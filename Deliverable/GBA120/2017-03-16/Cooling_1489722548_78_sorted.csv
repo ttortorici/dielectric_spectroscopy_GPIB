@@ -1,0 +1,5 @@
+# This data file was created on Thu Mar 16 21:50:18 2017
+# Chip ID: 2-19... Sample: GBA120... testing... Frequencies: 400Hz, 1400Hz, 14000Hz
+Time [s], Temperature A [K], Temperature B [K], Capacitance [pF], Loss tangent, Voltage [V], Frequency [Hz], Time [s], Temperature A [K], Temperature B [K], Capacitance [pF], Loss tangent, Voltage [V], Frequency [Hz], Time [s], Temperature A [K], Temperature B [K], Capacitance [pF], Loss tangent, Voltage [V], Frequency [Hz]
+1489722608.0069389, 300.00900000000001, 280.89800000000002, 1.799965, 0.0032070000000000002, 6.0, 400, 1489722591.6430039, 300.00900000000001, 280.84100000000001, 1.799668, 0.0022620000000000001, 15.0, 1400, 1489722582.087604, 300.00900000000001, 280.80900000000003, 1.79918, 0.00044099999999999999, 15.0, 14000
+-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 400, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1400, 1489722617.3683791, 300.00900000000001, 280.93000000000001, 1.7991649999999999, 0.000417, 15.0, 14000

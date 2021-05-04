@@ -1,0 +1,7 @@
+# This data file was created on Tue Oct 11 16:51:35 2016
+# measure GBA 124 with DC bias on "high" with filtered 9V battery
+Time [s], Temperature A [K], Temperature B [K], Frequency [Hz], Capacitance [pF], Loss tangent, Voltage
+# AC ON L INPUT
+1476226315.256665, 295.851, 278.306, -1, -1, -1, -1
+# AC ON L INPUT
+1476226327.687703, 295.851, 278.306, -1, -1, -1, -1

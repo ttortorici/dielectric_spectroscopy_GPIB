@@ -1,0 +1,8 @@
+# This data file was created on Thu Mar 16 21:49:21 2017
+# Chip ID: 2-19... Sample: GBA120... testing
+Time [s], Temperature A [K], Temperature B [K], Frequency [Hz], Capacitance [pF], Loss tangent, Voltage [V]
+# DC bias set to off
+1489722582.087604, 300.009, 280.809, 14000.0, 1.79918, 0.000441, 15.0
+1489722591.643004, 300.009, 280.841, 1400.0, 1.799668, 0.002262, 15.0
+1489722608.006939, 300.009, 280.898, 400.0, 1.799965, 0.003207, 6.0
+1489722617.368379, 300.009, 280.93, 14000.0, 1.799165, 0.000417, 15.0

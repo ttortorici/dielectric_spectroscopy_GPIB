@@ -1,0 +1,4 @@
+# This data file was created on Thu Mar 16 20:42:13 2017
+# Chip ID: ... Capacitor ID: ... DCBias setting: off
+Time [s], Temperature A [K], Temperature B [K], Frequency [Hz], Capacitance [pF], Loss tangent, Voltage [V]
+# DC bias set to LOW

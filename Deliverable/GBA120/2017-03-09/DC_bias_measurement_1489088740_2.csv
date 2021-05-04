@@ -1,0 +1,5 @@
+# This data file was created on Thu Mar  9 12:45:40 2017
+# testing positive
+Time [s], Temperature A [K], Temperature B [K], Frequency [Hz], Capacitance [pF], Loss tangent, Voltage [V], DC Voltage [V]
+# DC bias set to LO
+1489088760.577417, 100.0, 76.041, 10000.0, 1.811545, 0.000456, 15.0, 140

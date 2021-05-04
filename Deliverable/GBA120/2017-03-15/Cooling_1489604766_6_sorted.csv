@@ -1,0 +1,5 @@
+# This data file was created on Wed Mar 15 13:07:07 2017
+# capacitor 2-19; sample GBA120; nitrogen cooldown for more DC measurements... Frequencies: 400Hz, 1400Hz, 14000Hz
+Time [s], Temperature A [K], Temperature B [K], Capacitance [pF], Loss tangent, Voltage [V], Frequency [Hz], Time [s], Temperature A [K], Temperature B [K], Capacitance [pF], Loss tangent, Voltage [V], Frequency [Hz], Time [s], Temperature A [K], Temperature B [K], Capacitance [pF], Loss tangent, Voltage [V], Frequency [Hz]
+1489604809.362381, 148.70500000000001, 76.617000000000004, 1.8028135000000001, 0.000252, 6.0, 400, 1489604791.9183819, 149.679, 76.614000000000004, 1.8024960000000001, 0.00035500000000000001, 15.0, 1400, 1489604782.60642, 150.21000000000001, 76.625, 1.8019069999999999, 0.00027, 15.0, 14000
+-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 400, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1400, 1489604818.5319581, 148.19200000000001, 76.649000000000001, 1.8021149999999999, 0.000272, 15.0, 14000

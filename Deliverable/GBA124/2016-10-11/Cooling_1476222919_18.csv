@@ -1,0 +1,25 @@
+# This data file was created on Tue Oct 11 15:55:19 2016
+# measure GBA 124 with 100V DC bias on "high" with filter
+Time [s], Temperature A [K], Temperature B [K], Frequency [Hz], Capacitance [pF], Loss tangent, Voltage
+# AC ON L INPUT
+1476222939.518037, 295.843, 278.3, -1, -1, -1, -1
+# AC ON L INPUT
+1476222951.927412, 295.843, 278.3, -1, -1, -1, -1
+# AC ON L INPUT
+1476222999.424992, 295.844, 278.3, -1, -1, -1, -1
+# AC ON L INPUT
+1476223009.84241, 295.844, 278.3, -1, -1, -1, -1
+# AC ON L INPUT
+1476223022.251728, 295.844, 278.3, -1, -1, -1, -1
+# AC ON L INPUT
+1476223069.752233, 295.844, 278.301, -1, -1, -1, -1
+# AC ON L INPUT
+1476223080.1796, 295.844, 278.301, -1, -1, -1, -1
+# AC ON L INPUT
+1476223092.602108, 295.844, 278.301, -1, -1, -1, -1
+# AC ON L INPUT
+1476223140.110875, 295.843, 278.297, -1, -1, -1, -1
+# AC ON L INPUT
+1476223150.509514, 295.843, 278.298, -1, -1, -1, -1
+# AC ON L INPUT
+1476223162.920141, 295.842, 278.298, -1, -1, -1, -1
