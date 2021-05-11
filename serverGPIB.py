@@ -10,11 +10,12 @@ import socket
 from _thread import *
 import threading
 # import os
+import get
 import sys
 sys.path.append('GPIB')
 import GPIB_universal as GPIB
 import LabJack
-import get
+
 
 
 """ADDRESSES"""
@@ -251,12 +252,10 @@ class GPIBcomm:
 
             """FORMAT"""
             self.bridgeAH.write('FO NOTAT ENG')     # engineering notation
-            time.sleep(0.01)
             self.bridgeAH.write('FO LA ON')         # enable labels to be sent
-            time.sleep(0.01)
             self.bridgeAH.write('FO IEE OF')        # disable IEEE-488.2 compatible punctuation when set to ON
-            time.sleep(0.01)
             self.bridgeAH.write('FO FW FIX')        # fix field width
+            self.bridgeAH.write('UN DS')
             print('imported AH2700')
         else:
             self.bridgeAH = None

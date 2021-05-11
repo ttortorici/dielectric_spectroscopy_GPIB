@@ -9,7 +9,6 @@ import socket
 import os
 from builtins import input
 import sys
-sys.path.append('../GPIB')
 import get
 
 if sys.version_info.major > 2:
@@ -38,11 +37,11 @@ def send(msg, port):
     return msg_out.decode('ascii')
 
 
-class data_file:
+class DataFile:
 
     cryo_to_ls = {'DESERT-LN': 340, 'DESERT-HE': 340, '40K': 331, '4K': None}
 
-    def __init__(self, path, filename, purpose, port, unique_freqs, bridge='AH', cryo='40K', comment='', lj_chs=[]):
+    def __init__(self, path, filename, port, unique_freqs, bridge='AH', cryo='40K', comment='', lj_chs=[]):
         """Create data file, and instances of the bridge and Lakeshore for communication"""
         self.name = os.path.join(path, filename)
         print(unique_freqs)
@@ -66,6 +65,15 @@ class data_file:
             self.lj = None
             print('did not import LabJack')
         labels = []
+        self.set_labels()
+
+    def set_labels(self):
+        pass
+
+
+class CalFile(DataFile):
+
+    def set_lables(self):
         for freq in self.unique_freqs:
             f = str(int(freq))
             if len(f) <= 3:

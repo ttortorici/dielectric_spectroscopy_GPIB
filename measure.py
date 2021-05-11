@@ -24,8 +24,7 @@ try:
     import Tkinter
 except ImportError:
     import tkinter as Tkinter
-import measurement_tools as tools
-sys.path.append('../GPIB')
+import client_tools as tools
 import get
 
 
