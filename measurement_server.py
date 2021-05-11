@@ -12,7 +12,7 @@ import threading
 # import os
 import sys
 sys.path.append('GPIB')
-import GPIB
+import GPIB_universal as GPIB
 import LabJack
 import get
 
