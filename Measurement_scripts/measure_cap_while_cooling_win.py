@@ -1,9 +1,12 @@
 import threading
-import Tkinter
-import tkMessageBox
+try:
+    import Tkinter
+except ImportError:
+    import tkinter as Tkinter
+# import tkMessageBox
 import capacitance_measurement_tools as cap
-import sys
-import data_sorter as ds
+# import sys
+# import data_sorter as ds
 import os
 import time
 import datetime
@@ -142,7 +145,7 @@ class Setup_Window(Tkinter.Tk):
         set up DC select
         """
         self.dcbias = preset['dc']
-        print self.dcbias
+        print(self.dcbias)
         self.dcbias_selection = Tkinter.IntVar(self)
         dc_setting = {'off': 0,
                       'low': 1,
@@ -204,13 +207,13 @@ class Setup_Window(Tkinter.Tk):
     def dcselect(self):
         if self.dcbias_selection.get() == 0:
             self.dcbias = 'off'
-            print 'selected off'
+            print('selected off')
         elif self.dcbias_selection.get() == 1:
             self.dcbias = 'low'
-            print 'selected low'
+            print('selected low')
         elif self.dcbias_selection.get() == 2:
             self.dcbias = 'high'
-            print 'selected high'
+            print('selected high')
 
     def go(self):
         self.title = str(self.title_entry.get())
@@ -222,7 +225,7 @@ class Setup_Window(Tkinter.Tk):
         self.meas_volt = abs(float(self.volt_entry.get()))
         if self.meas_volt > 15:
             self.meas_volt = 15
-            print 'Set voltage measurement to 15'
+            print('Set voltage measurement to 15')
         self.ave_time_val = int(self.ave_time_entry.get())
         self.dcbias_val = float(self.dcbias_val_entry.get())
         self.amp_val = float(self.amp_entry.get())
@@ -241,14 +244,14 @@ class Setup_Window(Tkinter.Tk):
         with open(os.path.join(self.base_path, 'presets.yml'), 'w') as f:
             yaml.dump(presets, f, default_flow_style=False)
 
-        print 'Chip ID: ' + self.capchipID
-        print 'Sample: ' + self.capID
-        print 'Frequencies to measure: ' + str(self.frequencies) + 'Hz'
-        print 'Voltage of measurement: ' + str(self.meas_volt) + 'V'
-        print 'DC bias setting: ' + str(self.dcbias)
-        print 'DC bias set to: ' + str(self.dcbias_val) + 'V'
-        print 'Amplifier is: ' + str(self.amp_val) + 'x'
-        print self.purpose_val
+        print('Chip ID: ' + self.capchipID)
+        print('Sample: ' + self.capID)
+        print('Frequencies to measure: ' + str(self.frequencies) + 'Hz')
+        print('Voltage of measurement: ' + str(self.meas_volt) + 'V')
+        print('DC bias setting: ' + str(self.dcbias))
+        print('DC bias set to: ' + str(self.dcbias_val) + 'V')
+        print('Amplifier is: ' + str(self.amp_val) + 'x')
+        print(self.purpose_val)
 
         self.cleanUp()
         
@@ -271,16 +274,16 @@ class Setup_Window(Tkinter.Tk):
             if abs(self.dcbias_val) > 15:
                 step = 10 * np.sign(self.dcbias_val)
                 for volt in np.arange(step, self.dcbias_val+step, step):
-                    print 'setting dc voltage to %d' % volt
+                    print('setting dc voltage to %d' % volt)
                     data.lj.set_dc_voltage2(volt, amp=self.amp_val)
                     time.sleep(2)
             else:
-                print 'setting dc voltage to %d' % self.dcbias_val
+                print('setting dc voltage to %d' % self.dcbias_val)
                 data.lj.set_dc_voltage(self.dcbias_val, amp=self.amp_val)
         #except:
         #    pass
         while True:
-            for ii in xrange(10):
+            for ii in range(10):
                 data.sweep_freq_win()
 
     def cleanUp(self):

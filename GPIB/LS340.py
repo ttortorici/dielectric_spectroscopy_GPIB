@@ -1,14 +1,11 @@
 import platform
 if platform.system() == 'Windows':
-    win = True
-else:
-    win = False
-if win:
     from GPIB_NI import GPIB
 else:
-    from GPIB import GPIB
+    from GPIB import GPIB_unix
 
 """Driver for using Lakeshore 340"""
+
 
 class dev(GPIB): # inherit basic commands from general_instrument_control.py
     def __init__(self, addr, serialport=''):
@@ -35,7 +32,11 @@ class dev(GPIB): # inherit basic commands from general_instrument_control.py
             return float(msgout)
         else:
             raise IOError('Must give "A" or "B" for ch input')
-            return ''
+
+    def get_front_panel(self):
+        A = self.get_temp('A')
+        B = self.get_temp('B')
+        return [A, B]
 
     def reset(self):
         """Reset and clear the Lakeshore"""
@@ -59,9 +60,10 @@ class dev(GPIB): # inherit basic commands from general_instrument_control.py
         value: the value for the setpoint (in whatever units the setpoint is using"""
         self.write3('SETP %d, %s' % (loop, str(value)))
 
+
 if __name__ == '__main__':
     import get
 
     bridge = dev(12, get.serialport())
     temperature = bridge.get_temp('A')
-    print temperature
+    print(temperature)

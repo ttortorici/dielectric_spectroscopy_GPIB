@@ -1,10 +1,11 @@
 import capacitance_measurement_tools as cap
+from builtins import input
 import time
 
 
 def takeInput():
     """This function will be executed via thread"""
-    value = raw_input("Press Enter to Pause")
+    value = input("Press Enter to Pause")
     return value
 
 

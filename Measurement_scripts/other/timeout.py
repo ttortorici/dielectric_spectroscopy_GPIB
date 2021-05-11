@@ -11,7 +11,7 @@ def test_request(arg=None):
     return arg
 
 
-class Timeout():
+class Timeout:
     """Timeout class using ALARM signal."""
 
     class Timeout(Exception):
@@ -35,11 +35,11 @@ def main():
     # Run block of code with timeouts
     try:
         with Timeout(3):
-            print test_request("Request 1")
+            print(test_request("Request 1"))
         with Timeout(1):
-            print test_request("Request 2")
+            print(test_request("Request 2"))
     except Timeout.Timeout:
-        print "Timeout"
+        print("Timeout")
 
 
 if __name__ == "__main__":

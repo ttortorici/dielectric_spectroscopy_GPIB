@@ -1,18 +1,39 @@
 import time
 import platform
+import numpy as np
 if platform.system() == 'Windows':
     win = True
-else:
-    win = False
-if win:
     from GPIB_NI import GPIB
 else:
-    from GPIB import GPIB
+    win = False
+    from GPIB import GPIB_unix
 import sys
 sys.path.append('../other')
 
 """Driver for using Andeen Hagerling 2700A Capactiance Bridge"""
 # Refer to Section 6 of AH 2700 Firmware 02 Manual.pdf in Manuals and pg 285 on
+
+
+def wait_time(ave_time, frequency):
+    switcher = {
+        0: {1: 15., 2: 13., 3: 5., 4: 0.5},
+        1: {1: 16., 2: 14., 3: 3., 4: 1.},
+        2: {1: 16., 2: 14., 3: 3., 4: 1.},
+        3: {1: 16., 2: 14., 3: 3., 4: 1.},
+        4: {1: 16., 2: 14., 3: 3., 4: 1.},
+        5: {1: 16., 2: 14., 3: 3., 4: 1.},
+        7: {1: 16., 2: 14., 3: 3., 4: 1.},
+        8: {1: 16., 2: 14., 3: 3., 4: 1.},
+        9: {1: 16., 2: 14., 3: 3., 4: 1.},
+        10: {1: 16., 2: 14., 3: 3., 4: 1.},
+        11: {1: 16., 2: 14., 3: 3., 4: 1.},
+        12: {1: 16., 2: 14., 3: 3., 4: 1.},
+        13: {1: 16., 2: 14., 3: 3., 4: 1.},
+        14: {1: 16., 2: 14., 3: 3., 4: 1.},
+        15: {1: 16., 2: 14., 3: 3., 4: 1.}
+    }
+    return switcher.get(int(ave_time)).get(int(np.log10(frequency)))
+
 
 class dev(GPIB):
     def __init__(self, addr, serialport=''):
@@ -20,30 +41,20 @@ class dev(GPIB):
         super(self.__class__, self).__init__(addr, serialport)
         self.devicename = 'AH2700A'
         self.dev.timeout = 25000
-        #self.addr = addr
-        #self.port = serialport
         self.set_units('DS')
-        # for some reason this doesn't register the first time, but waiting and trying again seems to work
-        # this is weird and could be investigated by an anal programmer or GPIB wiz
-        #time.sleep(0.01)
-        #self.set_units('DS')
-        # set to continuous mode, so you can see the measurements on instrument screen
         self.meas_cont(True)
         time.sleep(0.01)
         self.format('ENG', 'ON', 'OF', 'FIX')
-        #self.trigger()
         self.ave_time = 0 #fix later
-        #self.set_ave(3)
         self.set_ave(self.ave_time)
         self.freq = 10000
         self.set_freq(self.freq)
-        #elf.freq = self.get_frequency()
 
     def clear(self):
         """Clears a partially entered command or parameter when used from the front panel.
         Aborts entry of a command from the serial device."""
         self.write2('^U')
-        print 'Cleared'
+        print('Cleared')
 
     def dcbias(self, msgin):
         if msgin.lower() == 'off':
@@ -56,7 +67,7 @@ class dev(GPIB):
             msgout = 'BIAS ILOW'
             printmsg = 'DC Bias set to low'
         self.write2(msgout)
-        print printmsg
+        print(printmsg)
 
     def format(self, notation='ENG', labeling='ON', ieee='OF', fwidth='FIX'):
         """Controls the format and numeric notation of results which are sent to serial or
@@ -77,7 +88,7 @@ class dev(GPIB):
         time.sleep(0.01)
         # fixes field widths when set to FIXED. Permitted values are FIXed and VARiable
         self.write3('FO FW %s' % fwidth)
-        print 'Formatted'
+        print('Formatted')
 
     def get_capacitance(self):
         """fetch just capacitance [pF]"""
@@ -109,32 +120,7 @@ class dev(GPIB):
             self.ser.write('Q\n')
             #self.read()
             #self.ser.write('Q\n')
-            if self.ave_time == 3:
-                if self.freq < 100:
-                    wait = 25
-                elif self.freq < 500:
-                    wait = 14.5
-                elif self.freq < 1500:
-                    wait = 1
-                else:
-                    wait = 1
-            elif self.ave_time == 0:
-                if self.freq < 300:
-                    wait = 13
-                elif self.freq < 500:
-                    wait = 8
-                elif self.freq < 1500:
-                    #wait = 1.5
-                    wait = 5
-                else:
-                    wait = 0.5
-            if self.ave_time == 7:
-                if self.freq < 500:
-                    wait = 14
-                elif self.freq < 1500:
-                    wait = 3
-                else:
-                    wait = 1
+            wait = wait_time(self.ave_time, self.freq)
             if wait >= 1:
                 self.sleep(wait, 'Waiting to read from front panel', 'done')
             else:
@@ -215,7 +201,7 @@ class dev(GPIB):
             self.write3('CO OF')
 
     def remote(self):
-        """Turn of front panel operation"""
+        """Turn off front panel operation"""
         self.write3('NREM')
 
     def reset(self):
@@ -240,7 +226,6 @@ class dev(GPIB):
                 raise ValueError('Please enter a number, or "up" or "down"')
         self.write3('AV %s' % msg)
 
-
     def set_freq(self, inHertz):
         """Sets the frequency on capacitor
         give inHertz None or False and give 'UP' or 'DO' to adjust frequency by one "notch"
@@ -256,36 +241,6 @@ class dev(GPIB):
             else:
                 raise ValueError('Please enter a number, or "up" or "down"')
         self.write3('FR %s' % msg)
-        #if inHertz < 80:
-        #    wait = 21
-        #elif inHertz < 150:
-        #    wait = 11
-        #elif inHertz < 250:
-        #    wait = 6.5
-        #elif inHertz < 350:
-        #    wait = 3.5
-        #elif inHertz < 550:
-        #    wait = 3
-        #else:
-        #    wait = 1
-        """if self.ave_time == 0:
-            if inHertz < 80:
-                wait = 21
-            elif inHertz < 150:
-                wait = 11
-            elif inHertz < 250:
-                wait = 8
-            elif inHertz < 350:
-                wait = 7
-            elif inHertz < 550:
-                wait = 5
-            elif inHertz < 1500:
-                wait = 1
-            else:
-                wait = 1
-        else:
-            wait = 1
-        self.sleep(wait, 'Setting frequency to %d' % inHertz, 'frequency set')"""
         self.freq = inHertz
         #print self.get_frequency()
 
@@ -302,7 +257,7 @@ class dev(GPIB):
         """A custom sleep command that writes dots to console so you know what's going on"""
         sys.stdout.write(tag1)
         sys.stdout.flush()
-        for second in xrange(int(time_to_wait)):
+        for second in range(int(time_to_wait)):
             sys.stdout.write('.')
             sys.stdout.flush()
             time.sleep(1)
@@ -313,13 +268,13 @@ class dev(GPIB):
     def trigger(self):
         """Need to trigger to initiate"""
         self.write2('*TR')
-        print 'Triggered'
+        print('Triggered')
 
 
 if __name__ == '__main__':
     import get
 
     bridge = dev(28, get.serialport())
-    print bridge.id()
-    print bridge.get_capacitance()
-    print bridge.get_front_panel()
+    print(bridge.id())
+    print(bridge.get_capacitance())
+    print(bridge.get_front_panel())

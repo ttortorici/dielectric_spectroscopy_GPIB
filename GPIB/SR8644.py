@@ -2,12 +2,10 @@ import time
 import platform
 if platform.system() == 'Windows':
     win = True
-else:
-    win = False
-if win:
     from GPIB_NI import GPIB
 else:
-    from GPIB import GPIB
+    win = False
+    from GPIB import GPIB_unix
 import sys
 sys.path.append('../other')
 
@@ -43,7 +41,7 @@ class dev(GPIB):
         """Clears a partially entered command or parameter when used from the front panel.
         Aborts entry of a command from the serial device."""
         self.write2('^U')
-        print 'Cleared'
+        print('Cleared')
 
     def dcbias(self, msgin):
         if msgin.lower() == 'off':
@@ -56,7 +54,7 @@ class dev(GPIB):
             msgout = 'BIAS ILOW'
             printmsg = 'DC Bias set to low'
         self.write2(msgout)
-        print printmsg
+        print(printmsg)
 
     def format(self, notation='ENG', labeling='ON', ieee='OF', fwidth='FIX'):
         """Controls the format and numeric notation of results which are sent to serial or
@@ -77,7 +75,7 @@ class dev(GPIB):
         time.sleep(0.01)
         # fixes field widths when set to FIXED. Permitted values are FIXed and VARiable
         self.write3('FO FW %s' % fwidth)
-        print 'Formatted'
+        print('Formatted')
 
     def get_capacitance(self):
         """fetch just capacitance [pF]"""
@@ -302,7 +300,7 @@ class dev(GPIB):
         """A custom sleep command that writes dots to console so you know what's going on"""
         sys.stdout.write(tag1)
         sys.stdout.flush()
-        for second in xrange(int(time_to_wait)):
+        for second in range(int(time_to_wait)):
             sys.stdout.write('.')
             sys.stdout.flush()
             time.sleep(1)
@@ -313,13 +311,13 @@ class dev(GPIB):
     def trigger(self):
         """Need to trigger to initiate"""
         self.write2('*TR')
-        print 'Triggered'
+        print('Triggered')
 
 
 if __name__ == '__main__':
     import get
 
     bridge = dev(28, get.serialport())
-    print bridge.id()
-    print bridge.get_capacitance()
-    print bridge.get_front_panel()
+    print(bridge.id())
+    print(bridge.get_capacitance())
+    print(bridge.get_front_panel())

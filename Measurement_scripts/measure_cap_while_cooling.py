@@ -6,9 +6,10 @@ import time
 import datetime
 import numpy as np
 import sys
+from builtins import input
+
 sys.path.append('../GPIB')
 import get
-
 
 date = str(datetime.date.today()).split('-')
 year = date[0]
@@ -21,16 +22,19 @@ if len(sys.argv) > 1:
 else:
     comment = ''
 
+
 def takeInput():
     """This function will be executed via thread"""
-    value = raw_input("Press Enter to Pause")
+    value = input("Press Enter to Pause")
     return value
+
 
 def signal_handler(signal, frame):
     """After pressing ctrl-C to quit, this function will first run"""
     sort_by_separate_frequencies()
-    print 'quitting'
+    print('quitting')
     sys.exit(0)
+
 
 def start():
     global path, filename, comment
@@ -41,28 +45,30 @@ def start():
     data = cap.data_file(path, filename, comment)
     data.dcbias('LOW')
     data.lj.set_dc_voltage(-60., amp=100.)
-    #data.dcbias('OFF')
-    #freqs_to_sweep = [100, 400, 1000, 1400, 10000, 14000]
+    # data.dcbias('OFF')
+    # freqs_to_sweep = [100, 400, 1000, 1400, 10000, 14000]
     freqs_to_sweep = [14000, 1400, 400]
     while True:
-        for ii in xrange(10):
+        for ii in range(10):
             data.sweep_freq(freqs_to_sweep, 1)
-        #data.speak('Adjust probes')
-        #print 'Adjust Probes'
-        #raw_input("Press Enter to continue...")
+        # data.speak('Adjust probes')
+        # print 'Adjust Probes'
+        # raw_input("Press Enter to continue...")
     # data.cont_meas(1000)
     # data.sweep_heat(low=320, high=400, step_size=5, freqs=freqs_to_sweep, measure_per_freq=3, hold_time=60)
+
 
 def load_data():
     """for loading data back in to sort at the end"""
     global path, filename
-    print os.path.join(path, filename)
+    print(os.path.join(path, filename))
     if '.csv' in filename:
         f = filename
     else:
         f = filename + '.csv'
     data = np.loadtxt(os.path.join(path, f), comments='#', delimiter=',', skiprows=4)
     return data
+
 
 def sort_by_separate_frequencies():
     global path, filename, comment
@@ -94,7 +100,7 @@ def sort_by_separate_frequencies():
     """make sure all data sets are same length"""
     for freq in unique_frequencies:
         amount_to_append = length[freq_with_most_data] - length[str(freq)]
-        for ii in xrange(amount_to_append):
+        for ii in range(amount_to_append):
             timestamps[str(freq)] = np.append(timestamps[str(freq)], -1)
             temperature1[str(freq)] = np.append(temperature1[str(freq)], -1)
             temperature2[str(freq)] = np.append(temperature2[str(freq)], -1)
@@ -105,7 +111,7 @@ def sort_by_separate_frequencies():
         filename = filename[:-4]
     data_sorted = cap.data_file(path, filename + '_sorted',
                                 comment + '... Frequencies: %dHz, %dHz, %dHz' % tuple(unique_frequencies))
-    for ii in xrange(length[freq_with_most_data]):
+    for ii in range(length[freq_with_most_data]):
         data_to_write = []
         for freq in unique_frequencies:
             data_to_write.append(timestamps[str(freq)][ii])
@@ -116,11 +122,10 @@ def sort_by_separate_frequencies():
             data_to_write.append(voltage_rms[str(freq)][ii])
             data_to_write.append(int(freq))
         data_sorted.write_row2(data_to_write)
-    print "... data sorted..."
-
-
+    print("... data sorted...")
 
     data_to_write = [time.time(), temperature1, temperature2, -1, -1, -1, -1]
+
 
 if __name__ == "__main__":
     start()

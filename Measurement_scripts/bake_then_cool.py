@@ -1,7 +1,9 @@
 import capacitance_measurement_tools as cap
 
 if __name__ == "__main__":
-    import sys; sys.path.append('..')
+    import sys
+
+    sys.path.append('..')
     import os
     import GPIB.get as get
     import time
@@ -15,7 +17,7 @@ if __name__ == "__main__":
     high = 400
 
     data = cap.data_file(os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy'),
-                     'Bake_then_Cool_%s' % (str(time.time()).replace('.', '_')), comment)
+                         'Bake_then_Cool_%s' % (str(time.time()).replace('.', '_')), comment)
     freqs_to_sweep = [100, 1000, 10000]
     data.check_hysteresis2(low, high, freqs=freqs_to_sweep, measure_per_freq=3)
     data.ls.setpoint(400)

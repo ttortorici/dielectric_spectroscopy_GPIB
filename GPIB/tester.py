@@ -26,11 +26,11 @@ class GPIB():
             self.ser.write('++read eoi\n')
             time.sleep(0.01)
             self.ser.write('++addr %d\n' % self.addr)
-        except serial.SerialException, e:
-            print e
+        except serial.SerialException as e:
+            print(e)
             self.close()
-        except KeyboardInterrupt, e:
-            print e
+        except KeyboardInterrupt as e:
+            print(e)
             self.close()
 
 
@@ -43,10 +43,10 @@ class GPIB():
                     msgout += msg
                 else:
                     break
-        except serial.SerialException, e:
-            print e
-        except KeyboardInterrupt, e:
-            print e
+        except serial.SerialException as e:
+            print(e)
+        except KeyboardInterrupt as e:
+            print(e)
         return msgout
 
 

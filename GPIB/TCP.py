@@ -3,7 +3,8 @@ TELEPYTHIC -- a python interface to test equipment
 Copyright 2014 by Martijn Jasperse
 https://bitbucket.org/martijnj/telepythic
 """
-import socket, select
+import select
+import socket
 
 
 class TCPInterface:
@@ -20,7 +21,7 @@ class TCPInterface:
         buffer  -- TCP receive buffer chunk size (default: 1024)
         """
         if isinstance(host, int):
-            assert host >= 0 and host < 256
+            assert 0 <= host < 256
             # get the local (default) ip address -- probably breaks on multiple interface machines
             myaddr = socket.gethostbyname_ex('')[2][0]
             # replace the last octet

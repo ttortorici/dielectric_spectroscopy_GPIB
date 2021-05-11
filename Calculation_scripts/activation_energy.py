@@ -59,5 +59,5 @@ if __name__ == "__main__":
         delm = default_delm
         delb = default_delb
     Eb, tau0, delEb, deltau0 = calculate(m, b, delm, delb)        
-    print 'activation energy is (%.6g +/- %.2g) kcal/mol' % (Eb, delEb)
-    print 'activation time is (%.6g +/- %.2g) fs' % (tau0, deltau0)
+    print('activation energy is (%.6g +/- %.2g) kcal/mol' % (Eb, delEb))
+    print('activation time is (%.6g +/- %.2g) fs' % (tau0, deltau0))

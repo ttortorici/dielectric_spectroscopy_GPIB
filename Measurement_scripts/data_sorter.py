@@ -2,28 +2,32 @@ import sys
 import os
 import capacitance_measurement_tools as cap
 import numpy as np
+from builtins import input
+
 
 def takeInput():
     """This function will be executed via thread"""
-    value = raw_input("Press Enter to Pause")
+    value = input("Press Enter to Pause")
     return value
+
 
 def signal_handler(signal, frame):
     """After pressing ctrl-C to quit, this function will first run"""
     sort_by_separate_frequencies()
-    print 'quitting'
+    print('quitting')
     sys.exit(0)
 
 
 def load_data(path, filename):
     """for loading data back in to sort at the end"""
-    print os.path.join(path, filename)
+    print(os.path.join(path, filename))
     if '.csv' in filename:
         f = filename
     else:
         f = filename + '.csv'
     data = np.loadtxt(os.path.join(path, f), comments='#', delimiter=',', skiprows=4)
     return data
+
 
 def sort_by_separate_frequencies(path, filename, comment):
     """Load Data"""
@@ -55,7 +59,7 @@ def sort_by_separate_frequencies(path, filename, comment):
     """make sure all data sets are same length"""
     for freq in unique_frequencies:
         amount_to_append = length[freq_with_most_data] - length[str(freq)]
-        for ii in xrange(amount_to_append):
+        for ii in range(amount_to_append):
             timestamps[str(freq)] = np.append(timestamps[str(freq)], -1)
             temperature1[str(freq)] = np.append(temperature1[str(freq)], -1)
             temperature2[str(freq)] = np.append(temperature2[str(freq)], -1)
@@ -67,12 +71,12 @@ def sort_by_separate_frequencies(path, filename, comment):
     comment += '... Frequencies:'
     for freq in unique_frequencies:
         comment += ' %dHz' % freq
-    print tuple(unique_frequencies)
+    print(tuple(unique_frequencies))
     data_sorted = cap.data_file(path, filename + '_sorted',
                                 unique_freqs=unique_frequencies,
                                 comment=comment + '... Frequencies: %dHz, %dHz, %dHz' % tuple(unique_frequencies),
                                 sorter=True)
-    for ii in xrange(length[freq_with_most_data]):
+    for ii in range(length[freq_with_most_data]):
         data_to_write = []
         for freq in unique_frequencies:
             data_to_write.append(timestamps[str(freq)][ii])
@@ -83,4 +87,4 @@ def sort_by_separate_frequencies(path, filename, comment):
             data_to_write.append(voltage_rms[str(freq)][ii])
             data_to_write.append(int(freq))
         data_sorted.write_row2(data_to_write)
-    print "... data sorted..."
+    print("... data sorted...")

@@ -11,17 +11,17 @@ b.ser.write('UN DS\n')
 time.sleep(0.1)
 b.ser.write('FR 100\n')
 time.sleep(0.1)
-print '-----'
-print b.read()
-print '-----'
+print('-----')
+print(b.read())
+print('-----')
 b.ser.write('Q\n')
 t0 = time.time()
 x = ''
 while x == '':
     time.sleep(0.5)
     x = b.read()
-    print repr(x)
-print time.time() - t0
+    print(repr(x))
+print(time.time() - t0)
 
 
 

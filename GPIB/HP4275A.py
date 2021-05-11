@@ -2,13 +2,9 @@ import time
 import platform
 import numpy as np
 if platform.system() == 'Windows':
-    win = True
-else:
-    win = False
-if win:
     from GPIB_NI import GPIB
 else:
-    from GPIB import GPIB
+    from GPIB import GPIB_unix
 import sys
 sys.path.append('../other')
 
@@ -43,12 +39,12 @@ class dev(GPIB):
         """Clears a partially entered command or parameter when used from the front panel.
         Aborts entry of a command from the serial device."""
         self.write2('DC1')
-        print 'Cleared'
+        print('Cleared')
 
     def getCL(self, msg):
-        self.query('A2')
+        self.write('A2')
         time.sleep(0.02)
-        self.query('B1')
+        self.write('B1')
         time.sleep(0.02)
         rawmsg = self.query(msg)
         for ii, char in enumerate(rawmsg):
@@ -79,7 +75,7 @@ class dev(GPIB):
         return dispA*1e12, dispB
 
     def get_dispA(self, value='C'):
-        """values: 'C' - capacitance, 'L' - inductance, 'R' - resistance, 'Z' - impedence"""
+        """values: 'C' - capacitance, 'L' - inductance, 'R' - resistance, 'Z' - impedance"""
         dispA_dict = {'L': 'A1', 'C': 'A2', 'R': 'A3', 'Z': 'A4'}
         rawmsg = self.query(dispA_dict[value])
         return rawmsg
@@ -176,18 +172,17 @@ class dev(GPIB):
                      4e6: 'F19',
                      10e6: 'F20'}
         msg = freq_dict[self.freq]
-        caps = np.zeros((self.aves))
-        losses = np.zeros((self.aves))
+        caps = np.zeros(self.aves)
+        losses = np.zeros(self.aves)
         # throw away first 6 measurements
-        for ii in xrange(4):
+        for ii in range(4):
             throw_away_cap, throw_away_loss = self.getCL(msg)
-        for ii in xrange(self.aves):
+        for ii in range(self.aves):
             caps[ii], losses[ii] = self.getCL(msg)
-            #caps[ii], losses[ii] = self.get_RC(msg)
-        cap = sum(caps)/(self.aves)
+        cap = sum(caps) / self.aves
         if cap > 1000000.:
             cap = 0
-        loss = sum(losses)/(self.aves)
+        loss = sum(losses) / self.aves
         msgout = [self.freq, cap, loss, self.measure_volt]
         return msgout
         
@@ -203,19 +198,17 @@ class dev(GPIB):
                      4e6: 'F19',
                      10e6: 'F20'}
         msg = freq_dict[self.freq]
-        Zs = np.zeros((self.aves))
-        thetas = np.zeros((self.aves))
-        for ii in xrange(4):
-            throw_away_Z, throw_away_theta = self.get_Z(msg)
-        for ii in xrange(self.aves):
+        Zs = np.zeros(self.aves)
+        thetas = np.zeros(self.aves)
+        for ii in range(4):
+            _, _ = self.get_Z(msg)
+        for ii in range(self.aves):
             Zs[ii],  thetas[ii] = self.get_Z(msg)
-        Z = sum(Zs)/(self.aves)
-        theta = sum(thetas)/(self.aves)
+        Z = sum(Zs) / self.aves
+        theta = sum(thetas) / self.aves
         msgout = [self.freq, Z, theta*np.pi/180., self.measure_volt]
         return msgout
-                    
-        
-        
+
     def get_front_panel_RC(self):
         freq_dict = {10e3: 'F11',
                      20e3: 'F12',
@@ -228,24 +221,24 @@ class dev(GPIB):
                      4e6: 'F19',
                      10e6: 'F20'}
         msg = freq_dict[self.freq]
-        resses = np.zeros((self.aves))
-        caps = np.zeros((self.aves))
+        resses = np.zeros(self.aves)
+        caps = np.zeros(self.aves)
         # throw away first 6 measurements
-        for ii in xrange(10):
+        for ii in range(10):
             throw_away_res, throw_away_cap = self.get_RC(msg)
-        for ii in xrange(self.aves):
+        for ii in range(self.aves):
             resses[ii], caps[ii] = self.get_RC(msg)
-        res = sum(resses)/(self.aves)
+        res = sum(resses) / self.aves
         #if cap > 10.:
         #    cap = 0
-        cap = sum(caps)/(self.aves)
+        cap = sum(caps) / self.aves
         msgout = [self.freq, res, cap, self.measure_volt]
         return msgout
 
     def get_loss(self, units=False):
         """Fetch just loss [check units], give units=True to also print units"""
         if units:
-            return (self.get_front_panel()[2], self.get_units())
+            return [self.get_front_panel()[2], self.get_units()]
         return self.get_front_panel()[2]
 
     def get_units(self):
@@ -322,7 +315,7 @@ class dev(GPIB):
         """A custom sleep command that writes dots to console so you know what's going on"""
         sys.stdout.write(tag1)
         sys.stdout.flush()
-        for second in xrange(int(time_to_wait)):
+        for second in range(int(time_to_wait)):
             sys.stdout.write('.')
             sys.stdout.flush()
             time.sleep(1)
@@ -333,13 +326,13 @@ class dev(GPIB):
     def trigger(self):
         """Need to trigger to initiate"""
         self.write2('*TR')
-        print 'Triggered'
+        print('Triggered')
 
 
 if __name__ == '__main__':
     import get
 
     bridge = dev(28, get.serialport())
-    print bridge.id()
-    print bridge.get_capacitance()
-    print bridge.get_front_panel()
+    print(bridge.id())
+    print(bridge.get_capacitance())
+    print(bridge.get_front_panel())

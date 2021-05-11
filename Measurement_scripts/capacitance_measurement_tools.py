@@ -8,23 +8,28 @@ import sys; sys.path.append('../GPIB'); sys.path.append('../Server_scripts')
 import AH2700A
 import HP4275A
 import LS340
-#import lakeshore_client
 import LabJack
 import get
 import platform
-#import pyvisa
+from builtins import input
+if sys.version_info.major > 2:
+    if sys.version_info.minor < 4:
+        from imp import reload
+    else:
+        from importlib import reload
 if platform.system() == 'Windows':
     win = True
 else:
     win = False
 
+
 #first = 1
 
 
-def takeInput():
+'''def takeInput():
     """This function will be executed via thread"""
     value = raw_input("Type 'go' to continue")
-    return value
+    return value'''
 
 
 class data_file:
@@ -32,7 +37,7 @@ class data_file:
         """Create data file, and instances of the bridge and lakeshore for communication"""
         self.name = os.path.join(path, filename)
         self.filename = filename.lower()
-        print unique_freqs
+        print(unique_freqs)
         list.sort(unique_freqs)
         self.unique_freqs = unique_freqs[::-1]
         if '.csv' not in self.name:
@@ -45,10 +50,10 @@ class data_file:
             self.ls = None
         else:
             if self.unique_freqs[0] <= 20000:
-                print 'imported AH2700'
+                print('imported AH2700')
                 self.bridge = AH2700A.dev(28, get.serialport())
             else:
-                print 'imported HP4275'
+                print('imported HP4275')
                 self.bridge = HP4275A.dev(5, get.serialport())
             self.ls = LS340.dev(12, get.serialport())
         self.lj_chs = lj_chs
@@ -57,13 +62,13 @@ class data_file:
             if 1:            
                 #try:
                 self.lj = LabJack.LabJack()
-                print 'imported labjack'
+                print('imported labjack')
             #except:
             #    self.lj = None
             #    print 'did not import labjack'
         else:
             self.lj = None
-            print 'did not import labjack'
+            print('did not import labjack')
         if self.unique_freqs:
             labels = []
             for freq in self.unique_freqs:
@@ -133,13 +138,13 @@ class data_file:
         """the numbers you give it for dc_bias_values are the voltages you want. set amp to the amplifier's
         amplification, and it will divide by this number, to set the labjack at an appropriate value to be amplified
         to the desired value."""
-        print 'Starting a set of DC Bias measurements'
-        print 'Will measure these frequencies (in Hz): %s, %d times' % (freqs, measurements_at_each_volt)
+        print('Starting a set of DC Bias measurements')
+        print('Will measure these frequencies (in Hz): %s, %d times' % (freqs, measurements_at_each_volt))
         #print 'Will measure at all these DC bias values (in volts): %s with an amplifier of %0.2f amplification'\
         #      % (dc_bias_values, amp)
         for dc_bias_value in dc_bias_values:
             self.lj.set_dc_voltage2(dc_bias_value, amp=amp)
-            for _ in xrange(measurements_at_each_volt):
+            for _ in range(measurements_at_each_volt):
                 self.sweep_freq_win(amp, offset=offset)
         self.lj.set_dc_voltage2(0, amp=amp)
 
@@ -150,44 +155,44 @@ class data_file:
             temp_var = low
             low = float(high)
             high = float(temp_var)
-        print 'Starting temperature sweep measurements'
-        print 'Measuring between %dK and %dK' % (low, high)
+        print('Starting temperature sweep measurements')
+        print('Measuring between %dK and %dK' % (low, high))
         #print 'Measuring at these frequencies [Hz] %s' % str(freqs)
-        print 'Will wait %d seconds once %dK is reached' % (wait, high)
+        print('Will wait %d seconds once %dK is reached' % (wait, high))
         temperature1 = self.ls.get_temp('A')
         setpoints = [high, low]
         for ii, setpt in enumerate(setpoints):
             self.ls.setpoint(setpt)
-            print 'Set temperature to %.2fK. Waiting to reach setpoint' % setpt
+            print('Set temperature to %.2fK. Waiting to reach setpoint' % setpt)
             while abs(temperature1 - setpt) > 0.01:
                 for freq in freqs:
-                    for k in xrange(measure_per_freq):
+                    for k in range(measure_per_freq):
                         self.bridge.set_freq(freq)
                         temp_data = self.bridge.get_front_panel()
                         temperature1 = self.ls.get_temp('A')
                         temperature2 = self.ls.get_temp('B')
                         data_to_write = [time.time(), temperature1, temperature2] + temp_data
-                        print data_to_write
+                        print(data_to_write)
                         self.write_row2(data_to_write)
             if ii == 0:
-                print "Reached %dK" % high
+                print("Reached %dK" % high)
                 if wait > 0:
-                    print "Now waiting %d seconds" % wait
+                    print("Now waiting %d seconds" % wait)
                     then = time.time()
                     while abs(time.time() - then) < wait:
                         for freq in freqs:
-                            for ii in xrange(measure_per_freq):
+                            for ii in range(measure_per_freq):
                                 self.bridge.set_freq(freq)
                                 temp_data = self.bridge.get_front_panel()
                                 temperature1 = self.ls.get_temp('A')
                                 temperature2 = self.ls.get_temp('B')
                                 data_to_write = [time.time(), temperature1, temperature2] + temp_data
-                                print data_to_write
+                                print(data_to_write)
                                 self.write_row2(data_to_write)
-                print "done"
+                print("done")
                 self.speak('Reached %dK' % high)
             elif ii == 1:
-                print "Reached %dK" % low
+                print("Reached %dK" % low)
                 self.speak('Reached %dK' % low)
 
     def check_hysteresis2(self, low, high, freqs, measure_per_freq):
@@ -196,18 +201,18 @@ class data_file:
             temp_var = low
             low = float(high)
             high = float(temp_var)
-        print 'Starting temperature sweep measurements'
-        print 'Measuring between %dK and %dK' % (low, high)
+        print('Starting temperature sweep measurements')
+        print('Measuring between %dK and %dK' % (low, high))
         #print 'Measuring at these frequencies [Hz] %s' % str(freqs)
-        print 'Will wait for you to press enter once setpoints are reached to continue'
+        print('Will wait for you to press enter once setpoints are reached to continue')
         temperature1 = self.ls.get_temp('A')
         setpoints = [high, low]
         for ii, setpt in enumerate(setpoints):
             self.ls.setpoint(setpt)
-            print 'Set temperature to %.2fK. Waiting to reach setpoint' % setpt
+            print('Set temperature to %.2fK. Waiting to reach setpoint' % setpt)
             while abs(temperature1 - setpt) > 0.01:
                 for freq in freqs:
-                    for k in xrange(measure_per_freq):
+                    for k in range(measure_per_freq):
                         self.bridge.set_freq(freq)
                         try:
                             temp_data = self.bridge.get_front_panel()
@@ -217,10 +222,10 @@ class data_file:
                             temperature1 = self.ls.get_temp('A')
                             temperature2 = self.ls.get_temp('B')
                             data_to_write = [time.time(), temperature1, temperature2] + temp_data
-                            print data_to_write
+                            print(data_to_write)
                             self.write_row2(data_to_write)
                         except IOError:
-                            print 'Timed out reading from bridge, resetting bridge'
+                            print('Timed out reading from bridge, resetting bridge')
                             self.bridge.clear()
                             self.bridge.reset()
                         #except ValueError:
@@ -230,38 +235,38 @@ class data_file:
                         #    raw_input("Press Enter to continue...")
                         #    self.bridge.clear()
                         #    self.bridge.reset()
-            print "Reached %dK" % setpt
+            print("Reached %dK" % setpt)
             self.speak('Reached %dK' % setpt)
-            print "Now waiting for you to press Enter to continue"
+            print("Now waiting for you to press Enter to continue")
             self.speak('Press the enter key to continue')
             wait = True
             while wait:
-                print "Press Enter to Continue"
+                print("Press Enter to Continue")
                 for freq in freqs:
-                    for ii in xrange(measure_per_freq):
+                    for ii in range(measure_per_freq):
                         self.bridge.set_freq(freq)
                         temp_data = self.bridge.get_front_panel()
                         temperature1 = self.ls.get_temp('A')
                         temperature2 = self.ls.get_temp('B')
                         data_to_write = [time.time(), temperature1, temperature2] + temp_data
-                        print data_to_write
+                        print(data_to_write)
                         self.write_row2(data_to_write)
                 if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-                    line = raw_input()
+                    line = input()
                     wait = False
-            print "done"
+            print("done")
 
     def cont_meas(self, freq):
         """Continuously monitor capacitance until manual break (ctrl+C)"""
-        print 'Starting continuous measurement. Press ctrl+C to end data taking'
-        print 'Measuring at %d Hz' % freq
+        print('Starting continuous measurement. Press ctrl+C to end data taking')
+        print('Measuring at %d Hz' % freq)
         self.bridge.set_freq(freq)
         while True:
             temp_data = self.bridge.get_front_panel()
             temperature1 = self.ls.get_temp('A')
             temperature2 = self.ls.get_temp('B')
             data_to_write = [time.time(), temperature1, temperature2] + temp_data
-            print data_to_write
+            print(data_to_write)
             self.write_row2(data_to_write)
 
     def cool_down(self, freqs, cryo='Nitrogen'):
@@ -273,7 +278,7 @@ class data_file:
             setpt = 3
         else:
             raise ValueError("please enter Nitrogen or Helium for cryo")
-        print 'Starting measurements of '
+        print('Starting measurements of ')
 
     def dcbias(self, msg):
         self.bridge.dcbias(msg)
@@ -282,9 +287,9 @@ class data_file:
     def bake(self, high, step_size, freqs, measure_per_freq, hold_time=60):
         """Raise temperature to desired temperature and monitor along the way. Will continue to
         monitor until manual break"""
-        print 'Starting temperature sweep measurements'
-        print 'Measuring to %dK with steps of %d' % (high, step_size)
-        print 'Measuring at these frequencies [Hz] %s' % str(freqs)
+        print('Starting temperature sweep measurements')
+        print('Measuring to %dK with steps of %d' % (high, step_size))
+        print('Measuring at these frequencies [Hz] %s' % str(freqs))
         low = int(self.ls.get_temp('A'))
         setpoints = np.arange(low, high + step_size, step_size)
         for ii, setpt in enumerate(setpoints):
@@ -292,36 +297,36 @@ class data_file:
                 setpt = 400
             hold = hold_time
             self.ls.setpoint(setpt)
-            print 'Set temperature to %.2fK Waiting to reach setpoint' % setpt
+            print('Set temperature to %.2fK Waiting to reach setpoint' % setpt)
             while hold > 0:
                 temperature1 = self.ls.get_temp('A')
                 sys.stdout.write('.')
                 sys.stdout.flush()
                 if abs(temperature1 - setpt) < 0.01:
                     hold -= 1
-            print ' done waiting'
+            print(' done waiting')
             for freq in freqs:
                 self.bridge.set_freq(freq)
-                for ii in xrange(measure_per_freq):
+                for ii in range(measure_per_freq):
                     temp_data = self.bridge.get_front_panel()
                     temperature1 = self.ls.get_temp('A')
                     temperature2 = self.ls.get_temp('B')
                     data_to_write = [time.time(), temperature1, temperature2] + temp_data
-                    print data_to_write
+                    print(data_to_write)
                     self.write_row2(data_to_write)
         while True:
             self.sweep_freq(freqs, 3)
 
     def sweep_freq(self, freqs, measurements_at_each_freq):
         """Sweep a set of frequencies"""
-        print 'Starting frequency sweep measurements'
+        print('Starting frequency sweep measurements')
         for freq in freqs:
             self.bridge.set_freq(freq)
-            for ii in xrange(measurements_at_each_freq):
+            for ii in range(measurements_at_each_freq):
                 if 1:
                     temp_data = self.bridge.get_front_panel()
                     if temp_data[0] == '':
-                        print 'failed to read front panel, trying again...'
+                        print('failed to read front panel, trying again...')
                         temp_data = self.bridge.get_front_panel()
                     temperature1 = self.ls.get_temp('A')
                     temperature2 = self.ls.get_temp('B')
@@ -338,17 +343,17 @@ class data_file:
                         if 'dc' in self.filename:
                             data_to_write.append(-1)
                         self.write_row2('# %s' % temp_data[0])
-                    print data_to_write
+                    print(data_to_write)
                     self.write_row2(data_to_write)
                     
     def sweep_freq_win(self, amp=1, offset=0):
         """Sweep a set of frequencies"""
-        print 'Starting frequency sweep measurements'
+        print('Starting frequency sweep measurements')
         data_to_write = []
         for ii, freq in enumerate(self.unique_freqs):
             self.bridge.set_freq(freq)
             time.sleep(0.1)
-            print 'frequency set'
+            print('frequency set')
             good = 0
             while not good:
                 try:
@@ -361,9 +366,9 @@ class data_file:
                     pass
                     #print 'ERROR'
                 #temp_data = self.bridge.get_front_panel()
-            print 'read front panel'            
+            print('read front panel')
             if temp_data[0] == '':
-                print 'failed to read front panel, trying again...'
+                print('failed to read front panel, trying again...')
                 if 'resistance' in self.filename.lower():
                     temp_data = self.bridge.get_front_panel_RC
                 else:
@@ -387,20 +392,20 @@ class data_file:
                 if self.lj:
                     data_f.extend([-1]*4)
                 self.write_row2('# %s' % temp_data[0])
-            print data_f
+            print(data_f)
             data_to_write.extend(data_f)
         self.write_row2(data_to_write)
         
     def sweep_freq_win_return(self, amp=1, offset=0):
         """Sweep a set of frequencies"""
-        print 'Starting frequency sweep measurements'
+        print('Starting frequency sweep measurements')
         data_to_write = []
         Cret = np.zeros(len(self.unique_freqs))
         Lret = np.zeros(len(self.unique_freqs))
         for ii, freq in enumerate(self.unique_freqs):
             self.bridge.set_freq(freq)
             time.sleep(0.1)
-            print 'frequency set'
+            print('frequency set')
             good = 0
             while not good:
                 try:
@@ -408,9 +413,9 @@ class data_file:
                     good = 1
                 except VisaIOError:
                     pass
-            print 'read front panel'            
+            print('read front panel')
             if temp_data[0] == '':
-                print 'failed to read front panel, trying again...'
+                print('failed to read front panel, trying again...')
                 temp_data = self.bridge.get_front_panel()
             temperature1 = self.ls.get_temp('A')
             temperature2 = self.ls.get_temp('B')
@@ -433,23 +438,23 @@ class data_file:
                 if self.lj:
                     data_f.extend([-1]*4)
                 self.write_row2('# %s' % temp_data[0])
-            print data_f
+            print(data_f)
             data_to_write.extend(data_f)
         self.write_row2(data_to_write)
         return Cret, Lret
         
     def sweep_freq_win_RC(self, amp=1, offset=0):
         """Sweep a set of frequencies"""
-        print 'Starting frequency sweep measurements'
+        print('Starting frequency sweep measurements')
         data_to_write = []
         for ii, freq in enumerate(self.unique_freqs):
             self.bridge.set_freq(freq)
             time.sleep(0.1)
-            print 'frequency set'
+            print('frequency set')
             temp_data = self.bridge.get_front_panel_RC()
-            print 'read front panel'            
+            print('read front panel')
             if temp_data[0] == '':
-                print 'failed to read front panel, trying again...'
+                print('failed to read front panel, trying again...')
                 temp_data = self.bridge.get_front_panel_RC()
             temperature1 = self.ls.get_temp('A')
             temperature2 = self.ls.get_temp('B')
@@ -470,22 +475,22 @@ class data_file:
                 if self.lj:
                     data_f.extend([-1]*4)
                 self.write_row2('# %s' % temp_data[0])
-            print data_f
+            print(data_f)
             data_to_write.extend(data_f)
         self.write_row2(data_to_write)
         
     def sweep_freq_win_Z(self, amp=1, offset=0):
         """Sweep a set of frequencies"""
-        print 'Starting frequency sweep measurements'
+        print('Starting frequency sweep measurements')
         data_to_write = []
         for ii, freq in enumerate(self.unique_freqs):
             self.bridge.set_freq(freq)
             time.sleep(0.1)
-            print 'frequency set'
+            print('frequency set')
             temp_data = self.bridge.get_front_panel_Z()
-            print 'read front panel'            
+            print('read front panel')
             if temp_data[0] == '':
-                print 'failed to read front panel, trying again...'
+                print('failed to read front panel, trying again...')
                 temp_data = self.bridge.get_front_panel_Z()
             temperature1 = self.ls.get_temp('A')
             temperature2 = self.ls.get_temp('B')
@@ -506,14 +511,14 @@ class data_file:
                 if self.lj:
                     data_f.extend([-1]*4)
                 self.write_row2('# %s' % temp_data[0])
-            print data_f
+            print(data_f)
             data_to_write.extend(data_f)
         self.write_row2(data_to_write)
                     
     def sweep_freq_old2(self, freqs, measurements_at_each_freq):
         #global first
         """Sweep a set of frequencies"""
-        print 'Starting frequency sweep measurements'
+        print('Starting frequency sweep measurements')
         #print 'Measuring at these frequencies [Hz] %s' % str(freqs)
         #print 'Measuring %d times at each frequency' % measurements_at_each_freq
         #if first:
@@ -521,7 +526,7 @@ class data_file:
         #    first = 0
         for freq in freqs:
             self.bridge.set_freq(freq)
-            for ii in xrange(measurements_at_each_freq):
+            for ii in range(measurements_at_each_freq):
                 # try:
                 if 1:
                     # temp_data = self.bridge.get_front_panel()
@@ -542,7 +547,7 @@ class data_file:
                     #        self.ls = LS340.dev(12, get.serialport())
                     temp_data = self.bridge.get_front_panel()
                     if temp_data[0] == '':
-                        print 'failed to read front panel, trying again...'
+                        print('failed to read front panel, trying again...')
                         temp_data = self.bridge.get_front_panel()
                     temperature1 = self.ls.get_temp('A')
                     #temperature2 = self.ls.get_temp('B')
@@ -561,7 +566,7 @@ class data_file:
                     else:
                         data_to_write = [time.time(), temperature1, temperature2, -1, -1, -1, -1]
                         self.write_row2('# %s' % temp_data[0])
-                    print data_to_write
+                    print(data_to_write)
                     self.write_row2(data_to_write)
                     # except IOError:
                     #    print 'Timed out reading from bridge, resetting bridge'
@@ -577,13 +582,13 @@ class data_file:
 
     def sweep_freq_old(self, freqs, measurements_at_each_freq):
         """Sweep a set of frequencies"""
-        print 'Starting frequency sweep measurements'
-        print 'Measuring at these frequencies [Hz] %s' % str(freqs)
-        print 'Measuring %d times at each frequency' % measurements_at_each_freq
+        print('Starting frequency sweep measurements')
+        print('Measuring at these frequencies [Hz] %s' % str(freqs))
+        print('Measuring %d times at each frequency' % measurements_at_each_freq)
         #self.ls.read(3)
         for freq in freqs:
             self.bridge.set_freq(freq)
-            for ii in xrange(measurements_at_each_freq):
+            for ii in range(measurements_at_each_freq):
                 #try:
                 if 1:
                     #temp_data = self.bridge.get_front_panel()
@@ -599,7 +604,7 @@ class data_file:
                             #print temperature2
                             get_temp = False
                         except IOError:
-                            print "failed to get temperatures"
+                            print("failed to get temperatures")
                             #reload(lakeshore_client)
                             reload(LS340)
                             #self.ls = lakeshore_client.Lakeshore()
@@ -612,12 +617,12 @@ class data_file:
                     #print temp_data
                     if len(temp_data) > 1:
                         blah = [temperature1, temperature2] + temp_data
-                        print blah
+                        print(blah)
                         data_to_write = [time.time()] + blah #, temperature1, temperature2] + temp_data
                     else:
                         data_to_write = [time.time(), temperature1, temperature2, -1, -1, -1]
                         self.write_row2('# %s' % temp_data[0])
-                    print data_to_write
+                    print(data_to_write)
                     self.write_row2(data_to_write)
                 #except IOError:
                 #    print 'Timed out reading from bridge, resetting bridge'
@@ -637,9 +642,9 @@ class data_file:
             temp_var = low
             low = float(high)
             high = float(temp_var)
-        print 'Starting temperature sweep measurements'
-        print 'Measuring between %dK and %dK with steps of %d' % (low, high, step_size)
-        print 'Measuring at these frequencies [Hz] %s' % str(freqs)
+        print('Starting temperature sweep measurements')
+        print('Measuring between %dK and %dK with steps of %d' % (low, high, step_size))
+        print('Measuring at these frequencies [Hz] %s' % str(freqs))
         temperature1 = self.ls.get_temp('A')
         low_to_high = np.arange(low, high + step_size, step_size)
         high_to_low = low_to_high[::-1]
@@ -657,22 +662,22 @@ class data_file:
                     holdfactor = 4
             hold = hold_time * holdfactor
             self.ls.setpoint(setpt)
-            print 'Set temperature to %.2fK Waiting to reach setpoint' % setpt
+            print('Set temperature to %.2fK Waiting to reach setpoint' % setpt)
             while hold > 0:
                 temperature1 = self.ls.get_temp('A')
                 sys.stdout.write('.')
                 sys.stdout.flush()
                 if abs(temperature1 - setpt) < 0.01:
                     hold -= 1
-            print ' done waiting'
+            print(' done waiting')
             for freq in freqs:
-                for ii in xrange(measure_per_freq):
+                for ii in range(measure_per_freq):
                     self.bridge.set_freq(freq)
                     temp_data = self.bridge.get_front_panel()
                     temperature1 = self.ls.get_temp('A')
                     temperature2 = self.ls.get_temp('B')
                     data_to_write = [time.time(), temperature1, temperature2] + temp_data[:-1]
-                    print data_to_write
+                    print(data_to_write)
                     self.write_row2(data_to_write)
 
     def write_row(self, row_to_write):

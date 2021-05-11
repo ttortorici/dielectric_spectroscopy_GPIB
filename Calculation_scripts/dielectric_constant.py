@@ -28,10 +28,10 @@ def calculate_filling(c_bare, c_reference, c_loading, c_material, eps_substrate=
         eps_eff_load = (c_loading - c_bare)/c_geometric + 1.
         filling = 1 - (eps_eff_load - eps_eff_air)/(eps_reference - 1)
         eps_material = (eps_eff_air - 1 + filling)/filling
-        print 'Geometric capacitance = %.2f fF' % (c_geometric*1000.)
-        print 'Dielectric constant of loading material = %.2f' % eps_reference
-        print '%% Filling = %.2f %%' % (filling * 100.)
-        print 'Dielectric constant of loaded material = %.2f' % eps_material
+        print('Geometric capacitance = %.2f fF' % (c_geometric*1000.))
+        print('Dielectric constant of loading material = %.2f' % eps_reference)
+        print('%% Filling = %.2f %%' % (filling * 100.))
+        print('Dielectric constant of loaded material = %.2f' % eps_material)
         
         return (eps_material, filling, eps_reference, c_geometric)
         
@@ -55,14 +55,14 @@ def calculate_Eb_and_tau0_from_fit(m, b, delm, delb):
     delEb = abs(kBT0*delm/m**2)
     deltau0 = np.sqrt((tau0/m*delb)**2+(tau0*b/m**2*delm)**2)
 
-    print 'activation energy is (%.6g +/- %.2g) kcal/mol' % (Eb, delEb)
-    print 'activation time is (%.6g +/- %.2g) fs' % (tau0, deltau0)
+    print('activation energy is (%.6g +/- %.2g) kcal/mol' % (Eb, delEb))
+    print('activation time is (%.6g +/- %.2g) fs' % (tau0, deltau0))
 
 def evaluate_sigfigs(delEb):
     if str(delEb)[0] == '0':
-        print 'got it'
+        print('got it')
         for ii, char in enumerate(str(delEb)[1:]):
-            print char
+            print(char)
             if char != '0' and char != '1' and char != '.':
                 delEbdigit = float(char)
                 delEorder = -ii
@@ -95,6 +95,6 @@ def evaluate_sigfigs(delEb):
     else:
         raise ValueError('delEbdigit is not a digit: %s' % str(delEbdigit))
     delEbtemp = delEbdigit*10**delEorder
-    print delEb
-    print delEbtemp
-    print sigfigs_pastdec
+    print(delEb)
+    print(delEbtemp)
+    print(sigfigs_pastdec)
