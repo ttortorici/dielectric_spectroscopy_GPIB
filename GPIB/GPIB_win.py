@@ -21,9 +21,9 @@ class GPIB(object):
         self.rm = pyvisa.ResourceManager()
         if addr == 5:
             """addr 5 is for HP4275A"""
-            self.dev = self.rm.open_resource('GPIB0::%d::INSTR' % self.addr, read_termination='\r\n')
+            self.dev = self.rm.open_resource('GPIB0::{}::INSTR'.format(self.addr), read_termination='\r\n')
         else:
-            self.dev = self.rm.open_resource('GPIB0::%d::INSTR' % self.addr)
+            self.dev = self.rm.open_resource('GPIB0::{}::INSTR'.format(self.addr))
     
     def query(self, msg):
         return self.dev.query(msg)
@@ -31,22 +31,8 @@ class GPIB(object):
     def write(self, msg):
         self.dev.write(msg)
         
-    """def write2(self, msg):
-        return self.dev.query(msg)
-        
-    def write3(self, msg):
-        self.dev.write(msg)
-        
-    def query2(self, msg):
-        self.dev.write(msg)
-        time.sleep(0.1)
-        return self.dev.read()"""
-        
     def read(self):
         self.dev.read()
-        
-    """def read2(self, length=512):
-        self.dev.read()"""
         
     def dev_id(self):
         return self.query('*IDN?')

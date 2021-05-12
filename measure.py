@@ -544,8 +544,8 @@ class Setup_Window(Tkinter.Tk):
                         c_av) + ('{0:.%sf}) pF' % str(sig_figs_C[ii])).format(c_sd)
                     L_string = ('Loss Tangent at %d %s is ({0:.%sf} +/- ' % (f, unit, str(sig_figs_L[ii]))).format(
                         l_av) + ('{0:.%sf}) pF' % str(sig_figs_L[ii])).format(l_sd)
-                    data.write_row2('# %s' % C_string)
-                    data.write_row2('# %s' % L_string)
+                    data.write_row('# %s' % C_string)
+                    data.write_row('# %s' % L_string)
                     print(C_string)
                     print(L_string)
 
@@ -556,7 +556,7 @@ class Setup_Window(Tkinter.Tk):
                             qualifier = 'increased'
                         delC_string = ('Capacitance at %d %s %s by {0:.%sf} fF' % (
                         f, unit, qualifier, str(sig_figs_C[ii] - 3))).format(abs(deltaC[ii]) * 1000.)
-                        data.write_row2('# %s' % delC_string)
+                        data.write_row('# %s' % delC_string)
                         print(delC_string)
                     if not self.bare_Ls == '':
                         if deltaL[ii] < 0:
@@ -565,11 +565,11 @@ class Setup_Window(Tkinter.Tk):
                             qualifier = 'increased'
                         delL_string = ('Loss Tangent at %d %s %s by {0:.%sf}' % (
                         f, unit, qualifier, str(sig_figs_L[ii]))).format(abs(deltaL[ii]))
-                        data.write_row2('# %s' % delL_string)
+                        data.write_row('# %s' % delL_string)
                         print(delL_string)
 
                 '''write data columnized'''
-                data.write_row2('# Labels')
+                data.write_row('# Labels')
                 labels = ['time', '', '', 'Cap Average [pf]', 'Loss Average', '', 'Frequency [Hz]']
                 labels2 = ['time', '', '', 'Cap Change [pf]', 'Loss Change', '', 'Frequency [Hz]']
                 label_row = []
@@ -593,11 +593,11 @@ class Setup_Window(Tkinter.Tk):
                         del_data[6 + ii * 7] = f
                 label_row[0] = '#' + label_row[0]
                 label2_row[0] = '#' + label2_row[0]
-                data.write_row2(label_row)
-                data.write_row2(ave_data)
+                data.write_row(label_row)
+                data.write_row(ave_data)
                 if not (self.bare_Cs == '' and self.bare_Ls == ''):
-                    data.write_row2(label2_row)
-                    data.write_row2(del_data)
+                    data.write_row(label2_row)
+                    data.write_row(del_data)
                 data.bridge.set_freq(10000)
                 data.bridge.meas_cont(1)
                 break
