@@ -1,3 +1,5 @@
+import time
+
 from client_tools import *
 
 epsilon0 = 8.85E-6      # in nF/um
@@ -80,6 +82,8 @@ class DataFile:
             self.bridge.set_freq(freq)
             print('frequency set')
 
+            if self.bridge.abbr == 'HP':
+                time.sleep(1)
             bridge_data = self.bridge.get_front_panel()
             print('read front panel')
 

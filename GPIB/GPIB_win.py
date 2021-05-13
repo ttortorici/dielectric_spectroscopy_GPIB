@@ -32,7 +32,7 @@ class GPIB(object):
         self.dev.write(msg)
         
     def read(self):
-        self.dev.read()
+        return self.dev.read()
         
     def dev_id(self):
         return self.query('*IDN?')
