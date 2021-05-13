@@ -36,6 +36,7 @@ class DataFile:
         self.start_time = time.time()
 
     def set_labels(self):
+        """Exclude LabJack (for now) and frequency"""
         self.labels = ['Time [s]']
         if self.cryo == '40K':
             self.labels.append('Temperature [K]')
@@ -108,3 +109,70 @@ class DataFile:
 
 class CalFile(DataFile):
     pass
+
+
+class DielectricConstant(DataFile):
+    def __init__(self, path, filename, port, unique_freqs, cGeo, bareFit,
+                 bridge='AH', cryo='40K', comment='', lj_chs=[]):
+        super(self.__class__, self).__init__(path, filename, port, unique_freqs, bridge, cryo, comment, lj_chs)
+        self.cGeo = cGeo
+        self.bareFitC = bareFit[0]
+        self.bareFitL = bareFit[2]
+
+    def set_labels(self):
+        """Exclude LabJack (for now) and frequency"""
+        self.labels = ['Time [s]']
+        if self.cryo == '40K':
+            self.labels.append('Temperature [K]')
+        else:
+            self.labels.extend(['A Temperature [K]', 'B Temperature [K]'])
+        self.labels.extend(['Capacitance [pF]', 'Loss Tangent', 'Re eps', 'Im eps'])
+
+    def sweep_freq(self, amp=1, offset=0):
+        """Sweep a set of frequencies"""
+        print('Starting frequency sweep measurements')
+        data_to_write = []
+        for ii, freq in enumerate(self.unique_freqs):
+            self.bridge.set_freq(freq)
+            print('frequency set')
+
+            bridge_data = self.bridge.get_front_panel()
+            print('read front panel')
+
+            temperatures = [self.ls.get_temp('A')]
+            if self.cryo != '40K':
+                temperatures.append(self.ls.get_temp('B'))
+            print('read temperatures')
+
+            """Write time elapsed"""
+            data_f = [time.time()-self.start_time]
+
+            """Write Temperatures"""
+            for temperature in temperatures:
+                data_f.append(temperature)
+
+            """Write data from bridge"""
+            data_f.extend(bridge_data[1:-1])
+
+            cBare = 0
+            for ii, c in enumerate(self.bareFitC):
+                cBare += c[ii]*temperatures[0]**ii
+            lBare = 0
+            for ii, c in enumerate(self.bareFitL):
+                lBare += c[ii]*temperatures[0]**ii
+
+            reEps = 1 + (bridge_data[1] - cBare) / self.cGeo
+            imEps = (bridge_data[2] * bridge_data[1] - lBare * cBare) / self.cGeo
+
+            """Write LabJack Data if using it"""
+            if type(self.lj_chs) == list:
+                if len(self.lj_chs) > 0:
+                    lj_val, lj_err = list(np.array(list(chain(*self.lj.get_voltages_ave(self.lj_chs)))) * amp)
+                    data_f.extend([lj_val + offset, lj_err])
+
+            """Write frequency measured at"""
+            data_f.append(bridge_data[0])
+
+            print(data_f)
+            data_to_write.extend(data_f)
+        self.write_row(data_to_write)
