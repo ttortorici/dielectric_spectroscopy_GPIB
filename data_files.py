@@ -1,5 +1,14 @@
 from client_tools import *
 
+epsilon0 = 8.85E-6      # in nF/um
+fingerNum = 52
+fingerLen = 1000        # um = 1mm
+gapUnitCell = 20        # um
+
+
+def sinh2(x, h):
+    return np.sinh(np.pi / 4 * x / h)
+
 
 class DataFile:
 
@@ -112,10 +121,17 @@ class CalFile(DataFile):
 
 
 class DielectricConstant(DataFile):
-    def __init__(self, path, filename, port, unique_freqs, cGeo, bareFit,
+    """path [str] - file path to where you want to write the file
+       filename [str] - name of the file to write
+       port [int] - port number to communicate with GPIB comm server
+       unique_freqs [list of int or float] - frequencies to measure
+       cGeo - geometric capacitance calculated based on thickness of film"""
+    def __init__(self, path, filename, port, unique_freqs, film_thickness, gap_width, bareFit,
                  bridge='AH', cryo='40K', comment='', lj_chs=[]):
         super(self.__class__, self).__init__(path, filename, port, unique_freqs, bridge, cryo, comment, lj_chs)
-        self.cGeo = cGeo
+
+
+        self.cGeo = epsilon0 * (fingerNum-1) * fingerLen * np.pi / 2 * (1 + kMat/4)
         self.bareFitC = bareFit[0]
         self.bareFitL = bareFit[2]
 
