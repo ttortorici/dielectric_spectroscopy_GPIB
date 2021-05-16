@@ -1,4 +1,0 @@
-# This data file was created on Fri Mar 10 15:04:50 2017
-# 100K positive data day 2 (after material sucked in)
-Time [s], Temperature A [K], Temperature B [K], Frequency [Hz], Capacitance [pF], Loss tangent, Voltage [V], DC Voltage [V]
-# DC bias set to LO

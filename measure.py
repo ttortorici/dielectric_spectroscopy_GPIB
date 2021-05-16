@@ -26,6 +26,8 @@ except ImportError:
     import tkinter as Tkinter
 import client_tools as tools
 import get
+import csv
+import calculations as calc
 
 
 class Setup_Window(Tkinter.Tk):
@@ -205,6 +207,17 @@ class Setup_Window(Tkinter.Tk):
 
         r += 1
 
+        """FILM THICKNESS"""
+        Tkinter.Label(self,
+                      text="Film Thickness (only used if measuring a film) [um]:",
+                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+        self.filmT = preset['filmT']
+        self.filmT_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.filmT_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
+        self.filmT_entry.insert(0, str(self.cal).strip('[').strip(']'))
+
+        r += 1
+
         """MEASURE VOLTAGE"""
         Tkinter.Label(self, text="Measurement Voltage amplitude [in Volts RMS for AH.. in Volts for HP]:",
                       font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
@@ -375,6 +388,7 @@ class Setup_Window(Tkinter.Tk):
         if len(self.frequencies) == 0:
             raise IOError('Invalid frequency input')
         self.cal = str(self.cal_entry.get())
+        self.filmT = abs(float(self.filmT_entry.get()))
         self.meas_volt = abs(float(self.volt_entry.get()))
         if self.meas_volt > 15:
             self.meas_volt = 15
@@ -393,6 +407,7 @@ class Setup_Window(Tkinter.Tk):
                    'sample': self.sample,
                    'freqs': self.frequencies,
                    'cal': self.cal,
+                   'filmT': self.filmT,
                    'v': self.meas_volt,
                    'ave': self.ave_time_val,
                    'dc': self.dcbias,
@@ -400,6 +415,8 @@ class Setup_Window(Tkinter.Tk):
                    'amp': self.amp_val,
                    'lj': self.lj_val,
                    'comment': self.comment_val}
+
+        self.cal = os.path.join(self.base_path, 'Calibration', self.cal)
 
         save_name = f'presets{self.date.year:04}-{self.date.month:02}-{self.date.day:02}_{self.date.hour:02}.yml'
         save_presets = os.path.join(self.base_path, 'presets', save_name)
@@ -444,28 +461,37 @@ class Setup_Window(Tkinter.Tk):
         else:
             lj_chs = self.lj_chs
 
-        data = tools.data_file(self.path, self.filename, self.purp, self.port,
-                               self.frequencies, self.inst, self.cryo,
-                               comment_line, lj_chs)
+        if self.purp == 'film' and self.cal and isinstance(self.cal, str):
+            fitC, fitD = load_calibration(self.cal)
+
+            bareC_RT = 0
+            if self.inst == 'ah':
+                fit_index = 0
+            elif self.inst == 'hp':
+                fit_index = 1
+            freq_bareC = self.frequencies[fit_index]
+            temp_bareC = 297                            # Kelvin
+            for ii, a in enumerate(fitC[fit_index]):
+                bareC_RT += a * temp_bareC ** ii
+            gapW = calc.find_gap(bareC_RT)
+
+            comment_line += ', Film Thickness {} um, '.format(self.filmT)
+            comment_line += 'Bare Capacitance of {} pF at {} K and {} Hz'.format(bareC_RT, temp_bareC, freq_bareC)
+            comment_line += ' was used to produce the gapW size of {} um'.format(gapW)
+
+            data = tools.DielectricConstant(self.path, self.filename, self.port, self.frequencies, self.filmT,
+                                            gapW, fitC, fitD,
+                                            self.inst, self.cryo, comment_line, lj_chs)
+        else:
+            data = tools.DataFile(self.path, self.filename, self.port,
+                                  self.frequencies, self.inst, self.cryo,
+                                  comment_line, lj_chs)
+
         print('created datafile')
         data.dcbias(self.dcbias)
         data.bridge.set_voltage(self.meas_volt)
         data.bridge.set_ave(self.ave_time_val)
 
-        print('Chip ID: ' + self.capchipID)
-        print('Sample: ' + self.capID)
-        print('Frequencies to measure: ' + str(self.frequencies) + 'Hz')
-        if not self.bare_Cs == '':
-            print('Bare Capacitances: ' + str(self.bare_Cs) + 'pF')
-        if not self.bare_Ls == '':
-            print('Bare Loss Tangents: ' + str(self.bare_Ls))
-        print('Voltage of measurement: ' + str(self.meas_volt) + 'V')
-        print('DC bias setting: ' + str(self.dcbias))
-        print('DC bias set to: ' + str(self.dcbias_val) + 'V')
-        print('Amplifier is: ' + str(self.amp_val) + 'x')
-        print(self.comment_val)
-
-        # try:
         if self.dcbias_val:
             if abs(self.dcbias_val) > 15:
                 step = 10 * np.sign(self.dcbias_val)
@@ -476,135 +502,11 @@ class Setup_Window(Tkinter.Tk):
             else:
                 print('setting dc voltage to %d' % self.dcbias_val)
                 data.lj.set_dc_voltage2(self.dcbias_val, amp=self.amp_val)
-        # except:
-        #    pass
+
         while True:
-            # if True:
-            if 'resistance' in self.title.lower():
-                print('measuring resistance')
-                for ii in range(10):
-                    data.sweep_freq_win_RC()
-            elif 'impedance' in self.title.lower():
-                print('measuring impedence')
-                for ii in range(10):
-                    data.sweep_freq_win_Z()
-            elif 'average' in self.comment_val.lower():
-                print('averaging')
-                ave_loc = self.comment_val.lower().find('average') + len('average ')
-                aves = int(self.comment_val[ave_loc:ave_loc + 2])
-                Caps = [0] * aves
-                Loss = [0] * aves
-
-                '''take data to average over'''
-                for ii in range(aves):
-                    (Caps[ii], Loss[ii]) = data.sweep_freq_win_return()
-
-                '''calculate averages and std devs'''
-                print(Caps)
-                cap_ave = sum(Caps) / float(aves)
-                cap_std = np.sqrt(sum((Caps - cap_ave) ** 2) / (float(aves) - 1))
-                los_ave = sum(Loss) / float(aves)
-                los_std = np.sqrt(sum((Loss - los_ave) ** 2) / (float(aves) - 1))
-
-                sig_figs_C = [0] * len(data.unique_freqs)
-                sig_figs_L = [0] * len(data.unique_freqs)
-
-                deltaC = [0] * len(data.unique_freqs)
-                deltaL = [0] * len(data.unique_freqs)
-
-                loop_over = zip(range(len(data.unique_freqs)), data.unique_freqs, cap_ave, los_ave, cap_std, los_std)
-                for ii, f, c_av, l_av, c_sd, l_sd in loop_over:
-                    '''find error and sig figs'''
-                    sig_figs_C[ii] = int(('%.0e' % c_sd)[len('%.0e' % c_sd) - 2:len('%.0e' % c_sd)])
-                    if ('%.0e' % c_sd)[0] == 1:
-                        sig_figs_C[ii] += 1
-                    sig_figs_L[ii] = int(('%.0e' % l_sd)[len('%.0e' % l_sd) - 2:len('%.0e' % l_sd)])
-                    if ('%.0e' % l_sd)[0] == 1:
-                        sig_figs_L[ii] += 1
-
-                    '''Find change from bare'''
-                    if not self.bare_Cs == '':
-                        deltaC[ii] = c_av - self.bare_Cs[ii]
-                    if not self.bare_Ls == '':
-                        deltaL[ii] = l_av - self.bare_Ls[ii]
-
-                    '''Establish unit for frequency'''
-                    if f < 1000:
-                        unit = 'Hz'
-                    elif f < 1e6:
-                        unit = 'kHz'
-                        f /= 1000.
-                    elif f < 1e9:
-                        unit = 'MHz'
-                        f /= 1e6
-                    elif f < 1e12:
-                        unit = 'GHz'
-                        f /= 1e9
-                    C_string = ('Capacitance at %d %s is ({0:.%sf} +/- ' % (f, unit, str(sig_figs_C[ii]))).format(
-                        c_av) + ('{0:.%sf}) pF' % str(sig_figs_C[ii])).format(c_sd)
-                    L_string = ('Loss Tangent at %d %s is ({0:.%sf} +/- ' % (f, unit, str(sig_figs_L[ii]))).format(
-                        l_av) + ('{0:.%sf}) pF' % str(sig_figs_L[ii])).format(l_sd)
-                    data.write_row('# %s' % C_string)
-                    data.write_row('# %s' % L_string)
-                    print(C_string)
-                    print(L_string)
-
-                    if not self.bare_Cs == '':
-                        if deltaC[ii] < 0:
-                            qualifier = 'decreased'
-                        else:
-                            qualifier = 'increased'
-                        delC_string = ('Capacitance at %d %s %s by {0:.%sf} fF' % (
-                        f, unit, qualifier, str(sig_figs_C[ii] - 3))).format(abs(deltaC[ii]) * 1000.)
-                        data.write_row('# %s' % delC_string)
-                        print(delC_string)
-                    if not self.bare_Ls == '':
-                        if deltaL[ii] < 0:
-                            qualifier = 'decreased'
-                        else:
-                            qualifier = 'increased'
-                        delL_string = ('Loss Tangent at %d %s %s by {0:.%sf}' % (
-                        f, unit, qualifier, str(sig_figs_L[ii]))).format(abs(deltaL[ii]))
-                        data.write_row('# %s' % delL_string)
-                        print(delL_string)
-
-                '''write data columnized'''
-                data.write_row('# Labels')
-                labels = ['time', '', '', 'Cap Average [pf]', 'Loss Average', '', 'Frequency [Hz]']
-                labels2 = ['time', '', '', 'Cap Change [pf]', 'Loss Change', '', 'Frequency [Hz]']
-                label_row = []
-                label2_row = []
-                ave_data = [0] * 7 * len(data.unique_freqs)
-                # if (not (self.bare_Cs == '')) or (not (self.bare_Ls == '')):
-                del_data = [0] * 7 * len(data.unique_freqs)
-                for ii, f in enumerate(data.unique_freqs):
-                    label_row.extend(labels)
-                    label2_row.extend(labels2)
-                    ave_data[ii * 7] = time.time()
-                    ave_data[3 + ii * 7] = cap_ave[ii]
-                    ave_data[4 + ii * 7] = los_ave[ii]
-                    ave_data[6 + ii * 7] = f
-                    if not self.bare_Cs == '':
-                        del_data[3 + ii * 7] = deltaC[ii]
-                    if not self.bare_Ls == '':
-                        del_data[4 + ii * 7] = deltaL[ii]
-                    if not (self.bare_Cs == '' and self.bare_Ls == ''):
-                        del_data[ii * 7] = time.time()
-                        del_data[6 + ii * 7] = f
-                label_row[0] = '#' + label_row[0]
-                label2_row[0] = '#' + label2_row[0]
-                data.write_row(label_row)
-                data.write_row(ave_data)
-                if not (self.bare_Cs == '' and self.bare_Ls == ''):
-                    data.write_row(label2_row)
-                    data.write_row(del_data)
-                data.bridge.set_freq(10000)
-                data.bridge.meas_cont(1)
-                break
-            else:
-                print('measuring capacitance')
-                for ii in range(10):
-                    data.sweep_freq_win()
+            print('measuring capacitance')
+            for ii in range(10):
+                data.sweep_freq()
 
     def killWindow(self):
         self.destroy()
@@ -612,6 +514,37 @@ class Setup_Window(Tkinter.Tk):
 
 def start():
     Setup_Window.mainloop()
+
+
+def load_calibration(path):
+    cal_data = np.loadtxt(os.path.join(path), comments='#', delimiter=',', skiprows=3)
+    with open(path) as f:
+        reader = csv.reader(f, delimiter=',')
+        for row in reader:
+            if len(row) > 1:        # this will grab the first line with the labels
+                labels = row
+                break
+    Tind = []       # indexes for temperatures
+    Cind = []       # indexes for capacitance
+    Dind = []       # indexes for loss tangent
+
+    for ii, label in enumerate(labels):
+        if 'temperature' in label.lower() and 'B' not in label:
+            Tind.append(ii)
+        elif 'capacitance' in label.lower():
+            Cind.append(ii)
+        elif 'loss tangent' in label.lower():
+            Dind.append(ii)
+
+    Cfit = [0] * len(Tind)
+    Dfit = [0] * len(Tind)
+    for ii in range(Cfit):
+        Cfit[ii] = np.polyfit(cal_data[:, Tind[ii]], cal_data[:, Cind[ii]], 2)
+        Dfit[ii] = np.polyfit(cal_data[:, Tind[ii]], cal_data[:, Dind[ii]], 1)
+
+    return Cfit, Dfit
+
+
 
 
 if __name__ == '__main__':

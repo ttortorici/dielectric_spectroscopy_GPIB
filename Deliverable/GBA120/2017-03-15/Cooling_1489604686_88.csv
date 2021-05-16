@@ -1,9 +1,0 @@
-# This data file was created on Wed Mar 15 13:04:46 2017
-# capacitor 2-19; sample GBA120; nitrogen cooldown for more DC measurements
-Time [s], Temperature A [K], Temperature B [K], Frequency [Hz], Capacitance [pF], Loss tangent, Voltage [V]
-# DC bias set to OFF
-1489604706.54657, 154.672, 76.671, 14000.0, 1.801303, 0.000278, 15.0
-1489604715.84352, 154.112, 76.666, 1400.0, 1.801955, 0.000375, 15.0
-1489604734.268741, 153.014, 76.663, 400.0, 1.8022793, 0.0002627, 6.0
-1489604743.437924, 152.476, 76.659, 14000.0, 1.801597, 0.0002702, 15.0
-1489604752.718127, 151.932, 76.648, 1400.0, 1.802225, 0.000363, 15.0

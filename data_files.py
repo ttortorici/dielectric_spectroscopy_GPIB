@@ -1,13 +1,5 @@
 from client_tools import *
-
-epsilon0 = 8.85E-6      # in nF/um
-fingerNum = 52
-fingerLen = 1000        # um = 1mm
-gapUnitCell = 20        # um
-
-
-def sinh2(x, h):
-    return np.sinh(np.pi / 4 * x / h)
+from calculations import geometric_capacitance
 
 
 class DataFile:
@@ -125,15 +117,17 @@ class DielectricConstant(DataFile):
        filename [str] - name of the file to write
        port [int] - port number to communicate with GPIB comm server
        unique_freqs [list of int or float] - frequencies to measure
-       cGeo - geometric capacitance calculated based on thickness of film"""
-    def __init__(self, path, filename, port, unique_freqs, film_thickness, gap_width, bareFit,
+       filmThicknes [float] - thickness of the film in [um]
+       gapWidth [float] - distance between fingers in [um]
+       bareFit [list] - with [0]: [c0, c1, c2] for capacitance and [1]: [a0, a1] for loss"""
+    def __init__(self, path, filename, port, uniqueFreqs, filmThickness, gapWidth, bareCFit, bareDFit,
                  bridge='AH', cryo='40K', comment='', lj_chs=[]):
-        super(self.__class__, self).__init__(path, filename, port, unique_freqs, bridge, cryo, comment, lj_chs)
+        super(self.__class__, self).__init__(path, filename, port, uniqueFreqs, bridge, cryo, comment, lj_chs)
 
+        self.cGeo = geometric_capacitance(gapWidth, filmThickness)
 
-        self.cGeo = epsilon0 * (fingerNum-1) * fingerLen * np.pi / 2 * (1 + kMat/4)
-        self.bareFitC = bareFit[0]
-        self.bareFitL = bareFit[2]
+        self.bareFitC = bareCFit
+        self.bareFitD = bareDFit
 
     def set_labels(self):
         """Exclude LabJack (for now) and frequency"""
@@ -174,11 +168,13 @@ class DielectricConstant(DataFile):
             for ii, c in enumerate(self.bareFitC):
                 cBare += c[ii]*temperatures[0]**ii
             lBare = 0
-            for ii, c in enumerate(self.bareFitL):
+            for ii, c in enumerate(self.bareFitD):
                 lBare += c[ii]*temperatures[0]**ii
 
             reEps = 1 + (bridge_data[1] - cBare) / self.cGeo
             imEps = (bridge_data[2] * bridge_data[1] - lBare * cBare) / self.cGeo
+
+            data_f.extend([reEps, imEps])
 
             """Write LabJack Data if using it"""
             if type(self.lj_chs) == list:
