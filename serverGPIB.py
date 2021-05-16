@@ -17,7 +17,6 @@ import GPIB_universal as GPIB
 import LabJack
 
 
-
 """ADDRESSES"""
 addr_ah2700 = 28
 addr_hp4275 = 5
@@ -262,6 +261,10 @@ class GPIBcomm:
         if hp:
             self.bridgeHP = GPIB.dev(addr_hp4275, get.serialport(), 'HP4275A')
             self.bridgeHP.dev.timeout = 25000
+            self.bridgeHP.write('A2')           # set to capacitor for dispA
+            self.bridgeHP.write('B1')           # set to loss for dispB
+            self.bridgeHP.write('C1')           # set to auto circuit mode (C1: auto, C2: series, C3: parallel)
+            self.bridgeHP.write('H1')           # turn on high res mode (H0: off, H1: on)
             print('imported HP4275')
         else:
             self.bridgeHP = None
@@ -307,7 +310,9 @@ class GPIBcomm:
             elif msgL[1] in ['Q', 'QU', 'QUERY']:
                 print('querying {} with {}'.format(msgL[0], msgL[2]))
                 msgout = instrument.query(msgL[2])
-            elif msgL[1] in ['GFP', 'GETFRONTPANEL', 'GET_FRONT_PANEL', 'READ']:
+            elif msgL[1] in ['R', 'RE', 'READ']:
+                msgout = instrument.read()
+            elif msgL[1] == 'RFP':
                 msgout = instrument.get_front_panel()
         else:
             msgout = 'Failed'

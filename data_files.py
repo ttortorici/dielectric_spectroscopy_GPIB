@@ -1,3 +1,5 @@
+import time
+
 from client_tools import *
 from calculations import geometric_capacitance
 
@@ -72,6 +74,8 @@ class DataFile:
             self.bridge.set_freq(freq)
             print('frequency set')
 
+            if self.bridge.abbr == 'HP':
+                time.sleep(1)
             bridge_data = self.bridge.get_front_panel()
             print('read front panel')
 

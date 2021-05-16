@@ -48,6 +48,9 @@ class Instrument:
     def write(self, msg):
         send('{}::WR::{}'.format(self.abbr, msg), self.port)
 
+    def read(self):
+        return send('{}::RE::'.format(self.abbr), self.port)
+
     def read_id(self):
         """Get device id"""
         return self.query('*IDN?')
@@ -272,14 +275,12 @@ class HP4275A(Instrument):
 
     def __init__(self, port):
         super(self.__class__, self).__init__('HP', port)
-        self.frequency = 10e3
+        self.frequency = 0
+        self.set_freq(10e6)
         self.aves = 1
         self.measure_volt = 1
         self.dispA = 'C'
         self.dispB = 'D'
-        #self.set_dispA(self.dispA)
-        #self.set_dispB(self.dispB)
-
 
     def clear(self):
         """Clears a partially entered command or parameter when used from the front panel.
@@ -287,52 +288,20 @@ class HP4275A(Instrument):
         self.write('DC1')
         print('Cleared HP bridge')
 
-    def read_CL(self, freq_code):
-        self.write('A2')
-        time.sleep(0.02)
-        self.write('B1')
-        time.sleep(0.02)
-        rawmsg = self.query(freq_code)
-        for ii, char in enumerate(rawmsg):
-            if char == '+' or char == '-':
-                start1 = ii
-                break
-        go = True
-        count = 0
-        while go:
-            try:
-                dispA = float(rawmsg[start1:len(rawmsg) - count])
-                go = False
-            except ValueError:
-                count += 1
-        rawmsg2 = rawmsg[len(rawmsg) - count:]
-        for ii, char in enumerate(rawmsg2):
-            if char == '+' or char == '-':
-                start2 = ii
-                break
-        go = True
-        count = 0
-        while go:
-            try:
-                dispB = float(rawmsg2[start2:len(rawmsg2) - count])
-                go = False
-            except ValueError:
-                count += 1
-        return dispA * 1e12, dispB
-
     def read_front_panel(self):
         """fetch frequency [Hz], capacitance [pF], loss [default is tan(delta)], and voltage [V]"""
-        freq_msg = self.valid_freqs[self.frequency]
         caps = np.zeros(self.aves)
         losses = np.zeros(self.aves)
-        # throw away first 6 measurements
-        #for ii in range(4):
-        #    _, _ = self.read_CL(freq_msg)
+        msg = self.read()
+        while not msg.strip(' ')[2:4] == 'NC':
+            print('waiting for measurement')
+            time.sleep(1)
+            msg = self.read()
         for ii in range(self.aves):
-            caps[ii], losses[ii] = self.query(freq_msg)
-        cap = sum(caps) / self.aves
-        if cap > 1000000.:
-            cap = 0
+            msgBack = self.read().split(',')
+            caps[ii] = float(msgBack[0][msgBack[0].index('C')+1:])
+            losses[ii] = float(msgBack[1][msgBack[1].index('D')+1:])
+        cap = sum(caps) / self.aves * 1e12          # put it in pF
         loss = sum(losses) / self.aves
         msgout = [self.frequency, cap, loss, self.measure_volt]
         return msgout
@@ -360,7 +329,7 @@ class HP4275A(Instrument):
         otherwise, just give a number for inHertz in.. Hertz"""
         valid_freqs = list(self.valid_freqs.keys())
         try:
-            freq = int(inHertz)
+            freq = float(inHertz)
             """find differences between given inHertz and valid frequencies"""
             difs = [abs(valF - freq) for valF in valid_freqs]
             """find smallest difference to find 'nearest' valid frequency"""
@@ -376,6 +345,12 @@ class HP4275A(Instrument):
                     self.frequency = valid_freqs[valid_freqs.index(self.frequency) - 1]
             else:
                 raise ValueError('Please enter a number, or "up" or "down"')
+        self.write(self.valid_freqs[self.frequency])
+        if self.frequency < 25e3:
+            print('wait 60 s')
+            time.sleep(60)
+        else:
+            time.sleep(2)
 
     def set_voltage(self, volt=1):
         """set the voltage of the sine wave the AH uses to make measurements"""
