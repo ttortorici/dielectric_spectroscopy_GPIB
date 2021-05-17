@@ -25,6 +25,7 @@ try:
 except ImportError:
     import tkinter as Tkinter
 import client_tools as tools
+import data_files
 import get
 import csv
 import calculations as calc
@@ -479,11 +480,11 @@ class Setup_Window(Tkinter.Tk):
             comment_line += 'Bare Capacitance of {} pF at {} K and {} Hz'.format(bareC_RT, temp_bareC, freq_bareC)
             comment_line += ' was used to produce the gapW size of {} um'.format(gapW)
 
-            data = tools.DielectricConstant(self.path, self.filename, self.port, self.frequencies, self.filmT,
+            data = data_files.DielectricConstant(self.path, self.filename, self.port, self.frequencies, self.filmT,
                                             gapW, fitC, fitD,
                                             self.inst, self.cryo, comment_line, lj_chs)
         else:
-            data = tools.DataFile(self.path, self.filename, self.port,
+            data = data_files.DataFile(self.path, self.filename, self.port,
                                   self.frequencies, self.inst, self.cryo,
                                   comment_line, lj_chs)
 
