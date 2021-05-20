@@ -26,7 +26,10 @@ class GPIB(object):
             self.dev = self.rm.open_resource('GPIB0::{}::INSTR'.format(self.addr))
     
     def query(self, msg):
-        return self.dev.query(msg)
+        try:
+            return self.dev.query(msg)
+        except pyvisa.errors.VisaIOError:
+            return ''
     
     def write(self, msg):
         self.dev.write(msg)

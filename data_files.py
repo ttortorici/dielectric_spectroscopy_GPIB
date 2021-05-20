@@ -16,8 +16,8 @@ class DataFile:
         self.unique_freqs = unique_freqs[::-1]
         if '.csv' not in self.name:
             self.name += '.csv'  # if there's no .csv, append it on the end
-        self.write_row2("# This data file was created on {}".format(time.ctime(time.time())))
-        self.write_row2('# {}'.format(comment))
+        self.write_row("# This data file was created on {}".format(time.ctime(time.time())))
+        self.write_row('# {}'.format(comment))
 
         if bridge.upper()[0:2] == 'AH':
             self.bridge = AH2700A(port)
@@ -26,6 +26,7 @@ class DataFile:
         self.cryo = cryo.upper()
         self.ls = LakeShore(port, self.cryo_to_ls[self.cryo])
 
+        self.lj_chs = lj_chs
         if len(lj_chs) > 0:
             self.lj = LabJack.LabJack()
             print('imported LabJack')
@@ -76,12 +77,12 @@ class DataFile:
 
             if self.bridge.abbr == 'HP':
                 time.sleep(1)
-            bridge_data = self.bridge.get_front_panel()
+            bridge_data = self.bridge.read_front_panel()
             print('read front panel')
 
-            temperatures = [self.ls.get_temp('A')]
+            temperatures = [self.ls.read_temp('A')]
             if self.cryo != '40K':
-                temperatures.append(self.ls.get_temp('B'))
+                temperatures.append(self.ls.read_temp('B'))
             print('read temperatures')
 
             """Write time elapsed"""
@@ -97,7 +98,7 @@ class DataFile:
             """Write LabJack Data if using it"""
             if type(self.lj_chs) == list:
                 if len(self.lj_chs) > 0:
-                    lj_val, lj_err = list(np.array(list(chain(*self.lj.get_voltages_ave(self.lj_chs)))) * amp)
+                    lj_val, lj_err = list(np.array(list(chain(*self.lj.read_voltages_ave(self.lj_chs)))) * amp)
                     data_f.extend([lj_val + offset, lj_err])
 
             """Write frequency measured at"""

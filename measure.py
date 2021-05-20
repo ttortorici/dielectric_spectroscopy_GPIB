@@ -215,7 +215,7 @@ class Setup_Window(Tkinter.Tk):
         self.filmT = preset['filmT']
         self.filmT_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
         self.filmT_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
-        self.filmT_entry.insert(0, str(self.cal).strip('[').strip(']'))
+        self.filmT_entry.insert(0, str(self.filmT).strip('[').strip(']'))
 
         r += 1
 
@@ -381,7 +381,7 @@ class Setup_Window(Tkinter.Tk):
     """
 
     def go(self):
-        self.port = str(self.port_entry.get())
+        self.port = int(self.port_entry.get())
         self.capchipID = str(self.capchipID_entry.get())
         self.sample = str(self.sample_entry.get())
         unsorted_f = [float(freq) for freq in str(self.freq_entry.get()).split(',')]
@@ -489,7 +489,7 @@ class Setup_Window(Tkinter.Tk):
                                   comment_line, lj_chs)
 
         print('created datafile')
-        data.dcbias(self.dcbias)
+        data.bridge.dcbias(self.dcbias)
         data.bridge.set_voltage(self.meas_volt)
         data.bridge.set_ave(self.ave_time_val)
 
