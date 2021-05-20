@@ -464,7 +464,7 @@ class LakeShore(Instrument):
         """Configure Control loop setpoint.
         loop: specifies which loop to configure.
         value: the value for the setpoint (in whatever units the setpoint is using"""
-        self.write3('SETP {}, {}' % (loop, float(value)))
+        self.write('SETP {}, {}' % (loop, float(value)))
 
 
 class LabJack(Instrument):
