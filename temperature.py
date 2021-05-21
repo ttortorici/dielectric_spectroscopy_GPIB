@@ -31,7 +31,7 @@ class Setup_Window(Tkinter.Tk):
         self.date has attributes .year, .month, .day, .hour, .min, .second, .microsecond"""
         self.date = datetime.datetime.fromtimestamp(time.time())
 
-        # get filepath in googledrive
+        # get filepath in google drive
         self.base_path = os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy-2')
 
         self.lj_chs = []                    # will be used later
