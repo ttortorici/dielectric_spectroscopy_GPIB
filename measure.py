@@ -31,7 +31,7 @@ import csv
 import calculations as calc
 
 
-class Setup_Window(Tkinter.Tk):
+class SetupWindow(Tkinter.Tk):
     FONT_SIZE = 10
     FONT = 'Arial'
     LJ_CHs = 4
@@ -71,15 +71,15 @@ class Setup_Window(Tkinter.Tk):
 
         """TITLE LINE"""
         Tkinter.Label(self, text='Please enter parameters then press "START EXPERIMENT" to start the measurement',
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
 
         r += 1
 
         """PORT FOR SERVER COMM"""
         Tkinter.Label(self, text="Port to communicate with GPIB server:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.port = preset['port']
-        self.port_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.port_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.port_entry.grid(row=r, column=1, sticky=Tkinter.E + Tkinter.W)
         self.port_entry.insert(0, self.port)
 
@@ -87,7 +87,7 @@ class Setup_Window(Tkinter.Tk):
 
         """INSTRUMENT"""
         Tkinter.Label(self, text="Instrument used:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.inst = preset['inst']
         self.inst_selection = Tkinter.IntVar(self)
 
@@ -98,13 +98,13 @@ class Setup_Window(Tkinter.Tk):
         self.inst_selection.set(inst_setting[self.inst])
 
         Tkinter.Radiobutton(self, text="Andeen-Hagerling", variable=self.inst_selection, value=0,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.instselect).grid(row=r, column=1)
         Tkinter.Radiobutton(self, text="Hewlett Packard", variable=self.inst_selection, value=1,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.instselect).grid(row=r, column=2)
         Tkinter.Radiobutton(self, text="Other", variable=self.inst_selection, value=2,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.instselect).grid(row=r, column=3)
         self.instselect()       # prints current selection
 
@@ -112,7 +112,7 @@ class Setup_Window(Tkinter.Tk):
 
         """CRYOSTAT"""
         Tkinter.Label(self, text="Cryostat used:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.cryo = preset['cryo']
         self.cryo_selection = Tkinter.IntVar(self)
 
@@ -123,16 +123,16 @@ class Setup_Window(Tkinter.Tk):
         self.cryo_selection.set(cryo_setting[self.cryo])
 
         Tkinter.Radiobutton(self, text="DesertCryo LN", variable=self.cryo_selection, value=0,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.cryoselect).grid(row=r, column=1)
         Tkinter.Radiobutton(self, text="DesertCryo He", variable=self.cryo_selection, value=1,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.cryoselect).grid(row=r, column=2)
         Tkinter.Radiobutton(self, text="40 K Cryo", variable=self.cryo_selection, value=2,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.cryoselect).grid(row=r, column=3)
         Tkinter.Radiobutton(self, text="4 K Cryo", variable=self.cryo_selection, value=3,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.cryoselect).grid(row=r, column=4)
         self.cryoselect()  # prints current result
 
@@ -140,7 +140,7 @@ class Setup_Window(Tkinter.Tk):
 
         """PURPOSE"""
         Tkinter.Label(self, text="Purpose of measurement:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.purp = preset['purp']
         self.purp_selection = Tkinter.IntVar(self)
 
@@ -151,16 +151,16 @@ class Setup_Window(Tkinter.Tk):
         self.purp_selection.set(purp_setting[self.purp])
 
         Tkinter.Radiobutton(self, text="Calibration", variable=self.purp_selection, value=0,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.purpselect).grid(row=r, column=1)
         Tkinter.Radiobutton(self, text="Powder", variable=self.purp_selection, value=1,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.purpselect).grid(row=r, column=2)
         Tkinter.Radiobutton(self, text="Film", variable=self.purp_selection, value=2,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.purpselect).grid(row=r, column=3)
         Tkinter.Radiobutton(self, text="Other", variable=self.purp_selection, value=3,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.purpselect).grid(row=r, column=4)
         self.purpselect()  # prints current result
 
@@ -168,9 +168,9 @@ class Setup_Window(Tkinter.Tk):
 
         """CAPACITOR CHIP ID"""
         Tkinter.Label(self, text="Capacitor Chip ID:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.capchipID = preset['id']
-        self.capchipID_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.capchipID_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.capchipID_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.capchipID_entry.insert(0, self.capchipID)
 
@@ -178,9 +178,9 @@ class Setup_Window(Tkinter.Tk):
 
         """SAMPLE NAME"""
         Tkinter.Label(self, text="Sample (if calibrating, what's the substrate?):",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.sample = preset['sample']
-        self.sample_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.sample_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.sample_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.sample_entry.insert(0, self.sample)
 
@@ -188,9 +188,9 @@ class Setup_Window(Tkinter.Tk):
 
         """FREQUENCIES TO MEASURE"""
         Tkinter.Label(self, text="Frequencies of measurement [in Hz, separate by commas]:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.frequencies = preset['freqs']
-        self.freq_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.freq_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.freq_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.freq_entry.insert(0, str(self.frequencies).strip('[').strip(']'))
 
@@ -200,9 +200,9 @@ class Setup_Window(Tkinter.Tk):
         Tkinter.Label(self,
                       text="Calibration file location (use / not \\) [Google "
                            "Drive/Dielectric_data/Teddy-2/1-Calibrations/...]:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.cal = preset['cal']
-        self.cal_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.cal_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.cal_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.cal_entry.insert(0, str(self.cal).strip('[').strip(']'))
 
@@ -211,9 +211,9 @@ class Setup_Window(Tkinter.Tk):
         """FILM THICKNESS"""
         Tkinter.Label(self,
                       text="Film Thickness (only used if measuring a film) [um]:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.filmT = preset['filmT']
-        self.filmT_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.filmT_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.filmT_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.filmT_entry.insert(0, str(self.filmT).strip('[').strip(']'))
 
@@ -221,9 +221,9 @@ class Setup_Window(Tkinter.Tk):
 
         """MEASURE VOLTAGE"""
         Tkinter.Label(self, text="Measurement Voltage amplitude [in Volts RMS for AH.. in Volts for HP]:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.meas_volt = preset['v']
-        self.volt_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.volt_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.volt_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.volt_entry.insert(0, self.meas_volt)
 
@@ -231,9 +231,9 @@ class Setup_Window(Tkinter.Tk):
 
         """AVERAGING"""
         Tkinter.Label(self, text="Averaging setting [0-15 for AH.. any positive integer for HP]:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.ave_time_val = preset['ave']
-        self.ave_time_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.ave_time_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.ave_time_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.ave_time_entry.insert(0, self.ave_time_val)
 
@@ -241,7 +241,7 @@ class Setup_Window(Tkinter.Tk):
 
         """DC BIAS SETTING"""
         Tkinter.Label(self, text="DC Bias Setting (AH only):",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.dcbias = preset['dc']
         self.dcbias_selection = Tkinter.IntVar(self)
 
@@ -251,13 +251,13 @@ class Setup_Window(Tkinter.Tk):
         self.dcbias_selection.set(dc_setting[self.dcbias])
 
         Tkinter.Radiobutton(self, text="Off", variable=self.dcbias_selection, value=0,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.dcselect).grid(row=r, column=1)
         Tkinter.Radiobutton(self, text="I-Low", variable=self.dcbias_selection, value=1,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.dcselect).grid(row=r, column=2)
         Tkinter.Radiobutton(self, text="I-High", variable=self.dcbias_selection, value=2,
-                            font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                            font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                             command=self.dcselect).grid(row=r, column=3)
         self.dcselect()  # prints current result
 
@@ -265,9 +265,9 @@ class Setup_Window(Tkinter.Tk):
 
         """DESIRED DC VALUE"""
         Tkinter.Label(self, text="DC Bias Value [0-100V] (AH only):",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.dcbias_val = preset['dcv']
-        self.dcbias_val_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.dcbias_val_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.dcbias_val_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.dcbias_val_entry.insert(0, self.dcbias_val)
 
@@ -275,34 +275,34 @@ class Setup_Window(Tkinter.Tk):
 
         """DC AMPLIFIER VALUE"""
         Tkinter.Label(self, text="Amplification level on DC bias (AH only):",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.amp_val = preset['amp']
-        self.amp_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.amp_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.amp_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.amp_entry.insert(0, self.amp_val)
 
         r += 1
 
         """LABJACK CHANNEL LABELS"""
-        if len(preset['lj']) == Setup_Window.LJ_CHs:
+        if len(preset['lj']) == SetupWindow.LJ_CHs:
             self.lj_val = preset['lj']
         else:
-            self.lj_val = [''] * Setup_Window.LJ_CHs
-        self.lj_entry = [0] * Setup_Window.LJ_CHs
+            self.lj_val = [''] * SetupWindow.LJ_CHs
+        self.lj_entry = [0] * SetupWindow.LJ_CHs
 
         for ii, lj_v in enumerate(self.lj_val):
             Tkinter.Label(self, text="Labjack CH%d Label (optional):" % ii,
-                          font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
-            self.lj_entry[ii] = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+                          font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+            self.lj_entry[ii] = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
             self.lj_entry[ii].grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
             self.lj_entry[ii].insert(0, lj_v)
             r += 1
 
         """COMMENT"""
         Tkinter.Label(self, text="Comments:",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
         self.comment_val = preset['comment']
-        self.comment_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.comment_entry = Tkinter.Entry(self, font=(SetupWindow.FONT, SetupWindow.FONT_SIZE))
         self.comment_entry.grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         self.comment_entry.insert(0, self.comment_val)
 
@@ -310,12 +310,12 @@ class Setup_Window(Tkinter.Tk):
 
         """GO BUTTON"""
         Tkinter.Button(self, text="START EXPERIMENT",
-                       font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                       font=(SetupWindow.FONT, SetupWindow.FONT_SIZE),
                        command=self.go).grid(row=r, column=1, columnspan=columns - 1, sticky=Tkinter.E + Tkinter.W)
         r += 1
         Tkinter.Label(self, text="2021 Teddy Tortorici",
-                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, columnspan=2,
-                                                                             sticky=Tkinter.W, padx=1, pady=1)
+                      font=(SetupWindow.FONT, SetupWindow.FONT_SIZE)).grid(row=r, column=0, columnspan=2,
+                                                                           sticky=Tkinter.W, padx=1, pady=1)
 
         # Organize cleanup
         self.protocol("WM_DELETE_WINDOW", self.killWindow)
@@ -514,7 +514,7 @@ class Setup_Window(Tkinter.Tk):
 
 
 def start():
-    Setup_Window.mainloop()
+    SetupWindow().mainloop()
 
 
 def load_calibration(path):
@@ -549,4 +549,4 @@ def load_calibration(path):
 
 
 if __name__ == '__main__':
-    Setup_Window().mainloop()
+    SetupWindow().mainloop()

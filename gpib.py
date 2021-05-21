@@ -244,7 +244,7 @@ class GPIBcomm:
     def __init__(self, ah, hp, cryo, lj):
         if ah:
             self.bridgeAH = GPIB.dev(addr_ah2700, get.serialport(), 'AH2700A')
-            self.bridgeAH.dev.timeout = 25000
+            self.bridgeAH.dev.timeout = 2500
             self.bridgeAH.write('UN DS')            # imaginary in units of loss tangent
             self.bridgeAH.write('CO ON')            # turn on continuous measurement
             time.sleep(0.01)
@@ -304,11 +304,11 @@ class GPIBcomm:
 
         if instrument:
             if msgL[1] in ['W', 'WR', 'WRITE']:
-                print('writing {} to {}'.format(msgL[2], msgL[0]))
+                print('writing "{}" to {}'.format(msgL[2], msgL[0]))
                 instrument.write(msgL[2])
                 msgout = 'empty'
             elif msgL[1] in ['Q', 'QU', 'QUERY']:
-                print('querying {} with {}'.format(msgL[0], msgL[2]))
+                print('querying "{}" with {}'.format(msgL[0], msgL[2]))
                 msgout = instrument.query(msgL[2])
             elif msgL[1] in ['R', 'RE', 'READ']:
                 msgout = instrument.read()
@@ -339,7 +339,7 @@ def server_main(gpib_comm):
 
         # lock acquired by client
         print_lock.acquire()
-        print('Connected to :', addr[0], ':', addr[1])
+        print('Connected to :', addr[0], ':', addr[1], time.ctime(time.time()))
 
         # Start a new thread and return its identifier
         start_new_thread(commthread, (c, gpib_comm,))

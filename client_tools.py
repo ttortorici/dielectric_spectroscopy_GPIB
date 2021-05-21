@@ -375,7 +375,7 @@ class HP4275A(Instrument):
 
 
 class LakeShore(Instrument):
-    def __init__(self, port, inst_num=340):
+    def __init__(self, port, inst_num=331):
         super(self.__class__, self).__init__('LS', port)
         """correspond heater power (in Watts) with heater range setting"""
         if inst_num == 331:
@@ -399,7 +399,7 @@ class LakeShore(Instrument):
 
     def read_heater_range(self):
         """Returns heater range in Watts"""
-        return float(self.heater_ranges[self.query('RANGE?')])
+        return float(self.heater_ranges[int(self.query('RANGE?'))])
 
     def read_PID(self, loop=1):
         """Returns PID values nnnn.n,nnnn.n,nnnn"""
@@ -411,7 +411,7 @@ class LakeShore(Instrument):
 
     def read_ramp_speed(self, loop=1):
         """Kelvin per minute"""
-        response = self.query('RAMP? {}'.format(loop))
+        response = self.query('RAMP? {}'.format(loop)).split(',')
         return float(response[1])
 
     def read_ramp_status(self, loop=1):
@@ -430,7 +430,7 @@ class LakeShore(Instrument):
 
     def read_setpoint(self, loop=1):
         """Returns setpoint value in units specified"""
-        return self.query('SETP? {}'.format(loop))
+        return float(self.query('SETP? {}'.format(loop)))
 
     def set_heater_range(self, power_range):
         """Configure Heater range."""
@@ -464,7 +464,7 @@ class LakeShore(Instrument):
         """Configure Control loop setpoint.
         loop: specifies which loop to configure.
         value: the value for the setpoint (in whatever units the setpoint is using"""
-        self.write('SETP {}, {}' % (loop, float(value)))
+        self.write('SETP {}, {}'.format(loop, float(value)))
 
 
 class LabJack(Instrument):
