@@ -128,6 +128,20 @@ class Setup_Window(Tkinter.Tk):
 
         r += 1
 
+        """READ TEMPERATURE"""
+        Tkinter.Label(self, text="Read Temperature [K]:",
+                      font=(Setup_Window.FONT, Setup_Window.FONT_SIZE)).grid(row=r, column=0, sticky=Tkinter.W)
+        self.temp = self.lj.read_temp()
+        self.temp_entry = Tkinter.Entry(self, font=(Setup_Window.FONT, Setup_Window.FONT_SIZE))
+        self.temp_entry.grid(row=r, column=1, sticky=Tkinter.E + Tkinter.W)
+        self.temp_entry.insert(0, self.temp)
+
+        Tkinter.Button(self, text="UPDATE",
+                       font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
+                       command=self.update_temp).grid(row=r, column=2, sticky=Tkinter.E + Tkinter.W)
+
+        r += 1
+
         """QUIT BUTTON"""
         Tkinter.Button(self, text="QUIT",
                        font=(Setup_Window.FONT, Setup_Window.FONT_SIZE),
@@ -162,6 +176,11 @@ class Setup_Window(Tkinter.Tk):
     def set_stpt(self):
         self.stpt = float(self.stpt_entry.get())
         self.lj.set_setpoint(self.stpt)
+
+    def update_temp(self):
+        self.temp = self.lj.read_temp()
+        self.temp_entry.delete(0, 'end')
+        self.temp_entry.insert(0, self.temp)
 
     def quit(self):
         self.destroy()
