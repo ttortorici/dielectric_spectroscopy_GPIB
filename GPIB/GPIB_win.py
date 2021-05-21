@@ -29,7 +29,7 @@ class GPIB(object):
         try:
             return self.dev.query(msg)
         except pyvisa.errors.VisaIOError:
-            return ''
+            return 'timed out'
     
     def write(self, msg):
         self.dev.write(msg)

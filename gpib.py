@@ -219,23 +219,26 @@ def start():
 
 
 def commthread(c, gpib_comm):
-    while True:
-        # message received from client
-        msg_client = c.recv(1024)
-        if not msg_client:
-            print('unlock thread')
+    try:
+        while True:
+            # message received from client
+            msg_client = c.recv(1024)
+            if not msg_client:
+                print('unlock thread')
 
-            # lock released on exit
-            print_lock.release()
-            break
+                # lock released on exit
+                print_lock.release()
+                break
 
-        # parse message
-        msg_out = gpib_comm.parse(msg_client.decode('ascii'))
-        print(msg_out)
-        print('got it')
+            # parse message
+            msg_out = gpib_comm.parse(msg_client.decode('ascii'))
+            print(repr(msg_out))
+            print('got it')
 
-        # send back reversed string to client
-        c.send(msg_out.encode('ascii'))
+            # send back reversed string to client
+            c.send(msg_out.encode('ascii'))
+    except KeyboardInterrupt:
+        print('interupted at commthread')
 
     # connection closed
     c.close()
@@ -244,7 +247,7 @@ class GPIBcomm:
     def __init__(self, ah, hp, cryo, lj):
         if ah:
             self.bridgeAH = GPIB.dev(addr_ah2700, get.serialport(), 'AH2700A')
-            self.bridgeAH.dev.timeout = 2500
+            self.bridgeAH.dev.timeout = 25000
             self.bridgeAH.write('UN DS')            # imaginary in units of loss tangent
             self.bridgeAH.write('CO ON')            # turn on continuous measurement
             time.sleep(0.01)
@@ -308,7 +311,7 @@ class GPIBcomm:
                 instrument.write(msgL[2])
                 msgout = 'empty'
             elif msgL[1] in ['Q', 'QU', 'QUERY']:
-                print('querying "{}" with {}'.format(msgL[0], msgL[2]))
+                print('querying {} with "{}"'.format(msgL[0], msgL[2]))
                 msgout = instrument.query(msgL[2])
             elif msgL[1] in ['R', 'RE', 'READ']:
                 msgout = instrument.read()
@@ -333,16 +336,19 @@ def server_main(gpib_comm):
     print("socket is listening")
 
     # a forever loop until client wants to exit
-    while True:
-        # establish connection with client
-        c, addr = s.accept()
+    try:
+        while True:
+            # establish connection with client
+            c, addr = s.accept()
 
-        # lock acquired by client
-        print_lock.acquire()
-        print('Connected to :', addr[0], ':', addr[1], time.ctime(time.time()))
+            # lock acquired by client
+            print_lock.acquire()
+            print('Connected to :', addr[0], ':', addr[1], time.ctime(time.time()))
 
-        # Start a new thread and return its identifier
-        start_new_thread(commthread, (c, gpib_comm,))
+            # Start a new thread and return its identifier
+            start_new_thread(commthread, (c, gpib_comm,))
+    except KeyboardInterrupt:
+        print('interupted')
     s.close()
 
 

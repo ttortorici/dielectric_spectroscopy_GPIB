@@ -151,12 +151,12 @@ class DielectricConstant(DataFile):
             self.bridge.set_freq(freq)
             print('frequency set')
 
-            bridge_data = self.bridge.get_front_panel()
+            bridge_data = self.bridge.read_front_panel()
             print('read front panel')
 
-            temperatures = [self.ls.get_temp('A')]
+            temperatures = [self.ls.read_temp('A')]
             if self.cryo != '40K':
-                temperatures.append(self.ls.get_temp('B'))
+                temperatures.append(self.ls.read_temp('B'))
             print('read temperatures')
 
             """Write time elapsed"""
@@ -184,7 +184,7 @@ class DielectricConstant(DataFile):
             """Write LabJack Data if using it"""
             if type(self.lj_chs) == list:
                 if len(self.lj_chs) > 0:
-                    lj_val, lj_err = list(np.array(list(chain(*self.lj.get_voltages_ave(self.lj_chs)))) * amp)
+                    lj_val, lj_err = list(np.array(list(chain(*self.lj.read_voltages_ave(self.lj_chs)))) * amp)
                     data_f.extend([lj_val + offset, lj_err])
 
             """Write frequency measured at"""
