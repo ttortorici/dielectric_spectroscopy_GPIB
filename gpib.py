@@ -247,7 +247,7 @@ class GPIBcomm:
     def __init__(self, ah, hp, cryo, lj):
         if ah:
             self.bridgeAH = GPIB.dev(addr_ah2700, get.serialport(), 'AH2700A')
-            self.bridgeAH.dev.timeout = 25000
+            self.bridgeAH.dev.timeout = 15000
             self.bridgeAH.write('UN DS')            # imaginary in units of loss tangent
             self.bridgeAH.write('CO ON')            # turn on continuous measurement
             time.sleep(0.01)

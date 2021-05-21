@@ -78,6 +78,8 @@ class DataFile:
             if self.bridge.abbr == 'HP':
                 time.sleep(1)
             bridge_data = self.bridge.read_front_panel()
+            while bridge_data[-1] == -1:
+                bridge_data = self.bridge.read_front_panel()
             print('read front panel')
 
             temperatures = [self.ls.read_temp('A')]
@@ -152,6 +154,8 @@ class DielectricConstant(DataFile):
             print('frequency set')
 
             bridge_data = self.bridge.read_front_panel()
+            if bridge_data == [-1, -1, -1, -1]:
+                bridge_data = self.bridge.read_front_panel()
             print('read front panel')
 
             temperatures = [self.ls.read_temp('A')]

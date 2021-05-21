@@ -154,7 +154,7 @@ class AH2700A(Instrument):
         """fetch frequency [Hz], capacitance [pF], loss [default is tan(delta)], and voltage [V]"""
         rawmsg = self.query('Q').split('=')
         if len(rawmsg) == 1:
-            msgout = rawmsg
+            msgout = [-1, -1, -1, -1]
         else:
             msgout = []
             for ii, element in enumerate(rawmsg):
@@ -239,6 +239,7 @@ class AH2700A(Instrument):
             else:
                 raise ValueError('Please enter a number, or "up" or "down"')
         self.write('FR {}'.format(msg))
+        time.sleep(2)
 
     def set_units(self, unit='DS'):
         """Set units for loss, default is dissipation factor tan(delta)
