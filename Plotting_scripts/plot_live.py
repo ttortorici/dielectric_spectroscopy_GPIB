@@ -21,7 +21,7 @@ HP = 0
 
 import os
 import sys
-sys.path.append('../GPIB')
+sys.path.append('..')
 import get
 from pyqtgraph.Qt import QtCore
 import pyqtgraph as pg
@@ -33,29 +33,16 @@ import data_files
 import itertools
 import csv
 import operator
+try:
+    import Tkinter
+    from Tkinter import filedialog
+except ImportError:
+    import tkinter as Tkinter
+    from tkinter import filedialog
 
 pg.setConfigOption('background','w')
 pg.setConfigOption('foreground','k')
 
-
-def file_sorter(files):
-    timestamps = [0] * len(files)        
-    for ii, f in enumerate(files):
-        temp = None
-        for jj, ll in enumerate(f.split('_')):
-            try:
-                if temp:
-                    timestamp = temp + float(ll)/100.
-                    timestamps[ii] = timestamp
-                    temp = None
-                else:
-                    temp = int(ll)
-            except ValueError:
-                temp = None
-    return [f for (t, f) in sorted(zip(timestamps, files))]
-         
-                
-                
 
 def most_common(L):
     # get an iterable of (item, iterable) pairs
@@ -75,170 +62,76 @@ def most_common(L):
     # pick the highest-count/earliest item
     return max(groups, key=_auxfun)[0]
 
+
 def get_labels(f):
     """Retrieve data file's comment"""
-    with open(f, 'r') as fff:
+    with open(f[0], 'r') as fff:
         labels = next(itertools.islice(csv.reader(fff), 2, None))
     return labels
-    
+
+
 def get_f_labels(f):
-    labels = get_labels(f)
+    global labels
     f_labels = [''] * 3
     ii = 0
     # print 'it is here'
     for label in labels:
-        print label
+        # print(label)
         if 'Frequency' in label:
             label_list = label.strip(' ').split(' ')
-            print label_list
+            print(label_list)
             for ll in label_list:
-                print ll
+                # print(ll)
                 if 'Hz' in ll and ll.strip('[').strip(']') == ll:
-                    print ll
-                    f_labels[ii] = ll
+                    # print(ll)
+                    f_labels[ii] = ll.strip('(').strip(')')
                     ii += 1
+    # print('\n', f_labels, '\n')
     return f_labels
 
-def get_path(date=None):
-    """set date"""
-    current_date = str(datetime.date.today()).split('-')
-    year = current_date[0]
-    month = current_date[1]
-    day = current_date[2]
-    if date:
-        if '-' in date:
-            datemsg = date.split('-')
-        elif '/' in date:
-            datemsg = date.split('/')
-        else:
-            try:
-                int(date)
-            except ValueError:
-                raise ValueError('Invalid input for date: try mm-dd-yyyy')
-            datemsg = [date]
-        if len(datemsg) == 2:
-            month = datemsg[0]
-            day = datemsg[1]
-        elif len(datemsg) == 3:
-            year = datemsg[2]
-            month = datemsg[0]
-            day = datemsg[1]
-        elif len(datemsg) == 1:
-            try:
-                day_temp = int(datemsg[0])
-                if day_temp > int(day):
-                    month = str(int(month) - 1)
-                    if int(month) == 0:
-                        month = '12'
-                day = datemsg[0]
-            except ValueError:
-                pass
-    # make sure the numbers come out right
-    if len(day) == 1:
-        day = '0' + day
-    if len(month) == 1:
-        month = '0' + month
-    if len(year) == 2:
-        year = '20' + year
-        
-    base_path = os.path.join(get.googledrive(), 'Dielectric_data',
-                             'Teddy')
-    path = os.path.join(base_path, year, month, day)
-    
-    return path, base_path, (month, day, year)
 
-
-def get_files(date, file_bool=None):
-    """get list of files in this directory"""
-    month = date[0]
-    day = date[1]
-    year = date[2]
-    filenames_all = data_files.file_name_sorted(month, day, year)
-    filenames = []
-    for f in filenames_all[0]:
-        if '_sorted' in f.lower() and not 'roomtemp' in f.lower():
-            filenames.append(f)
-    print 'All the files in the directory: ' + str(filenames)
-        
-    """use file_bool to select files"""
-    if file_bool:
-        if len(filenames) < len(file_bool):
-            file_bool = file_bool[:len(filenames)]
-        files_to_use = []
-        for ii, b in enumerate(file_bool):
-            if b:
-                files_to_use.append(filenames[ii])
-    else:
-        files_to_use = filenames
-    return files_to_use
-    
-def load_data(path, files_to_use):
+def load_data(files_to_use):
     skip = 0
-    #print skip
     temp_skip = -1
-    #print temp_skip
     while not skip == temp_skip:  # as long as the "try" passes, the while loop dies
         temp_skip = skip
-        #print 'trying'            
         try:
-            data = np.loadtxt(os.path.join(path,
-                                           files_to_use[0]),
-                              comments='#', delimiter=',', skiprows=4)
-            #print 'passed'
+            data = np.loadtxt(files_to_use[0], comments='#', delimiter=',', skiprows=3)
         except StopIteration:
             skip += 1
-            #print 'failed'
     if len(files_to_use) > 1:
         for ii, f in enumerate(files_to_use[1:]):
             try:
-                data_temp = np.loadtxt(os.path.join(path, f),
-                                       comments='#', delimiter=',',
-                                       skiprows=4)
+                data_temp = np.loadtxt(f, comments='#', delimiter=',', skiprows=3)
                 try:
                     data = np.append(data, data_temp, axis=0)
                 except ValueError:
                     data = np.append(data, np.array([data_temp]), axis=0)
             except StopIteration:
                 pass
-    #print np.shape(data)
-    """columns = np.shape(data)[1]
-    if columns == 21:
-        o = 0
-    elif columns == 24:
-        o = 1
-    elif columns == 36:
-        o = 4"""
     return data
+
     
 def updateViews():
     global p4a, p4
     p4a.setGeometry(p4.getViewBox().sceneBoundingRect())
     p4a.linkedViewChanged(p4.getViewBox(), p4a.XAxis)
-    
+
+
 def update():
-    global path, files_to_use, c_curves, l_curves, ct_curves, lt_curves, T_curves
-    data = load_data(path, files_to_use)
-    columns = np.shape(data)[1]
-    if columns == 21:
-        o = 0
-    elif columns == 24:
-        o = 1
-    elif columns == 33:
-        o = 4
-    elif columns == 36:
-        o = 4
-    try:
-        ts = [data[:, 0], data[:, 7+o], data[:, 14+o+o]]
-        Ts = [data[:, 1], data[:, 8+o], data[:, 15+o+o]]
-        TBs = [data[:, 2], data[:, 9+o], data[:, 16+o+o]]
-        Cs = [data[:, 3], data[:, 10+o], data[:, 17+o+o]]
-        Ls = [data[:, 4], data[:, 11+o], data[:, 18+o+o]]
-    except:
-        ts = [data[:, 0]]
-        Ts = [data[:, 1]]
-        TBs = [data[:, 2]]
-        Cs = [data[:, 3]]
-        Ls = [data[:, 4]]
+    global files, c_curves, l_curves, ct_curves, lt_curves, T_curves, labels, flabels,\
+        time_indexes, cap_indexes, loss_indexes, tempA_indexes, tempB_indexes
+    data = load_data(files)
+
+    ts = [data[:, ind] for ind in time_indexes]
+    Ts = [data[:, ind] for ind in tempA_indexes]
+    if tempB_indexes:
+        TBs = [data[:, ind] for ind in tempB_indexes]
+    else:
+        TBs = None
+    Cs = [data[:, ind] for ind in cap_indexes]
+    Ls = [data[:, ind] for ind in loss_indexes]
+
     for curve, t, C in zip(ct_curves, ts, Cs):
         curve.setData(x=t, y=C)
     for curve, t, L in zip(lt_curves, ts, Ls):
@@ -247,35 +140,32 @@ def update():
         curve.setData(x=T, y=C)
     for curve, T, L in zip(l_curves, Ts, Ls):
         curve.setData(x=T, y=L)
-    data = np.column_stack((np.concatenate(ts),
-                            np.concatenate(Ts),
-                            np.concatenate(TBs)))
+    if TBs:
+        data = np.column_stack((np.concatenate(ts),
+                                np.concatenate(Ts),
+                                np.concatenate(TBs)))
+    else:
+        data = np.column_stack((np.concatenate(ts),
+                                np.concatenate(Ts)))
     data = np.array(sorted(data, key=lambda row: row[0]))
     for ii, curve in enumerate(T_curves):
         curve.setData(x=data[:, 0], y=data[:, ii+1])
-    
+
+
 if __name__ == '__main__':
-    path, base_path, date = get_path(date)
-    files = get_files(date, file_bool=fb)
-    
+    root = Tkinter.Tk()
+    root.title('File Selector')
+
+    files = filedialog.askopenfilenames(initialdir=os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy-2'),
+                                        title='Select a data file to plot',
+                                        filetypes=(('CSV files', '*.csv',), ('all files', '*.*')))
+
     RC_count = 0
     Z_count = 0
-    for f in files:
-        if 'impedence' in f.lower():
-            Z_count += 1
-        elif 'resistance' in f.lower():
-            RC_count +=1
-    if len(files) == Z_count:
-        y_Alabel = 'Impedance Amp (ohm)'
-        y_Blabel = 'Phase (rads)'
-    elif len(files) == RC_count:
-        y_Alabel = 'Resistance (ohm)'
-        y_Blabel = 'Capacitance (F)'
-    else:
-        y_Alabel = 'Capacitance (pF)'
-        y_Blabel = 'Loss Tangent'
-    
-    title = "Live Plotting %s/%s/%s" % date
+    y_Alabel = 'Capacitance (pF)'
+    y_Blabel = 'Loss Tangent'
+
+    title = "Live Plotting"
     app = pg.QtGui.QApplication([])
     win = pg.GraphicsWindow(title="Live Plotting")
     win.resize(1900, 1000)
@@ -315,15 +205,6 @@ if __name__ == '__main__':
     p4a.setXLink(p4)
     p3.setXLink(p4)
 
-    """comments = [''] * len(files)    
-    for ii, f in enumerate(files):
-        comments[ii] = sort_comments.get_comment(os.path.join(path, f))"""
-                    
-    #p3.setLabel('bottom', 'Temperature (K)')
-    #p4.addLegend()
-                    
-    #p.showAxis('right')
-    #p.setLabel('right', 'Loss Tangent')
     colors6 = [(204, 0, 0),    # dark red
                (76, 153, 0),   # dark green
                (0, 0, 204),    # dark blue
@@ -348,42 +229,51 @@ if __name__ == '__main__':
         lt_curves *= 3
     else:
         ct_curves *= 2
-    #labels = ['10kHz', '1kHz', '100Hz']
-    #labels = ['20kHz', '2kHz', '400Hz']
+
+    labels = get_labels(files)
+    print(labels)
+
     flabels = [''] * len(files)
     for ii, f in enumerate(files):
-        flabels[ii] = get_f_labels(os.path.join(path, f))
-    #print flabels
-    labels = most_common(flabels)
-    #fbool2 = [0] * len(files)
-    #for ii, label in enumerate(flabels):
-    #    print ii
-    #    if label == labels:
-    #        fbool2[ii] = 1
-    #files_to_use = [''] * sum(fbool2)
-    #ii = 0
-    #for jj, bb in enumerate(fbool2):
-    #    if bb:
-    #        files_to_use[ii] = files[jj]
-    files_to_use = file_sorter(files)
-    
-    if HP:
-        labels = [labels[0]]
-    for ii, label in enumerate(labels):
-        offset = 3
-        if HP:
-            offset = 1
+        flabels[ii] = get_f_labels(files)
+        print(flabels)
+
+    flabels = most_common(flabels)
+
+    for ii, label in enumerate(flabels):
+        offset = len(flabels)
         c_curves[ii] = p1.plot(pen=pens6[ii], name=label)
         l_curves[ii] = p2.plot(pen=pens6[ii+offset], name=label)
         ct_curves[ii] = p4.plot(pen=pens6[ii], name=label+' capacitance')
         ct_curves[ii+offset] = p4.plot(pen=pens6[ii+offset], name=label+' loss')
         lt_curves[ii] = pg.PlotCurveItem(pen=pens6[ii+offset], name=label)
         p4a.addItem(lt_curves[ii])
-    
-    T_curves = [''] * 2
-    labels = ['Stage A', 'Stage B']
-    for ii, label in enumerate(labels):
-        T_curves[ii] = p3.plot(pen=pens2[ii], name=label)
+
+    stage_num = 1
+    T_labels = ['Sample Stage']
+    for l in labels:
+        if 'temperature b' in l.lower():
+            stage_num += 1
+            T_labels.append('Cooling Stage')
+            break
+    T_curves = [None] * stage_num
+
+    for ii, l in enumerate(T_labels):
+        T_curves[ii] = p3.plot(pen=pens2[ii], name=l)
+
+    time_indexes = [ii for ii, ll in enumerate(labels) if 'time' in ll.lower()]
+    if len(T_labels) == 1:
+        tempA_indexes = [ii for ii, ll in enumerate(labels) if 'temperature' in ll.lower()]
+        tempB_indexes = None
+    else:
+        tempA_indexes = [ii for ii, ll in enumerate(labels) if 'temperature a' in ll.lower()]
+        tempB_indexes = [ii for ii, ll in enumerate(labels) if 'temperature b' in ll.lower()]
+    cap_indexes = [ii for ii, ll in enumerate(labels) if 'capacitance' in ll.lower()]
+    loss_indexes = [ii for ii, ll in enumerate(labels) if 'loss' in ll.lower()]
+    print(time_indexes)
+    print(tempA_indexes)
+    print(cap_indexes)
+    print(loss_indexes)
 
     updateViews()
     p4.getViewBox().sigResized.connect(updateViews)
@@ -391,10 +281,4 @@ if __name__ == '__main__':
     timer = QtCore.QTimer()
     timer.timeout.connect(update)
     timer.start(50)
-    pg.QtGui.QApplication.instance().exec_()       
-    
-    
-                  
-        
-
-    
+    pg.QtGui.QApplication.instance().exec_()

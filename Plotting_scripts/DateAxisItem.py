@@ -209,7 +209,7 @@ class DateAxisItem(AxisItem):
         return values
 
     def setZoomLevelForDensity(self, density):
-        keys = sorted(self.zoomLevels.iterkeys())
+        keys = sorted(self.zoomLevels)#.iterkeys())
         key = next((k for k in keys if density < k), keys[-1])
         self.zoomLevel = self.zoomLevels[key]
         self.zoomLevel.utcOffset = self.utcOffset

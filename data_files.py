@@ -20,7 +20,7 @@ class DataFile:
         self.write_row('# {}'.format(comment))
 
         if bridge.upper()[0:2] == 'AH':
-            self.bridge = AH2700A(port)
+           self.bridge = AH2700A(port)
         elif bridge.upper()[0:2] == 'HP':
             self.bridge = HP4275A(port)
         self.cryo = cryo.upper()
@@ -46,7 +46,7 @@ class DataFile:
             self.labels.append('Temperature [K]')
         else:
             self.labels.extend(['A Temperature [K]', 'B Temperature [K]'])
-        self.labels.extend(['Capacitance [pF]', 'Loss Tangent', 'Voltage [V]'])
+        self.labels.extend(['Capacitance [pF]', 'Loss Tangent', 'Voltage [V]', 'Frequency [Hz]'])
 
     def write_labels(self):
         for freq in self.unique_freqs:
@@ -64,8 +64,8 @@ class DataFile:
             if type(self.lj_chs) == list:
                 for ii, ch in enumerate(self.lj_chs):
                     self.labels.extend(['LJ {} [V] ({})'.format(ch, f), 'LJ StdDev {} [V] ({})'.format(ch, f)])
-            self.labels.append('Frequency [Hz]')
-            self.write_row(self.labels_to_write)
+        self.write_row(self.labels_to_write)
+
 
     def sweep_freq(self, amp=1, offset=0):
         """Sweep a set of frequencies"""
@@ -143,7 +143,7 @@ class DielectricConstant(DataFile):
             self.labels.append('Temperature [K]')
         else:
             self.labels.extend(['A Temperature [K]', 'B Temperature [K]'])
-        self.labels.extend(['Capacitance [pF]', 'Loss Tangent', 'Re eps', 'Im eps'])
+        self.labels.extend(['Capacitance [pF]', 'Loss Tangent', 'Re eps', 'Im eps', 'Frequency [Hz]'])
 
     def sweep_freq(self, amp=1, offset=0):
         """Sweep a set of frequencies"""
