@@ -434,7 +434,7 @@ class SetupWindow(Tkinter.Tk):
         """Path to write file"""
         if self.purp == 'cal':
             self.path = os.path.join(self.path, '1-Calibrations', f'{self.date.year:04}')
-            self.filename = f'calibrate_{self.capchipID}_{self.inst}_{self.cryo}'
+            self.filename = f'calibrate_{self.capchipID}_{self.inst}_{self.cryo}_{self.month}-'
         elif self.purp == 'powder':
             self.path = os.path.join(self.path, '2-Powders')
         elif self.purp == 'film':
@@ -443,8 +443,8 @@ class SetupWindow(Tkinter.Tk):
             self.path = os.path.join(self.path, 'Other')
         if not self.purp == 'cal':
             self.path = os.path.join(self.path, f'{self.date.year:04}-{self.date.month:02}')
-            self.filename = f'{self.sample}_{self.capchipID}_{self.purp}_{self.inst}_{self.cryo}'
-        self.filename += f'_{self.date.day:02}_{self.date.hour:02}-{self.date.minute:02}'
+            self.filename = f'{self.sample}_{self.capchipID}_{self.purp}_{self.inst}_{self.cryo}_'
+        self.filename += f'{self.date.day:02}_{self.date.hour:02}-{self.date.minute:02}'
 
         print(self.filename)
 
