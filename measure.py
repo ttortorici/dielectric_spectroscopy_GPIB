@@ -546,7 +546,5 @@ def load_calibration(path):
     return Cfit, Dfit
 
 
-
-
 if __name__ == '__main__':
     SetupWindow().mainloop()

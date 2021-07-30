@@ -40,11 +40,12 @@ except ImportError:
     import tkinter as Tkinter
     from tkinter import filedialog
 
-pg.setConfigOption('background','w')
-pg.setConfigOption('foreground','k')
+pg.setConfigOption('background', 'w')
+pg.setConfigOption('foreground', 'k')
 
 
 def most_common(L):
+    """Returns the value found most common in a list"""
     # get an iterable of (item, iterable) pairs
     SL = sorted((x, i) for i, x in enumerate(L))
     # print 'SL:', SL
