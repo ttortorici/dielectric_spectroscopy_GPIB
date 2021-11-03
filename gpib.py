@@ -9,12 +9,13 @@ import platform
 import socket
 from _thread import *
 import threading
-# import os
+import os
 import get
 import sys
 sys.path.append('GPIB')
 import GPIB_universal as GPIB
-import LabJack
+if os.name == 'win':
+    import LabJack
 
 
 """ADDRESSES"""

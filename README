@@ -1,0 +1,18 @@
+This repo is for doing commanding dielectric spectroscopy instruments through GPIB
+
+Instructions to set up conda environment:
+in conda command prompt (windows) or terminal (unix)
+    conda create --name dielectric
+    conda activate dielectric
+    conda install git
+    conda install numpy
+    pip install pyqt5
+    conda install -c conda-forge pyqtgraph
+    #  conda install -c conda-forge jupyterlab
+    pip install PyYaml
+    pip insatll pyserial
+    pip install labjack-ljm
+
+install labjcak prereqs https://labjack.com/support/software/installers/ljm
+
+https://pythonspot.com/pyqt5-absolute-position/
