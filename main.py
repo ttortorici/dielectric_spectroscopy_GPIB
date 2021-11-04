@@ -3,19 +3,24 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 import sys
 import yaml
+import get
+import os
+import glob
 
 
 class App(qtw.QMainWindow):
     def __init__(self):
         super(App, self).__init__()
-        self.yaml_f = 'server_settings.yml'
-        with open(self.yaml_f, 'r') as f:
-            preset = yaml.safe_load(f)
+        self.base_path = os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy-2')
+        self.lj_chs = []  # will be used later
+        self.path = self.base_path  # will be added on to later
 
-        if preset['ah']:
-            self.bridge = 0         # AH
-        else:
-            self.bridge = 1         # HP
+        """LOAD PRESETS"""
+        yaml_fname = max(glob.glob(os.path.join(self.base_path, 'presets', '*yml')), key=os.path.getctime)
+        yaml_f = os.path.join(self.base_path, 'presets', yaml_fname)
+        # print(f'\n\n{yaml_f}\n\n')
+        with open(yaml_f, 'r') as f:
+            preset = yaml.safe_load(f)
 
         """MENU BAR"""
         mainMenu = self.menuBar()
@@ -38,22 +43,8 @@ class App(qtw.QMainWindow):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         self.tabs = MainTabs(self)
-        self.tabs.move(5, 20)
-        self.tabs.resize(self.width - 10, self.height - 10)
-        # label = qtw.QLabel(f'the bridge is set to {self.bridge}', self)
-        # label.move(10, 10)
-        '''# Create textbox
-        self.textbox = qtw.QLineEdit(self)
-        self.textbox.move(20, 20)
-        self.textbox.resize(280, 40)
-        # Create a button in the window
-        self.button = qtw.QPushButton('Show Text', self)
-        self.button.move(20, 80)
-        # connect button to function on_click
-        self.button.clicked.connect(self.on_click)
+        self.setCentralWidget(self.tabs)
 
-        self.choice = qtw.QRadioButton('qq', self)
-        self.choice.move(20, 120)'''
         self.show()
 
     def quit(self):
@@ -69,27 +60,73 @@ class MainTabs(qtw.QWidget):
         super(qtw.QWidget, self).__init__(parent)
         self.layout = qtw.QVBoxLayout(self)
 
-        # Initialize tab screen
+        """Initialize tab screen"""
         self.tabs = qtw.QTabWidget()
         self.tabMeas = qtw.QWidget()
         self.tabPlot = qtw.QWidget()
         self.tabCont = qtw.QWidget()
-        # self.tabs.resize(300, 200)
 
-        # Add tabs
+        """Add tabs"""
         self.tabs.addTab(self.tabMeas, "Measure")
         self.tabs.addTab(self.tabPlot, "Plot")
         self.tabs.addTab(self.tabCont, "Control")
 
-        # Create First Tab
+        """Create First Tab"""
         self.tabMeas.layout = qtw.QVBoxLayout(self)
-        # self.pushButton1 = qtw. QPushButton("This is a button")
-        # self.tab1.layout.addWidget(self.pushButton1)
-        # self.tab1.setLayout(self.tab1.layout)
+
+        """Make Text Box for data to dump"""
+        self.measureTextStream = qtw.QTextEdit()
+        self.measureTextStream.setReadOnly(True)
+        # self.measureTextStream.textCursor().insertText('')
+        self.tabMeas.layout.addWidget(self.measureTextStream)
+
+        """Add Bottom Row of Buttons"""
+        self.bottomRow = qtw.QHBoxLayout()
+        self.bottomRow.addStretch(1)
+        self.buttonNewData = qtw.QPushButton("Start New Data File")
+        self.buttonNewData.clicked.connect(self.startNewData)
+
+        self.stackPlayPause = qtw.QStackedWidget(self)
+        self.buttonPauseData = qtw.QPushButton("Pause")
+        self.buttonPauseData.clicked.connect(self.pauseData)
+        self.buttonContinue = qtw.QPushButton("Continue")
+        self.buttonContinue.clicked.connect(self.continueData)
+        self.stackPlayPause.addWidget(self.buttonPauseData)
+        self.stackPlayPause.addWidget(self.buttonContinue)
+
+        self.bottomRow.addWidget(self.buttonNewData)
+
+        #self.tabMeas.layout.addStretch(1)
+        self.tabMeas.layout.addLayout(self.bottomRow)
+
+        # self.tabMeas.layout.addWidget(self.newDataButton)
+        self.tabMeas.setLayout(self.tabMeas.layout)
 
         # Add tabs to widget
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
+
+    def write(self, text):
+        self.measureTextStream.textCursor().insertText('\n' + text)
+        self.measureTextStream.verticalScrollBar().setValue(self.measureTextStream.verticalScrollBar().maximum())
+
+    @pyqtSlot()
+    def startNewData(self):
+        self.write('start data')
+        self.bottomRow.removeWidget(self.buttonNewData)
+        self.bottomRow.addWidget(self.stackPlayPause)
+        self.bottomRow.addWidget(self.buttonNewData)
+        # self.stackPlayPause.setSizePolicy(40, 15)
+
+    @pyqtSlot()
+    def pauseData(self):
+        self.write('data paused')
+        self.stackPlayPause.setCurrentWidget(self.buttonContinue)
+
+    @pyqtSlot()
+    def continueData(self):
+        self.write('data continued')
+        self.stackPlayPause.setCurrentWidget(self.buttonPauseData)
 
     @pyqtSlot()
     def on_click(selfself):

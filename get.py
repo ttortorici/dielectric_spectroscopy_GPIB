@@ -29,9 +29,14 @@ def googledrive():
     user = getpass.getuser()
     if sys.platform == 'darwin':  # for mac users
         path = '/Users/%s/Google_Drive/' % (user)
-    elif (user == 'etortorici' or user == 'root') and sys.platform == 'linux2':  # legacy for linux
-        # path = '/home/etortorici/Google_Drive/'
-        path = '/home/etortorici/Documents/'
+    # elif (user == 'etortorici' or user == 'root') and sys.platform == 'linux2':  # legacy for linux
+    #     # path = '/home/etortorici/Google_Drive/'
+    #     path = '/home/etortorici/Documents/'
+    elif sys.platform == 'linux':
+        if user == 'etortoric':
+            path = '/home/etortoric/Documents/Google_Drive'
+        else:
+            path = ''
     else:
         #if user == 'Chuck':
         if os.name == 'nt':
@@ -42,4 +47,5 @@ def googledrive():
                 path = 'C:\\Users\\%s\\Google Drive' % user
         else:
             path = ''
+    # print(f'\n\n\n{path}\n\n\n')
     return path
