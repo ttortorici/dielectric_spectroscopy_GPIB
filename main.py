@@ -1,11 +1,12 @@
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, QTimer
 import sys
 import yaml
 import get
 import os
 import glob
+from start_meas_dialog import StartMeasDialog
 
 
 class App(qtw.QMainWindow):
@@ -15,12 +16,7 @@ class App(qtw.QMainWindow):
         self.lj_chs = []  # will be used later
         self.path = self.base_path  # will be added on to later
 
-        """LOAD PRESETS"""
-        yaml_fname = max(glob.glob(os.path.join(self.base_path, 'presets', '*yml')), key=os.path.getctime)
-        yaml_f = os.path.join(self.base_path, 'presets', yaml_fname)
-        # print(f'\n\n{yaml_f}\n\n')
-        with open(yaml_f, 'r') as f:
-            preset = yaml.safe_load(f)
+
 
         """MENU BAR"""
         mainMenu = self.menuBar()
@@ -42,7 +38,7 @@ class App(qtw.QMainWindow):
     def initUI(self):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        self.tabs = MainTabs(self)
+        self.tabs = MainTabs(self, self.base_path)
         self.setCentralWidget(self.tabs)
 
         self.show()
@@ -56,8 +52,9 @@ class App(qtw.QMainWindow):
 
 
 class MainTabs(qtw.QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, base_path):
         super(qtw.QWidget, self).__init__(parent)
+        self.base_path = base_path
         self.layout = qtw.QVBoxLayout(self)
 
         """Initialize tab screen"""
@@ -82,18 +79,28 @@ class MainTabs(qtw.QWidget):
 
         """Add Bottom Row of Buttons"""
         self.bottomRow = qtw.QHBoxLayout()
+        # self.bottomRow.direction(qtw.QBoxLayout.LeftToRight)
         self.bottomRow.addStretch(1)
+
         self.buttonNewData = qtw.QPushButton("Start New Data File")
         self.buttonNewData.clicked.connect(self.startNewData)
 
         self.stackPlayPause = qtw.QStackedWidget(self)
+        self.stackPlayPause.setSizePolicy(qtw.QSizePolicy.Minimum, qtw.QSizePolicy.Maximum)  # fixes size issue
         self.buttonPauseData = qtw.QPushButton("Pause")
         self.buttonPauseData.clicked.connect(self.pauseData)
+        self.buttonPauseData.setEnabled(False)
         self.buttonContinue = qtw.QPushButton("Continue")
         self.buttonContinue.clicked.connect(self.continueData)
         self.stackPlayPause.addWidget(self.buttonPauseData)
         self.stackPlayPause.addWidget(self.buttonContinue)
 
+        self.buttonStop = qtw.QPushButton("Stop")
+        self.buttonStop.clicked.connect(self.stopData)
+        self.buttonStop.setEnabled(False)
+
+        self.bottomRow.addWidget(self.buttonStop)
+        self.bottomRow.addWidget(self.stackPlayPause)
         self.bottomRow.addWidget(self.buttonNewData)
 
         #self.tabMeas.layout.addStretch(1)
@@ -113,10 +120,11 @@ class MainTabs(qtw.QWidget):
     @pyqtSlot()
     def startNewData(self):
         self.write('start data')
-        self.bottomRow.removeWidget(self.buttonNewData)
-        self.bottomRow.addWidget(self.stackPlayPause)
-        self.bottomRow.addWidget(self.buttonNewData)
-        # self.stackPlayPause.setSizePolicy(40, 15)
+        self.buttonPauseData.setEnabled(True)
+        self.buttonStop.setEnabled(True)
+        self.dialog = StartMeasDialog(self.base_path)
+        self.dialog.show()
+
 
     @pyqtSlot()
     def pauseData(self):
@@ -127,6 +135,14 @@ class MainTabs(qtw.QWidget):
     def continueData(self):
         self.write('data continued')
         self.stackPlayPause.setCurrentWidget(self.buttonPauseData)
+
+    @pyqtSlot()
+    def stopData(self):
+        self.write('stopping data')
+        self.buttonNewData.setEnabled(True)
+        self.buttonStop.setEnabled(False)
+        self.stackPlayPause.setCurrentWidget(self.buttonPauseData)
+        self.buttonPauseData.setEnabled(False)
 
     @pyqtSlot()
     def on_click(selfself):
