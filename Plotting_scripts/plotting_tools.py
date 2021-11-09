@@ -27,13 +27,12 @@ def most_common(L):
 
 def get_labels(f):
     """Retrieve data file's comment"""
-    with open(f[0], 'r') as fff:
+    with open(f, 'r') as fff:
         labels = next(itertools.islice(csv.reader(fff), 2, None))
     return labels
 
 
-def get_f_labels(f):
-    global labels
+def get_f_labels(f, labels):
     f_labels = [''] * 3
     ii = 0
     # print 'it is here'
@@ -41,7 +40,7 @@ def get_f_labels(f):
         # print(label)
         if 'Frequency' in label:
             label_list = label.strip(' ').split(' ')
-            print(label_list)
+            # print(label_list)
             for ll in label_list:
                 # print(ll)
                 if 'Hz' in ll and ll.strip('[').strip(']') == ll:
@@ -52,7 +51,7 @@ def get_f_labels(f):
     return f_labels
 
 
-def load_data(files_to_use):
+"""def load_data(files_to_use):
     skip = 0
     temp_skip = -1
     while not skip == temp_skip:  # as long as the "try" passes, the while loop dies
@@ -71,4 +70,15 @@ def load_data(files_to_use):
                     data = np.append(data, np.array([data_temp]), axis=0)
             except StopIteration:
                 pass
+    return data"""
+
+def load_data(file_to_use):
+    skip = 0
+    temp_skip = -1
+    while not skip == temp_skip:  # as long as the "try" passes, the while loop dies
+        temp_skip = skip
+        try:
+            data = np.loadtxt(file_to_use, comments='#', delimiter=',', skiprows=3)
+        except StopIteration:
+            skip += 1
     return data

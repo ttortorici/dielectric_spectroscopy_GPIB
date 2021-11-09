@@ -10,6 +10,7 @@ from PyQt5.QtGui import QFont
 from start_meas_dialog import StartMeasDialog
 import client_tools
 import data_files
+import gpib_tools as GPIB
 import calculations as calc
 
 
@@ -24,7 +25,7 @@ class WriteThread(QThread):
 
 
 class ControllerDataThread(QThread):
-    output = pyqtSignal(str, str, str, str)
+    output = pyqtSignal(float, float, float, bool)
 
     def send(self, temperature, heater_output, setpoint, ramp_status):
         self.output.emit(temperature, heater_output, setpoint, ramp_status)
@@ -32,9 +33,13 @@ class ControllerDataThread(QThread):
 
 class PlotterThread(QThread):
     output = pyqtSignal()
+    initialize = pyqtSignal(str)
 
     def updatePlots(self):
         self.output.emit()
+
+    def initPlots(self, filename):
+        self.initialize.emit(filename)
 
 
 class MeasureTab(qtw.QWidget):
@@ -151,21 +156,26 @@ class MeasureTab(qtw.QWidget):
                 self.lj_chs.append(ii)
 
         """Path to write file"""
-        if self.purp == 'cal':
-            self.data_path = os.path.join(self.path, '1-Calibrations', f'{self.date.year:04}')
-            self.data_filename = f'calibrate_{self.capchipID}_{self.inst}_{self.cryo}_{self.month}-'
-        elif self.purp == 'powder':
-            self.data_path = os.path.join(self.path, '2-Powders')
-        elif self.purp == 'film':
-            self.data_path = os.path.join(self.path, '3-Films')
-        elif self.purp == 'other':
-            self.data_path = os.path.join(self.path, 'Other')
-        if not self.purp == 'cal':
-            self.data_path = os.path.join(self.path, f'{self.date.year:04}-{self.date.month:02}')
-            self.data_filename = f'{self.sample}_{self.capchipID}_{self.purp}_{self.inst}_{self.cryo}_'
-        self.filename += f'{self.date.day:02}_{self.date.hour:02}-{self.date.minute:02}'
+        if self.dialog.purp_choice == 'cal':
+            self.data_path = os.path.join(self.base_path, '1-Calibrations', f'{self.date_time_start.year:04}')
+        elif self.dialog.purp_choice == 'powder':
+            self.data_path = os.path.join(self.base_path, '2-Powders')
+        elif self.dialog.purp_choice == 'film':
+            self.data_path = os.path.join(self.base_path, '3-Films')
+        elif self.dialog.purp_choice == 'other':
+            self.data_path = os.path.join(self.base_path, 'Other')
+        if not self.dialog.purp_choice == 'cal':
+            self.data_path = os.path.join(self.data_path, f'{self.date_time_start.year:04}'
+                                                          f'-{self.date_time_start.month:02}')
+        self.data_filename = '{}_{}_{}_{}_{}-'.format(self.dialog.sample_entry,
+                                                      self.dialog.chipID_entry,
+                                                      self.dialog.bridge_choice,
+                                                      self.dialog.cryo_choice,
+                                                      self.date_time_start.month)
+        self.data_filename += f'{self.date_time_start.day:02}_{self.date_time_start.hour:02}'
+        self.data_filename += f'-{self.date_time_start.minute:02}.csv'
 
-        print(self.filename)
+        print(self.data_filename)
 
         """FILE HEADER COMMENT"""
         comment_line = 'Chip ID:, {}.., Sample:, {}.., DCB Setting:, {}.. {} V, {}'.format(self.dialog.chipID_entry,
@@ -178,7 +188,7 @@ class MeasureTab(qtw.QWidget):
 
         """Make Directory if it doesn't already exist"""
         if not os.path.exists(self.data_path):
-            os.makedirs(self.path)
+            os.makedirs(self.data_path)
 
         if self.dialog.dcBias_choice == 'off':
             lj_chs = self.lj_chs
@@ -186,15 +196,15 @@ class MeasureTab(qtw.QWidget):
             lj_chs = 'dc'
 
         """CALIBRATION"""
-        if self.purp == 'film' and self.cal and isinstance(self.dialog.cal_entry, str):
+        if self.dialog.purp_choice == 'film' and self.dialog.cal_entry and isinstance(self.dialog.cal_entry, str):
             fitC, fitD = calc.load_calibration(self.dialog.cal_entry)
 
             bareC_RT = 0                                # Room Temperature Bare Capacitance value in pF
 
             """Use the 10kHz ish frequency"""
-            if self.inst == 'ah':
+            if self.dialog.bridge_choice == 'ah':
                 fit_index = 0
-            elif self.inst == 'hp':
+            elif self.dialog.bridge_choice == 'hp':
                 fit_index = 1
             freq_bareC = self.frequencies[fit_index]
 
@@ -210,40 +220,43 @@ class MeasureTab(qtw.QWidget):
             data = data_files.DielectricConstant(path=self.data_path,
                                                  filename=self.data_filename,
                                                  port=MeasureTab.port,
-                                                 uniqueFreqs=self.dialog.freq_entry,
-                                                 filmThickness=self.dialog.thick_entry,
-                                                 gapWidth=gapW, bareCFit=fitC, bareLFit=fitD,
+                                                 unique_freqs=self.dialog.freq_entry,
+                                                 film_thickness=self.dialog.thick_entry,
+                                                 gap_width=gapW, bare_Cfit=fitC, bare_Lfit=fitD,
                                                  bridge=self.dialog.bridge_choice,
-                                                 cryo=self.dialog.cryo_entry,
+                                                 cryo=self.dialog.cryo_choice,
                                                  comment=comment_line,
                                                  lj_chs=lj_chs)
         else:
             data = data_files.DataFile(path=self.data_path,
                                        filename=self.data_filename,
                                        port=MeasureTab.port,
-                                       uniqueFreqs=self.dialog.freq_entry,
+                                       unique_freqs=self.dialog.freq_entry,
                                        bridge=self.dialog.bridge_choice,
-                                       cryo=self.dialog.cryo_entry,
+                                       cryo=self.dialog.cryo_choice,
                                        comment=comment_line,
                                        lj_chs=lj_chs)
 
         print('created datafile')
-        data.bridge.dcbias(self.dcbias)
-        data.bridge.set_voltage(self.meas_volt)
-        data.bridge.set_ave(self.ave_time_val)
+        data.bridge.dcbias(self.dialog.dcBias_choice)
+        data.bridge.set_voltage(self.dialog.volt_entry)
+        data.bridge.set_ave(self.dialog.ave_entry)
 
-        if self.dcbias_val:
-            if abs(self.dcbias_val) > 15:
-                step = 10 * np.sign(self.dcbias_val)
-                for volt in np.arange(step, self.dcbias_val + step, step):
+        """Let Plotter know where the file is"""
+        # self.parent.tabPlot.initialize_plotter(os.path.join(self.data_path, self.data_filename))
+        self.update_plots.initPlots(os.path.join(self.data_path, self.data_filename))
+        if self.dialog.dcBias_entry:
+            if abs(self.dialog.dcBias_entry) > 15:
+                step = 10 * np.sign(self.dialog.dcBias_entry)
+                for volt in np.arange(step, self.dialog.dcBias_entry + step, step):
                     print('setting dc voltage to %d' % volt)
-                    data.lj.set_dc_voltage2(volt, amp=self.amp_val)
+                    data.lj.set_dc_voltage2(volt, amp=self.dialog.amp_entry)
                     time.sleep(2)
             else:
-                print('setting dc voltage to %d' % self.dcbias_val)
-                data.lj.set_dc_voltage2(self.dcbias_val, amp=self.amp_val)
+                print('setting dc voltage to %d' % self.dialog.dcBias_entry)
+                data.lj.set_dc_voltage2(self.dialog.dcBias_entry, amp=self.dialog.amp_entry)
 
-        if 'desert' in self.dialog.cryo_entry.lower():
+        if 'desert' in self.dialog.cryo_choice.lower():
             units = ['s', 'K', 'K', 'pF', '', 'V', 'Hz']
             expected_lens = [22, 6, 6, 8, 8, 2, 4]
         else:
@@ -264,13 +277,15 @@ class MeasureTab(qtw.QWidget):
                         msgout += ', '
                     msgout = msgout.strip(', ') + ';'
                     self.write(msgout)
-                    self.update_controller_thread.send('%.2f' % (np.random.rand() * 300.),
-                                                       '%.2f' % (np.random.rand() * 100.),
-                                                       '%.2f' % (np.random.rand() * 300.),
-                                                       np.random.choice(['Off', 'On']))
-                    self.update_plots.updatePlots()
+
+                    temperature = data_at_f[1]
+                    heater_out = data.ls.read_heater()
+                    setpoint = data.ls.read_setpoint(loop=1)
+                    ramp_bool = data.ls.read_ramp_status(loop=1)
+                    self.update_controller_thread.send(temperature, heater_out, setpoint, ramp_bool)
                     data_to_write.extend(data_at_f)
                 data.write_row(data_to_write)
+                self.update_plots.updatePlots()
 
     @pyqtSlot()
     def pauseData(self):
@@ -318,6 +333,9 @@ class MeasureTab(qtw.QWidget):
         self.server.listen(5)
         print("socket is listening")
 
+        # False for LabJack... fix later
+        gpib_comm = GPIB.GPIBcomm(self.dialog.bridge_choice, self.dialog.cryo_choice, False)
+
         # a forever loop until client wants to exit
         while self.running:
             # establish connection with client
@@ -345,9 +363,9 @@ class MeasureTab(qtw.QWidget):
                     break
                 else:
                     # parse message
-                    # msg_out = gpib_comm.parse(msg_client.decode('ascii'))
-                    msg_out = f"Got: {msg_client}"
-                    print(msg_out)
+                    msg_out = gpib_comm.parse(msg_client)
+                    print(repr(msg_out))
+                    print('got it')
                     c.send(msg_out.encode('ascii'))
         self.server.close()
 
@@ -356,6 +374,7 @@ class MeasureTab(qtw.QWidget):
         self.update_controller_thread.output.connect(self.parent.tabCont.update_values)
         self.update_plots = PlotterThread()
         self.update_plots.output.connect(self.parent.tabPlot.updatePlots)
+        self.update_plots.initialize.connect(self.parent.tabPlot.initialize_plotter)
 
     def stop(self):
         client_tools.send('shutdown')

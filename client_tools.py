@@ -174,6 +174,7 @@ class AH2700A(Instrument):
     def read_frequency(self):
         """fetch the value the frequency is set to in Hertz"""
         msgout = self.query('SH FR').split()
+        print(msgout)
         # sometimes returns ['FREQUENCY', '1.00000E+03', 'HZ'] and sometimes
         # ['FREQUENCY', '100.00', 'E+00', 'HZ']. cannot convert E+00 to float, but can
         # convert 1E+00 to float

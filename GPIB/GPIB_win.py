@@ -24,7 +24,7 @@ class GPIB(object):
             self.dev = self.rm.open_resource('GPIB0::{}::INSTR'.format(self.addr),
                                              read_termination='\r\n', delay=2)
         else:
-            self.dev = self.rm.open_resource('GPIB0::{}::INSTR'.format(self.addr), delay=2)
+            self.dev = self.rm.open_resource('GPIB0::{}::INSTR'.format(self.addr))
     
     def query(self, msg):
         try:

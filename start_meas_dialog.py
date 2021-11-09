@@ -224,7 +224,7 @@ class StartMeasDialog(qtw.QDialog):
 
         unsorted_freq_entry = [float(freq) for freq in self.freqEntry.text().split(',')]
         self.freq_entry = sorted(unsorted_freq_entry)[::-1]
-        if len(self.frequencies) == 0:
+        if len(self.freq_entry) == 0:
             raise IOError('Invalid frequency input')
 
         self.cal_entry = self.calButton.text()
@@ -268,7 +268,7 @@ class StartMeasDialog(qtw.QDialog):
         with open(save_presets, 'w') as f:
             yaml.dump(presets, f, default_flow_style=False)
 
-        self.cal_entry = os.path.join(self.cal_path, self.cal)
+        self.cal_entry = os.path.join(self.cal_path, self.cal_entry)
 
         self.accept()
 

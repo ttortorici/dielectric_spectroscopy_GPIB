@@ -168,14 +168,14 @@ class DielectricConstant(DataFile):
        filmThicknes [float] - thickness of the film in [um]
        gapWidth [float] - distance between fingers in [um]
        bareFit [list] - with [0]: [c0, c1, c2] for capacitance and [1]: [a0, a1] for loss"""
-    def __init__(self, path, filename, port, uniqueFreqs, filmThickness, gapWidth, bareCFit, bareLFit,
+    def __init__(self, path, filename, port, unique_freqs, film_thickness, gap_width, bare_Cfit, bare_Lfit,
                  bridge='AH', cryo='40K', comment='', lj_chs=[]):
-        super(self.__class__, self).__init__(path, filename, port, uniqueFreqs, bridge, cryo, comment, lj_chs)
+        super(self.__class__, self).__init__(path, filename, port, unique_freqs, bridge, cryo, comment, lj_chs)
 
-        self.cGeo = geometric_capacitance(gapWidth, filmThickness)
+        self.cGeo = geometric_capacitance(gap_width, film_thickness)
 
-        self.bareFitC = bareCFit
-        self.bareFitD = bareLFit
+        self.bareFitC = bare_Cfit
+        self.bareFitD = bare_Lfit
 
     def set_labels(self):
         """Exclude LabJack (for now) and frequency"""
