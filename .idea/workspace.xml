@@ -5,11 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c3e79c76-0c8c-448a-a1c3-f72fb78bec2d" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/start_meas_dialog.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dielectric-spectroscopy-instrument-control.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dielectric-spectroscopy-instrument-control.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plotting_scripts/plotting_tools.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fake_gpib_comm.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main_tabs.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tab_control.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tab_measure.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tab_plotter.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_server.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_thread.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GPIB/GPIB_universal.py" beforeDir="false" afterPath="$PROJECT_DIR$/GPIB/GPIB_universal.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GPIB/GPIB_win.py" beforeDir="false" afterPath="$PROJECT_DIR$/GPIB/GPIB_win.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plotting_scripts/DateAxisItem.py" beforeDir="false" afterPath="$PROJECT_DIR$/Plotting_scripts/DateAxisItem.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/client_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gpib.py" beforeDir="false" afterPath="$PROJECT_DIR$/gpib.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/start_meas_dialog.py" beforeDir="false" afterPath="$PROJECT_DIR$/start_meas_dialog.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testGUI.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testGUI2.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

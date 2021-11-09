@@ -12,8 +12,7 @@ import threading
 import os
 import get
 import sys
-sys.path.append('GPIB')
-import GPIB_universal as GPIB
+import GPIB.GPIB_universal as GPIB
 if os.name == 'win':
     import LabJack
 
@@ -243,6 +242,7 @@ def commthread(c, gpib_comm):
 
     # connection closed
     c.close()
+
 
 class GPIBcomm:
     def __init__(self, ah, hp, cryo, lj):

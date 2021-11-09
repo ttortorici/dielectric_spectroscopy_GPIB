@@ -6,7 +6,6 @@ Created on Thu Jun 29 14:31:15 2017
 """
 
 import pyvisa
-import time
 import numpy as np
 
 RQS = (1 << 11)

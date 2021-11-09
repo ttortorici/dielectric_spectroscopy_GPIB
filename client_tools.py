@@ -22,8 +22,9 @@ else:
     win = False
 
 
-def send(msg, port):
-    host = '127.0.0.1'
+def send(msg):
+    port = 62535
+    host = 'localhost'
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
@@ -38,18 +39,18 @@ def send(msg, port):
 
 
 class Instrument:
-    def __init__(self, abbr, port):
+    def __init__(self, abbr, port=62535):
         self.abbr = abbr
         self.port = port
 
     def query(self, msg):
-        return send('{}::QU::{}'.format(self.abbr, msg), self.port)
+        return send('{}::QU::{}'.format(self.abbr, msg))
 
     def write(self, msg):
-        send('{}::WR::{}'.format(self.abbr, msg), self.port)
+        send('{}::WR::{}'.format(self.abbr, msg))
 
     def read(self):
-        return send('{}::RE::'.format(self.abbr), self.port)
+        return send('{}::RE::'.format(self.abbr))
 
     def read_id(self):
         """Get device id"""

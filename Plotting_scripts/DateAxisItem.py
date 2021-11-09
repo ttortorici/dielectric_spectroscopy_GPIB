@@ -14,6 +14,7 @@ WEEK_SPACING = 7 * DAY_SPACING
 MONTH_SPACING = 30 * DAY_SPACING
 YEAR_SPACING = 365 * DAY_SPACING
 
+
 def makeMSStepper(stepSize):
     def stepper(val, n):
         val *= 1000
@@ -21,10 +22,12 @@ def makeMSStepper(stepSize):
         return (val // (n*f) + 1) * (n*f) / 1000.0
     return stepper
 
+
 def makeSStepper(stepSize):
     def stepper(val, n):
         return (val // (n*stepSize) + 1) * (n*stepSize)
     return stepper
+
 
 def makeMStepper(stepSize):
     def stepper(val, n):
@@ -33,6 +36,7 @@ def makeMStepper(stepSize):
         d = datetime(d.year + base0m / 12, base0m % 12 + 1, 1)
         return (d - datetime(1970, 1, 1)).total_seconds()
     return stepper
+
 
 def makeYStepper(stepSize):
     def stepper(val, n):

@@ -2,6 +2,7 @@ import PyQt5.QtWidgets as qtw
 import sys
 import yaml
 from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QIcon
 import os
 import glob
 import datetime
@@ -15,6 +16,29 @@ class StartMeasDialog(qtw.QDialog):
     def __init__(self, base_path):
         super(StartMeasDialog, self).__init__()
         self.setGeometry(50, 100, 800, qtw.QSizePolicy.Maximum)
+
+        self.date = None        # will fill in once Okay is pressed
+
+        self.formGroupBox = qtw.QGroupBox("Enter Measurement Details")
+        self.bridgeChoices = qtw.QComboBox()
+        self.cryoChoices = qtw.QComboBox()
+        self.purpChoices = qtw.QComboBox()
+        self.chipIDEntry = qtw.QLineEdit()
+        self.sampleEntry = qtw.QLineEdit()
+        self.freqEntry = qtw.QLineEdit()
+        self.calButton = qtw.QPushButton()
+        self.filmThickEntry = qtw.QLineEdit()
+        self.voltEntry = qtw.QLineEdit()
+        self.aveSetting = qtw.QSpinBox()
+        self.dcBiasChoice = qtw.QComboBox()
+        self.dcBiasEntry = qtw.QLineEdit()
+        self.ampEntry = qtw.QLineEdit()
+        self.ljEntry0 = qtw.QLineEdit()
+        self.ljEntry1 = qtw.QLineEdit()
+        self.ljEntry2 = qtw.QLineEdit()
+        self.ljEntry3 = qtw.QLineEdit()
+
+        self.setWindowIcon(QIcon(os.path.join('icons', 'app.png')))
 
         self.base_path = base_path
         self.cal_path = os.path.join(base_path, '1-Calibrations')
@@ -55,84 +79,65 @@ class StartMeasDialog(qtw.QDialog):
         self.setWindowTitle("Measurement Details")
 
     def createFormGroupBox(self):
-        self.formGroupBox = qtw.QGroupBox("Enter Measurement Details")
         layout = qtw.QFormLayout()
 
         """Select Bridge being used"""
-        self.bridgeChoices = qtw.QComboBox()
-        self.bridgeChoices.addItems(["Andeen-Hagerling 2500A", "HP"])
+        self.bridgeChoices.addItems(["Andeen-Hagerling 2500A", "HP 4275A"])
         bridge_setting = {'ah': 0, 'hp': 1}
         self.bridgeChoices.setCurrentIndex(bridge_setting[self.bridge_choice])
 
         """Select Cryostat Being Used"""
-        self.cryoChoices = qtw.QComboBox()
         self.cryoChoices.addItems(["DesertCryo-LN", "DesertCryo-He", "Frankenstein", "Dan's"])
         cryo_setting = {'Desert-LN': 0, 'Desert-He': 1, '40K': 2, '4K': 3}
         self.cryoChoices.setCurrentIndex(cryo_setting[self.cryo_choice])
 
         """Select Purpose of Measurement"""
-        self.purpChoices = qtw.QComboBox()
         self.purpChoices.addItems(["Calibration", "Powder Sample", "Film Sample", "Other"])
         purp_setting = {'cal': 0, 'powder': 1, 'film': 2, 'other': 3}
         self.purpChoices.setCurrentIndex(purp_setting[self.purp_choice])
 
         """Specify Chip iD"""
-        self.chipIDEntry = qtw.QLineEdit()
         self.chipIDEntry.setText(self.chipID_entry)
 
         """Specify Sample"""
-        self.sampleEntry = qtw.QLineEdit()
         self.sampleEntry.setText(self.sample_entry)
 
         """Specify Frequencies"""
-        self.freqEntry = qtw.QLineEdit()
         self.freqEntry.setText(str(self.freq_entry).strip('[').strip(']'))
 
         """Calibration File"""
-        self.calButton = qtw.QPushButton()
         self.calButton.clicked.connect(self.findCal)
         self.calButton.setText(self.cal_entry)
 
         """Film Thickness"""
-        self.filmThickEntry = qtw.QLineEdit()
         self.filmThickEntry.setText(str(self.thick_entry))
 
         """Measurement Voltage"""
-        self.voltEntry = qtw.QLineEdit()
         self.voltEntry.setText(str(self.volt_entry))
 
         """Averaging"""
-        self.aveSetting = qtw.QSpinBox()
         self.aveSetting.setValue(int(self.ave_entry))
 
         """DC Bias Setting"""
-        self.dcBiasChoice = qtw.QComboBox()
         self.dcBiasChoice.addItems(["Off", "I-Low", "I-High"])
         dc_setting = {'off': 0, 'low': 1, 'high': 2}
         self.dcBiasChoice.setCurrentIndex(dc_setting[self.dcBias_choice])
 
         """DC Bias Value"""
-        self.dcBiasEntry = qtw.QLineEdit()
         self.dcBiasEntry.setText(str(self.dcBias_entry))
 
         """Amplifier"""
-        self.ampEntry = qtw.QLineEdit()
         self.ampEntry.setText(str(self.amp_entry))
 
         """Labjack Channels"""
-        self.ljEntry0 = qtw.QLineEdit()
         self.ljEntry0.setText(self.lj_entry[0])
-        self.ljEntry1 = qtw.QLineEdit()
         self.ljEntry1.setText(self.lj_entry[1])
-        self.ljEntry2 = qtw.QLineEdit()
         self.ljEntry2.setText(self.lj_entry[2])
-        self.ljEntry3 = qtw.QLineEdit()
         self.ljEntry3.setText(self.lj_entry[3])
 
         """Comments"""
         self.commentEntry = qtw.QLineEdit()
         self.commentEntry.setText(self.comment_entry)
-
 
         labels = [qtw.QLabel("Bridge:"),
                   qtw.QLabel("Cryostat:"),
