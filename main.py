@@ -14,6 +14,8 @@ class App(qtw.QMainWindow):
         self.lj_chs = []  # will be used later
         self.path = self.base_path  # will be added on to later
 
+        self.force_quit = True      # will turn false if quit properly
+
         """WINDOW PROPERTIES"""
         self.setWindowTitle('Dielectric Spectroscopy')
         self.left = 10
@@ -21,7 +23,6 @@ class App(qtw.QMainWindow):
         self.width = 1000
         self.height = 800
 
-        self.setWindowFlag(qtc.Qt.WindowCloseButtonHint, False)
         self.setWindowIcon(QIcon(os.path.join('icons', 'app.png')))
 
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -73,13 +74,18 @@ class App(qtw.QMainWindow):
         self.show()
 
     def quit(self):
+        if self.tabs.tabMeas.running:
+            self.tabs.tabMeas.stopData()
         exitQ = qtw.QMessageBox.question(self, 'Exiting', 'Are you sure you would like to quit?',
                                          qtw.QMessageBox.Yes | qtw.QMessageBox.Cancel, qtw. QMessageBox.Cancel)
         if exitQ == qtw.QMessageBox.Yes:
+            self.force_quit = False
             print('Exiting')
-            if self.tabs.tabMeas.running:
-                self.tabs.tabMeas.stopData()
             self.close()
+
+    def closeEvent(self, event):
+        if self.force_quit:
+            self.quit()
 
 
 if __name__ == '__main__':

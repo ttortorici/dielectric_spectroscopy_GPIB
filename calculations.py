@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import special
 from scipy import optimize
+import os
+import csv
 
 eps0 = 8.85e-6  # electric constant in nF/um
 epsS = 3.9      # relative dielectric constant of silica
@@ -52,4 +54,30 @@ def sinhpi4(x, h):
     return np.sinh(np.pi * x / (4 * h))
 
 
+def load_calibration(path):
+    cal_data = np.loadtxt(os.path.join(path), comments='#', delimiter=',', skiprows=3)
+    with open(path) as f:
+        reader = csv.reader(f, delimiter=',')
+        for row in reader:
+            if len(row) > 1:        # this will grab the first line with the labels
+                labels = row
+                break
+    Tind = []       # indexes for temperatures
+    Cind = []       # indexes for capacitance
+    Dind = []       # indexes for loss tangent
 
+    for ii, label in enumerate(labels):
+        if 'temperature' in label.lower() and 'B' not in label:
+            Tind.append(ii)
+        elif 'capacitance' in label.lower():
+            Cind.append(ii)
+        elif 'loss tangent' in label.lower():
+            Dind.append(ii)
+
+    Cfit = [0] * len(Tind)
+    Dfit = [0] * len(Tind)
+    for ii in range(Cfit):
+        Cfit[ii] = np.polyfit(cal_data[:, Tind[ii]], cal_data[:, Cind[ii]], 2)
+        Dfit[ii] = np.polyfit(cal_data[:, Tind[ii]], cal_data[:, Dind[ii]], 1)
+
+    return Cfit, Dfit

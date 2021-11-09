@@ -221,10 +221,19 @@ class StartMeasDialog(qtw.QDialog):
 
         self.chipID_entry = self.chipIDEntry.text()
         self.sample_entry = self.sampleEntry.text()
-        self.freq_entry = [float(freq) for freq in self.freqEntry.text().split(',')]
+
+        unsorted_freq_entry = [float(freq) for freq in self.freqEntry.text().split(',')]
+        self.freq_entry = sorted(unsorted_freq_entry)[::-1]
+        if len(self.frequencies) == 0:
+            raise IOError('Invalid frequency input')
+
         self.cal_entry = self.calButton.text()
         self.thick_entry = float(self.filmThickEntry.text())
+
         self.volt_entry = float(self.voltEntry.text())
+        if self.volt_entry > 15.:
+            self.volt_entry = 15.
+
         self.ave_entry = int(self.aveSetting.text())
 
         if self.dcBiasChoice.currentIndex() == 0:
@@ -258,6 +267,8 @@ class StartMeasDialog(qtw.QDialog):
         save_presets = os.path.join(self.base_path, 'presets', save_name)
         with open(save_presets, 'w') as f:
             yaml.dump(presets, f, default_flow_style=False)
+
+        self.cal_entry = os.path.join(self.cal_path, self.cal)
 
         self.accept()
 

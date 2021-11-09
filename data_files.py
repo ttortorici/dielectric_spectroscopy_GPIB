@@ -66,6 +66,47 @@ class DataFile:
                     self.labels.extend(['LJ {} [V] ({})'.format(ch, f), 'LJ StdDev {} [V] ({})'.format(ch, f)])
         self.write_row(self.labels_to_write)
 
+    def measure_at_freq(self, frequency, amp=1, offset=0):
+        """Just measure at one frequency"""
+        print('Starting measurement')
+
+        self.bridge.set_freq(frequency)
+        print(f'Frequency set to {frequency} Hz')
+
+        if self.bridge.abbr == 'HP':
+            time.sleep(1)
+        bridge_data = self.bridge.read_front_panel()
+        while bridge_data[-1] == -1:
+            bridge_data = self.bridge.read_front_panel()
+        print('read front panel')
+
+        temperatures = [self.ls.read_temp('A')]
+        if 'desert' in self.cryo.lower():
+            temperatures.append(self.ls.read_temp('B'))
+        print('read temperatures')
+
+        """Write time and begin data to write"""
+        data_to_return = [time.time()]
+
+        """Write Temperatures"""
+        for temperature in temperatures:
+            data_to_return.append(temperature)
+
+        """Write Bridge Data"""
+        data_to_return.extend(bridge_data[1:])      # cap, loss, volt (skipping freq)
+
+        """Write LabJack Data if using it"""
+        if type(self.lj_chs) == list:
+            if len(self.lj_chs) > 0:
+                lj_val, lj_err = list(np.array(list(chain(*self.lj.read_voltages_ave(self.lj_chs)))) * amp)
+                data_to_return.extend([lj_val + offset, lj_err])
+
+        """Write frequency measured at"""
+        data_to_return.append(bridge_data[0])
+
+        print(data_to_return)
+        return data_to_return
+
 
     def sweep_freq(self, amp=1, offset=0):
         """Sweep a set of frequencies"""
