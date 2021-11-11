@@ -1,13 +1,8 @@
-import csv
 import time
-import os
-from itertools import chain
 import numpy as np
-import select
 import platform
 import socket
 import os
-from builtins import input
 import sys
 import get
 
@@ -419,7 +414,7 @@ class LakeShore(Instrument):
 
     def read_ramp_status(self, loop=1):
         """Kelvin per minute"""
-        return bool(self.query('RAMPST? {}'.format(loop)))
+        return bool(int(self.query('RAMPST? {}'.format(loop))))
 
     def read_temp(self, ch='A', units='K'):
         """Get temperature from specified channel. Pass 'C' for units for Celsius"""

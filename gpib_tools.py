@@ -25,9 +25,15 @@ class GPIBcomm:
         if bridge.lower() == 'ah':
             ah = True
             hp = False
-        else:
+            fake = False
+        elif bridge.lower() == 'hp':
             ah = False
             hp = True
+            fake = False
+        else:
+            ah = False
+            hp = False
+            fake = True
         if ah:
             self.bridgeAH = GPIB.dev(addr_ah2700, get.serialport(), 'AH2700A')
             self.bridgeAH.dev.timeout = 15000
@@ -54,7 +60,10 @@ class GPIBcomm:
             print('imported HP4275')
         else:
             self.bridgeHP = None
-        if cryo == 'desert':
+        if fake:
+            self.bridgeAH = GPIB.fake_bridge()
+
+        if 'desert' in cryo.lower():
             self.ls = GPIB.dev(addr_ls340, get.serialport(), 'LS340')
             print('imported LS340')
         elif cryo == '40K':
@@ -62,6 +71,8 @@ class GPIBcomm:
             print('imported LS331')
         elif cryo == '4K':
             self.ls = None
+        elif cryo == 'fake':
+            self.ls = GPIB.fake_lakeshore()
         if lj:
             self.lj = LabJack.LabJack()
             print('imported LabJack')

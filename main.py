@@ -20,7 +20,7 @@ class App(qtw.QMainWindow):
         self.setWindowTitle('Dielectric Spectroscopy')
         self.left = 10
         self.top = 35
-        self.width = 1000
+        self.width = 1200
         self.height = 800
 
         self.setWindowIcon(QIcon(os.path.join('icons', 'app.png')))

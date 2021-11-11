@@ -82,13 +82,13 @@ class StartMeasDialog(qtw.QDialog):
         layout = qtw.QFormLayout()
 
         """Select Bridge being used"""
-        self.bridgeChoices.addItems(["Andeen-Hagerling 2500A", "HP 4275A"])
-        bridge_setting = {'ah': 0, 'hp': 1}
+        self.bridgeChoices.addItems(["Andeen-Hagerling 2500A", "HP 4275A", "Fake Bridge"])
+        bridge_setting = {'ah': 0, 'hp': 1, 'fake': 2}
         self.bridgeChoices.setCurrentIndex(bridge_setting[self.bridge_choice])
 
         """Select Cryostat Being Used"""
-        self.cryoChoices.addItems(["DesertCryo-LN", "DesertCryo-He", "Frankenstein", "Dan's"])
-        cryo_setting = {'Desert-LN': 0, 'Desert-He': 1, '40K': 2, '4K': 3}
+        self.cryoChoices.addItems(["DesertCryo-LN", "DesertCryo-He", "Frankenstein", "Dan's", "Fake Cryo"])
+        cryo_setting = {'Desert-LN': 0, 'Desert-He': 1, '40K': 2, '4K': 3, 'fake': 4}
         self.cryoChoices.setCurrentIndex(cryo_setting[self.cryo_choice])
 
         """Select Purpose of Measurement"""
@@ -198,8 +198,10 @@ class StartMeasDialog(qtw.QDialog):
         self.date = datetime.datetime.fromtimestamp(time.time())
         if self.bridgeChoices.currentIndex() == 0:
             self.bridge_choice = 'ah'
-        else:
+        elif self.bridgeChoices.currentIndex() == 1:
             self.bridge_choice = 'hp'
+        elif self.bridgeChoices.currentIndex() == 2:
+            self.bridge_choice = 'fake'
 
         if self.cryoChoices.currentIndex() == 0:
             self.cryo_choice = 'Desert-LN'
@@ -207,8 +209,10 @@ class StartMeasDialog(qtw.QDialog):
             self.cryo_choice = 'Desert-He'
         elif self.cryoChoices.currentIndex() == 2:
             self.cryo_choice = '40K'
-        else:
+        elif self.cryoChoices.currentIndex() == 3:
             self.cryo_choice = '4K'
+        elif self.cryoChoices.currentIndex() == 4:
+            self.cryo_choice = 'fake'
 
         if self.purpChoices.currentIndex() == 0:
             self.purp_choice = 'cal'

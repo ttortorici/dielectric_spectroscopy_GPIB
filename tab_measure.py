@@ -17,29 +17,32 @@ import calculations as calc
 print_lock = threading.Lock()
 
 
-class WriteThread(QThread):
+class WriteThread(qtw.QWidget):
     output = pyqtSignal(str)
 
     def write(self, msg):
         self.output.emit(msg)
 
 
-class ControllerDataThread(QThread):
+class ControllerDataThread(qtw.QWidget):
     output = pyqtSignal(float, float, float, bool)
 
     def send(self, temperature, heater_output, setpoint, ramp_status):
         self.output.emit(temperature, heater_output, setpoint, ramp_status)
 
 
-class PlotterThread(QThread):
+class PlotterThread(qtw.QWidget):
     output = pyqtSignal()
     initialize = pyqtSignal(str)
+    # done = pyqtSignal()
 
     def updatePlots(self):
         self.output.emit()
 
     def initPlots(self, filename):
         self.initialize.emit(filename)
+        # self.signals.signal_done_processing.emit()
+
 
 
 class MeasureTab(qtw.QWidget):
@@ -50,6 +53,7 @@ class MeasureTab(qtw.QWidget):
         self.parent = parent
         self.base_path = base_path
 
+        self.data = None                # will be object containing everything related to taking and saving data
         self.data_path = ''             # where the data file will be saved
         self.data_filename = ''         # name of the data file
         self.server = None              # will be the socket
@@ -244,7 +248,6 @@ class MeasureTab(qtw.QWidget):
 
         """Let Plotter know where the file is"""
         # self.parent.tabPlot.initialize_plotter(os.path.join(self.data_path, self.data_filename))
-        self.update_plots.initPlots(os.path.join(self.data_path, self.data_filename))
         if self.dialog.dcBias_entry:
             if abs(self.dialog.dcBias_entry) > 15:
                 step = 10 * np.sign(self.dialog.dcBias_entry)
@@ -255,7 +258,7 @@ class MeasureTab(qtw.QWidget):
             else:
                 print('setting dc voltage to %d' % self.dialog.dcBias_entry)
                 data.lj.set_dc_voltage2(self.dialog.dcBias_entry, amp=self.dialog.amp_entry)
-
+        self.update_plots.initPlots(os.path.join(self.data_path, self.data_filename))
         if 'desert' in self.dialog.cryo_choice.lower():
             units = ['s', 'K', 'K', 'pF', '', 'V', 'Hz']
             expected_lens = [22, 6, 6, 8, 8, 2, 4]
@@ -265,7 +268,7 @@ class MeasureTab(qtw.QWidget):
         while self.running:
             while not self.paused:
                 data_to_write = []
-                for ii, frequency in enumerate(self.dialog.freq_entry):
+                for ii, frequency in enumerate(self.dialog.freq_entry[::-1]):
                     data_at_f = data.measure_at_freq(frequency)
 
                     msgout = ''
@@ -373,6 +376,7 @@ class MeasureTab(qtw.QWidget):
         self.update_controller_thread = ControllerDataThread()
         self.update_controller_thread.output.connect(self.parent.tabCont.update_values)
         self.update_plots = PlotterThread()
+        # self.update_plots.finished.connect(self.continue_after_plots_init)
         self.update_plots.output.connect(self.parent.tabPlot.updatePlots)
         self.update_plots.initialize.connect(self.parent.tabPlot.initialize_plotter)
 

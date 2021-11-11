@@ -6,7 +6,7 @@ from calculations import geometric_capacitance
 
 class DataFile:
 
-    cryo_to_ls = {'DESERT-LN': 340, 'DESERT-HE': 340, '40K': 331, '4K': None}
+    cryo_to_ls = {'DESERT-LN': 340, 'DESERT-HE': 340, '40K': 331, '4K': None, 'FAKE': 331}
 
     def __init__(self, path, filename, port, unique_freqs, bridge='AH', cryo='40K', comment='', lj_chs=[]):
         """Create data file, and instances of the bridge and Lakeshore for communication"""
@@ -19,8 +19,8 @@ class DataFile:
         self.write_row("# This data file was created on {}".format(time.ctime(time.time())))
         self.write_row('# {}'.format(comment))
 
-        if bridge.upper()[0:2] == 'AH':
-           self.bridge = AH2700A(port)
+        if bridge.upper()[0:2] == 'AH' or bridge == 'fake':
+            self.bridge = AH2700A(port)
         elif bridge.upper()[0:2] == 'HP':
             self.bridge = HP4275A(port)
         self.cryo = cryo.upper()
@@ -42,7 +42,7 @@ class DataFile:
     def set_labels(self):
         """Exclude LabJack (for now) and frequency"""
         self.labels = ['Time [s]']
-        if self.cryo == '40K':
+        if self.cryo == '40K' or self.cryo.upper() == 'FAKE':
             self.labels.append('Temperature [K]')
         else:
             self.labels.extend(['A Temperature [K]', 'B Temperature [K]'])

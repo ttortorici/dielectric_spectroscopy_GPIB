@@ -108,6 +108,6 @@ class ControlTab(qtw.QWidget):
     def update_values(self, temperature, heater, setpoint, ramp):
         print(temperature)
         self.tempValue.setText('%.2f K' % temperature)
-        self.heaterValue.setText(f'{int(heater * 100)} %')
+        self.heaterValue.setText(f'{heater} %')
         self.setpointValue.setText('%.2f K' % setpoint)
         self.rampStatus.setText('On' if ramp else 'Off')
