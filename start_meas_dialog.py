@@ -10,9 +10,6 @@ import time
 
 
 class StartMeasDialog(qtw.QDialog):
-    # NumGridRows = 3
-    # NumButtons = 4
-
     def __init__(self, base_path):
         super(StartMeasDialog, self).__init__()
         self.setGeometry(50, 100, 800, qtw.QSizePolicy.Maximum)

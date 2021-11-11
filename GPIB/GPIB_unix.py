@@ -1,5 +1,7 @@
 import serial
 import time
+import sys
+import os.path
 
 
 RQS = (1 << 11)

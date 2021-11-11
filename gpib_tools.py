@@ -79,8 +79,8 @@ class GPIBcomm:
         else:
             self.lj = None
 
-        if not win:
-            self.ls.meter.write('++eot_enable')
+        # if not win:
+        #     self.ls.meter.write('++eot_enable')
 
     def parse(self, msg):
         """msg should be INSTRUMENT_NAME::COMMAND, and if COMMAND is WR or WRITE, then

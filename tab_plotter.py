@@ -5,6 +5,7 @@ from start_meas_dialog import StartMeasDialog
 import numpy as np
 import os
 import sys
+import time
 import pyqtgraph as pg
 import numpy as np
 import Plotting_scripts.DateAxisItem as DateAxisItem
@@ -155,6 +156,8 @@ class PlotterTab(qtw.QWidget):
 
         self.updateViews()
         self.plot_Cvt.getViewBox().sigResized.connect(self.updateViews)
+
+        self.plot_Tvt.setXRange(time.time(), time.time() + 360, padding=0)
         print('done')
 
     def updateViews(self):
