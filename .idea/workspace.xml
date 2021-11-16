@@ -7,10 +7,14 @@
     <list default="true" id="c3e79c76-0c8c-448a-a1c3-f72fb78bec2d" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/GPIB/prologix_ex.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< Updated upstream
       <change beforePath="$PROJECT_DIR$/GPIB/GPIB_unix.py" beforeDir="false" afterPath="$PROJECT_DIR$/GPIB/GPIB_unix.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gpib_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/gpib_tools.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/start_meas_dialog.py" beforeDir="false" afterPath="$PROJECT_DIR$/start_meas_dialog.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tab_plotter.py" beforeDir="false" afterPath="$PROJECT_DIR$/tab_plotter.py" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/tab_measure.py" beforeDir="false" afterPath="$PROJECT_DIR$/tab_measure.py" afterDir="false" />
+>>>>>>> Stashed changes
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,7 +47,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../GIWAXS" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RunManager">
