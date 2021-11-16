@@ -34,15 +34,12 @@ class ControllerDataThread(qtw.QWidget):
 class PlotterThread(qtw.QWidget):
     output = pyqtSignal()
     initialize = pyqtSignal(str)
-    # done = pyqtSignal()
 
     def updatePlots(self):
         self.output.emit()
 
     def initPlots(self, filename):
         self.initialize.emit(filename)
-        # self.signals.signal_done_processing.emit()
-
 
 
 class MeasureTab(qtw.QWidget):
