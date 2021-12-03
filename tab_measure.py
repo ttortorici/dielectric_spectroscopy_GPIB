@@ -26,9 +26,13 @@ class WriteThread(qtw.QWidget):
 
 class ControllerDataThread(qtw.QWidget):
     output = pyqtSignal(float, float, float, bool)
+    initialize = pyqtSignal()
 
     def send(self, temperature, heater_output, setpoint, ramp_status):
         self.output.emit(temperature, heater_output, setpoint, ramp_status)
+
+    def initController(self):
+        self.initialize.emit()
 
 
 class PlotterThread(qtw.QWidget):
@@ -218,30 +222,30 @@ class MeasureTab(qtw.QWidget):
             comment_line += f'Bare Capacitance of {bareC_RT} pF at {temp_bareC} K and {freq_bareC} Hz'
             comment_line += f' was used to produce the gapW size of {gapW} um'
 
-            data = data_files.DielectricConstant(path=self.data_path,
-                                                 filename=self.data_filename,
-                                                 port=MeasureTab.port,
-                                                 unique_freqs=self.dialog.freq_entry,
-                                                 film_thickness=self.dialog.thick_entry,
-                                                 gap_width=gapW, bare_Cfit=fitC, bare_Lfit=fitD,
-                                                 bridge=self.dialog.bridge_choice,
-                                                 cryo=self.dialog.cryo_choice,
-                                                 comment=comment_line,
-                                                 lj_chs=lj_chs)
+            self.data = data_files.DielectricConstant(path=self.data_path,
+                                                      filename=self.data_filename,
+                                                      port=MeasureTab.port,
+                                                      unique_freqs=self.dialog.freq_entry,
+                                                      film_thickness=self.dialog.thick_entry,
+                                                      gap_width=gapW, bare_Cfit=fitC, bare_Lfit=fitD,
+                                                      bridge=self.dialog.bridge_choice,
+                                                      cryo=self.dialog.cryo_choice,
+                                                      comment=comment_line,
+                                                      lj_chs=lj_chs)
         else:
-            data = data_files.DataFile(path=self.data_path,
-                                       filename=self.data_filename,
-                                       port=MeasureTab.port,
-                                       unique_freqs=self.dialog.freq_entry,
-                                       bridge=self.dialog.bridge_choice,
-                                       cryo=self.dialog.cryo_choice,
-                                       comment=comment_line,
-                                       lj_chs=lj_chs)
+            self.data = data_files.DataFile(path=self.data_path,
+                                            filename=self.data_filename,
+                                            port=MeasureTab.port,
+                                            unique_freqs=self.dialog.freq_entry,
+                                            bridge=self.dialog.bridge_choice,
+                                            cryo=self.dialog.cryo_choice,
+                                            comment=comment_line,
+                                            lj_chs=lj_chs)
 
         print('created datafile')
-        data.bridge.dcbias(self.dialog.dcBias_choice)
-        data.bridge.set_voltage(self.dialog.volt_entry)
-        data.bridge.set_ave(self.dialog.ave_entry)
+        self.data.bridge.dcbias(self.dialog.dcBias_choice)
+        self.data.bridge.set_voltage(self.dialog.volt_entry)
+        self.data.bridge.set_ave(self.dialog.ave_entry)
 
         """Let Plotter know where the file is"""
         # self.parent.tabPlot.initialize_plotter(os.path.join(self.data_path, self.data_filename))
@@ -250,11 +254,11 @@ class MeasureTab(qtw.QWidget):
                 step = 10 * np.sign(self.dialog.dcBias_entry)
                 for volt in np.arange(step, self.dialog.dcBias_entry + step, step):
                     print('setting dc voltage to %d' % volt)
-                    data.lj.set_dc_voltage2(volt, amp=self.dialog.amp_entry)
+                    self.data.lj.set_dc_voltage2(volt, amp=self.dialog.amp_entry)
                     time.sleep(2)
             else:
                 print('setting dc voltage to %d' % self.dialog.dcBias_entry)
-                data.lj.set_dc_voltage2(self.dialog.dcBias_entry, amp=self.dialog.amp_entry)
+                self.data.lj.set_dc_voltage2(self.dialog.dcBias_entry, amp=self.dialog.amp_entry)
         self.update_plots.initPlots(os.path.join(self.data_path, self.data_filename))
         if 'desert' in self.dialog.cryo_choice.lower():
             units = ['s', 'K', 'K', 'pF', '', 'V', 'Hz']
@@ -266,7 +270,7 @@ class MeasureTab(qtw.QWidget):
             while not self.paused:
                 data_to_write = []
                 for ii, frequency in enumerate(self.dialog.freq_entry[::-1]):
-                    data_at_f = data.measure_at_freq(frequency)
+                    data_at_f = self.data.measure_at_freq(frequency)
 
                     msgout = ''
                     for item, unit, exp_len in zip(data_at_f, units, expected_lens):
@@ -279,12 +283,12 @@ class MeasureTab(qtw.QWidget):
                     self.write(msgout)
 
                     temperature = data_at_f[1]
-                    heater_out = data.ls.read_heater()
-                    setpoint = data.ls.read_setpoint(loop=1)
-                    ramp_bool = data.ls.read_ramp_status(loop=1)
+                    heater_out = self.data.ls.read_heater()
+                    setpoint = self.data.ls.read_setpoint(loop=1)
+                    ramp_bool = self.data.ls.read_ramp_status(loop=1)
                     self.update_controller_thread.send(temperature, heater_out, setpoint, ramp_bool)
                     data_to_write.extend(data_at_f)
-                data.write_row(data_to_write)
+                self.data.write_row(data_to_write)
                 self.update_plots.updatePlots()
 
     @pyqtSlot()
@@ -372,6 +376,7 @@ class MeasureTab(qtw.QWidget):
     def init_controller_updates(self):
         self.update_controller_thread = ControllerDataThread()
         self.update_controller_thread.output.connect(self.parent.tabCont.update_values)
+        self.update_controller_thread.initialize.connect(self.parent.tabCont.initialize)
         self.update_plots = PlotterThread()
         # self.update_plots.finished.connect(self.continue_after_plots_init)
         self.update_plots.output.connect(self.parent.tabPlot.updatePlots)

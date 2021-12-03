@@ -376,6 +376,7 @@ class LakeShore(Instrument):
     def __init__(self, port, inst_num=331):
         super(self.__class__, self).__init__('LS', port)
         """correspond heater power (in Watts) with heater range setting"""
+        self.inst_num = inst_num
         if inst_num == 331:
             self.heater_ranges = [0., 0.5, 5., 50.]
         elif inst_num == 340:

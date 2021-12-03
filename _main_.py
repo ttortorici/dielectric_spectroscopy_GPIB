@@ -16,6 +16,8 @@ class App(qtw.QMainWindow):
 
         self.force_quit = True      # will turn false if quit properly
 
+
+
         """WINDOW PROPERTIES"""
         self.setWindowTitle('Dielectric Spectroscopy')
         self.left = 10

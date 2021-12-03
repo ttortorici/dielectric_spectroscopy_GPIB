@@ -14,6 +14,8 @@ class ControlTab(qtw.QWidget):
         super(qtw.QWidget, self).__init__(parent)
         self.parent = parent
 
+        self.ls = None  # lakeshore class will pull from measure tabs .data class
+
         self.layout = qtw.QVBoxLayout(self)
 
         intro = qtw.QLabel("LakeShore Remote Control")
@@ -25,22 +27,24 @@ class ControlTab(qtw.QWidget):
         labels = ['Model', 'Heater Power Range [W]', 'Ramp Speed [K/min]', 'Setpoint [K]', 'PID']
 
         self.modelChoice = qtw.QComboBox()
-        self.modelChoice.addItems(['LS331', 'LS340'])
+        self.model_choices = ['LS331', 'LS340']
+        self.modelChoice.addItems(self.model_choices)
 
         self.heaterRangeChoice = qtw.QComboBox()
-        self.heaterRangeChoice.addItems(['Off', '500 mW', '5 W'])
+        self.heater_range_choices = ['Off', '500 mW', '5 W']
+        self.heaterRangeChoice.addItems(self.heater_range_choices)
 
         self.rampSpeed = qtw.QSpinBox()
         self.rampSetButton = qtw.QPushButton()
         self.rampSetButton.setText('Apply')
         self.rampSetButton.setFixedWidth(100)
-        # self.rampSetButton.clicked.connect(self.set_ramp_speed)
+        self.rampSetButton.clicked.connect(self.set_ramp_speed)
 
         self.setpointEntry = qtw.QSpinBox()
         self.setpointButton = qtw.QPushButton()
         self.setpointButton.setText('Apply')
         self.setpointButton.setFixedWidth(100)
-        # self.setpointButton.clicked.connect(self.set_setpoint)
+        self.setpointButton.clicked.connect(self.set_setpoint)
 
         self.pValue = qtw.QSpinBox()
         self.iValue = qtw.QSpinBox()
@@ -48,7 +52,7 @@ class ControlTab(qtw.QWidget):
         self.pidButton = qtw.QPushButton()
         self.pidButton.setText('Apply')
         self.pidButton.setFixedWidth(100)
-        # self.pidButton.clicked.connect(self.set_PID)
+        self.pidButton.clicked.connect(self.set_PID)
 
         widgets = [[self.modelChoice],
                    [self.heaterRangeChoice],
@@ -111,3 +115,45 @@ class ControlTab(qtw.QWidget):
         self.heaterValue.setText(f'{heater} %')
         self.setpointValue.setText('%.2f K' % setpoint)
         self.rampStatus.setText('On' if ramp else 'Off')
+
+    def initialize(self):
+        self.ls = self.parent.tabMeas.data.ls
+
+        self.modelChoice.setCurrentIndex(self.model_choices.index(f'LS{self.ls.inst_num}'))
+        hrange = self.ls.read_heater_range()
+        if hrange > 1:
+            hstring = f'{int(hrange)} W'
+        elif not hrange:
+            hstring = 'Off'
+        else:
+            hstring = f'{int(hrange*1000)} mW'
+        self.heaterRangeChoice.setCurrentIndex(self.heater_range_choices.index(hstring))
+        self.rampSpeed.setText(self.ls.read_ramp_speed())
+        self.setpointEntry.setText(self.ls.read_setpoint())
+        pid = self.ls.read_PID()
+        self.pValue.setText(pid[0])
+        self.iValue.setText(pid[1])
+        self.dValue.setText(pid[2])
+
+    @pyqtSlot()
+    def set_heater_range(self):
+        hstring = self.heaterRangeChoice.text()
+        if hstring == 'Off':
+            hrange = 0.
+        elif 'mW' in hstring:
+            hrange = float(hstring.strip('mW'))
+        else:
+            hrange = float(hstring.strip('W'))
+        self.ls.set_heater_range(hrange)
+
+    @pyqtSlot()
+    def set_ramp_speed(self):
+        self.ls.set_ramp_speed(float(self.rampSpeed.text()))
+
+    @pyqtSlot()
+    def set_setpoint(self):
+        self.ls.set_setpoint(float(self.setpointEntry.text()))
+
+    @pyqtSlot()
+    def set_PID(self):
+        self.ls.set_PID(float(self.pValue.text()), float(self.iValue.text(), float(self.dValue.text())))
