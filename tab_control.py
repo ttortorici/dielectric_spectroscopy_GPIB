@@ -3,7 +3,6 @@ from PyQt5.QtCore import pyqtSlot, QRunnable, Qt, QThread, QObject, pyqtSignal
 import PyQt5.QtGui as qtg
 from start_meas_dialog import StartMeasDialog
 import threading
-from _thread import *
 import client_tools
 import socket
 import time
@@ -117,6 +116,7 @@ class ControlTab(qtw.QWidget):
         self.rampStatus.setText('On' if ramp else 'Off')
 
     def initialize(self):
+        print('\n\n initialize received \n\n')
         self.ls = self.parent.tabMeas.data.ls
 
         self.modelChoice.setCurrentIndex(self.model_choices.index(f'LS{self.ls.inst_num}'))
@@ -137,6 +137,10 @@ class ControlTab(qtw.QWidget):
 
     @pyqtSlot()
     def set_heater_range(self):
+        t = threading.Thread(target=self.set_heater_range_thread, args=())
+        t.start()
+
+    def set_heater_range_thread(self):
         hstring = self.heaterRangeChoice.text()
         if hstring == 'Off':
             hrange = 0.
@@ -148,12 +152,24 @@ class ControlTab(qtw.QWidget):
 
     @pyqtSlot()
     def set_ramp_speed(self):
+        t = threading.Thread(target=set_ramp_speed_thread, args=())
+        t.start()
+
+    def set_ramp_speed_thread(self):
         self.ls.set_ramp_speed(float(self.rampSpeed.text()))
 
     @pyqtSlot()
     def set_setpoint(self):
+        t = threading.Thread(target=self.set_setpoint_thread, args=())
+        t.start()
+
+    def set_setpoint_thread(self):
         self.ls.set_setpoint(float(self.setpointEntry.text()))
 
     @pyqtSlot()
     def set_PID(self):
+        t = threading.Thread(target=self.set_PID_thread, args=())
+        t.start()
+
+    def set_PID_thread(self):
         self.ls.set_PID(float(self.pValue.text()), float(self.iValue.text(), float(self.dValue.text())))

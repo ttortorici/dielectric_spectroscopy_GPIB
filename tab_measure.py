@@ -32,6 +32,7 @@ class ControllerDataThread(qtw.QWidget):
         self.output.emit(temperature, heater_output, setpoint, ramp_status)
 
     def initController(self):
+        print('initialize controller')
         self.initialize.emit()
 
 
@@ -246,6 +247,8 @@ class MeasureTab(qtw.QWidget):
         self.data.bridge.dcbias(self.dialog.dcBias_choice)
         self.data.bridge.set_voltage(self.dialog.volt_entry)
         self.data.bridge.set_ave(self.dialog.ave_entry)
+
+        self.update_controller_thread.initController()
 
         """Let Plotter know where the file is"""
         # self.parent.tabPlot.initialize_plotter(os.path.join(self.data_path, self.data_filename))
