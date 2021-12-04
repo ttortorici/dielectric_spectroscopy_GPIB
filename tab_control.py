@@ -1,12 +1,37 @@
 import PyQt5.QtWidgets as qtw
-from PyQt5.QtCore import pyqtSlot, QRunnable, Qt, QThread, QObject, pyqtSignal
+from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
 import PyQt5.QtGui as qtg
-from start_meas_dialog import StartMeasDialog
 import threading
-import client_tools
-import socket
-import time
 
+
+class ButtonHandler(qtw.QWidget):
+
+    heater = pyqtSignal(bool)
+    ramp = pyqtSignal(bool)
+    setpt = pyqtSignal(bool)
+    pid = pyqtSignal(bool)
+
+    def activate(self, label):
+        label = label.lower()
+        if 'heat' in label:
+            self.heater.emit(True)
+        elif 'ramp' in label:
+            self.ramp.emit(True)
+        elif 'set' in label:
+            self.setpt.emit(True)
+        elif 'pid' in label:
+            self.pid.emit(True)
+
+    def deactivate(self, label):
+        label = label.lower()
+        if 'heat' in label:
+            self.heater.emit(False)
+        elif 'ramp' in label:
+            self.ramp.emit(False)
+        elif 'set' in label:
+            self.setpt.emit(False)
+        elif 'pid' in label:
+            self.pid.emit(False)
 
 class ControlTab(qtw.QWidget):
     def __init__(self, parent):
@@ -14,6 +39,11 @@ class ControlTab(qtw.QWidget):
         self.parent = parent
 
         self.ls = None  # lakeshore class will pull from measure tabs .data class
+        self.button_handler = ButtonHandler()
+        self.button_handler.heater.connect(self.heater_button_active)
+        self.button_handler.ramp.connect(self.ramp_button_active)
+        self.button_handler.setpt.connect(self.setpt_button_active)
+        self.button_handler.pid.connect(self.pid_button_active)
 
         self.layout = qtw.QVBoxLayout(self)
 
@@ -32,6 +62,7 @@ class ControlTab(qtw.QWidget):
         self.heaterRangeChoice = qtw.QComboBox()
         self.heater_range_choices = ['Off', '500 mW', '5 W']
         self.heaterRangeChoice.addItems(self.heater_range_choices)
+        self.heaterRangeChoice.activated.connect(self.set_heater_range)
 
         self.rampSpeed = qtw.QSpinBox()
         self.rampSetButton = qtw.QPushButton()
@@ -108,6 +139,7 @@ class ControlTab(qtw.QWidget):
         self.layout.addWidget(live_rowW)
         self.setLayout(self.layout)
 
+    @pyqtSlot()
     def update_values(self, temperature, heater, setpoint, ramp):
         print(temperature)
         self.tempValue.setText('%.2f K' % temperature)
@@ -115,6 +147,7 @@ class ControlTab(qtw.QWidget):
         self.setpointValue.setText('%.2f K' % setpoint)
         self.rampStatus.setText('On' if ramp else 'Off')
 
+    @pyqtSlot()
     def initialize(self):
         print('\n\n initialize received \n\n')
         self.ls = self.parent.tabMeas.data.ls
@@ -128,12 +161,12 @@ class ControlTab(qtw.QWidget):
         else:
             hstring = f'{int(hrange*1000)} mW'
         self.heaterRangeChoice.setCurrentIndex(self.heater_range_choices.index(hstring))
-        self.rampSpeed.setText(self.ls.read_ramp_speed())
-        self.setpointEntry.setText(self.ls.read_setpoint())
+        self.rampSpeed.setValue(self.ls.read_ramp_speed())
+        self.setpointEntry.setValue(self.ls.read_setpoint())
         pid = self.ls.read_PID()
-        self.pValue.setText(pid[0])
-        self.iValue.setText(pid[1])
-        self.dValue.setText(pid[2])
+        self.pValue.setValue(pid[0])
+        self.iValue.setValue(pid[1])
+        self.dValue.setValue(pid[2])
 
     @pyqtSlot()
     def set_heater_range(self):
@@ -141,7 +174,8 @@ class ControlTab(qtw.QWidget):
         t.start()
 
     def set_heater_range_thread(self):
-        hstring = self.heaterRangeChoice.text()
+        self.button_handler.deactivate('heater')
+        hstring = self.heaterRangeChoice.currentText()
         if hstring == 'Off':
             hrange = 0.
         elif 'mW' in hstring:
@@ -149,22 +183,28 @@ class ControlTab(qtw.QWidget):
         else:
             hrange = float(hstring.strip('W'))
         self.ls.set_heater_range(hrange)
+        self.button_handler.activate('heater')
 
     @pyqtSlot()
     def set_ramp_speed(self):
-        t = threading.Thread(target=set_ramp_speed_thread, args=())
+        t = threading.Thread(target=self.set_ramp_speed_thread, args=())
         t.start()
 
     def set_ramp_speed_thread(self):
+        self.button_handler.deactivate('ramp')
         self.ls.set_ramp_speed(float(self.rampSpeed.text()))
+        self.button_handler.activate('ramp')
 
     @pyqtSlot()
     def set_setpoint(self):
         t = threading.Thread(target=self.set_setpoint_thread, args=())
         t.start()
 
+
     def set_setpoint_thread(self):
+        self.button_handler.deactivate('setpoint')
         self.ls.set_setpoint(float(self.setpointEntry.text()))
+        self.button_handler.activate('setpoint')
 
     @pyqtSlot()
     def set_PID(self):
@@ -172,4 +212,22 @@ class ControlTab(qtw.QWidget):
         t.start()
 
     def set_PID_thread(self):
+        self.button_handler.deactivate('pid')
         self.ls.set_PID(float(self.pValue.text()), float(self.iValue.text(), float(self.dValue.text())))
+        self.button_handler.activate('pid')
+
+    @pyqtSlot()
+    def heater_button_active(self, activate):
+        self.heaterRangeChoice.setEnabled(activate)
+
+    @pyqtSlot()
+    def ramp_button_active(self, activate):
+        self.rampSetButton.setEnabled(activate)
+
+    @pyqtSlot()
+    def setpt_button_active(self, activate):
+        self.setpointButton.setEnabled(activate)
+
+    @pyqtSlot()
+    def pid_button_active(self, activate):
+        self.pidButton.setEnabled(activate)

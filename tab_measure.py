@@ -5,7 +5,7 @@ import time
 import datetime
 import numpy as np
 import PyQt5.QtWidgets as qtw
-from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QFont
 from start_meas_dialog import StartMeasDialog
 import client_tools
@@ -123,6 +123,7 @@ class MeasureTab(qtw.QWidget):
     def write(self, text):
         self.write_thread.write(text)
 
+    @pyqtSlot()
     def writeFromThread(self, text):
         self.measureTextStream.append(text)
         self.measureTextStream.verticalScrollBar().setValue(self.measureTextStream.verticalScrollBar().maximum())
