@@ -92,6 +92,7 @@ class PlotterTab(qtw.QWidget):
         self.pensL = [None]
         self.pens2 = [None]
 
+    @pyqtSlot(str)
     def initialize_plotter(self, filename):
         self.filename = filename
         print(self.filename)
@@ -164,42 +165,43 @@ class PlotterTab(qtw.QWidget):
         self.plot_Lvt.setGeometry(self.plot_Cvt.getViewBox().sceneBoundingRect())
         self.plot_Lvt.linkedViewChanged(self.plot_Cvt.getViewBox(), self.plot_Lvt.XAxis)
 
+    @pyqtSlot()
     def updatePlots(self):
         print('UDPATING PLOT')
         data = tools.load_data(self.filename)
-        print(data)
+        # print(data)
 
-        print(self.time_indexes)
-        print(self.cap_indexes)
-        print(self.loss_indexes)
-        print(self.tempA_indexes)
+        # print(self.time_indexes)
+        # print(self.cap_indexes)
+        # print(self.loss_indexes)
+        # print(self.tempA_indexes)
+        if len(data.shape) > 1:
+            ts = [data[:, ind] for ind in self.time_indexes]
+            Ts = [data[:, ind] for ind in self.tempA_indexes]
+            if self.tempB_indexes:
+                TBs = [data[:, ind] for ind in self.tempB_indexes]
+            else:
+                TBs = None
+            Cs = [data[:, ind] for ind in self.cap_indexes]
+            Ls = [data[:, ind] for ind in self.loss_indexes]
 
-        ts = [data[:, ind] for ind in self.time_indexes]
-        Ts = [data[:, ind] for ind in self.tempA_indexes]
-        if self.tempB_indexes:
-            TBs = [data[:, ind] for ind in self.tempB_indexes]
-        else:
-            TBs = None
-        Cs = [data[:, ind] for ind in self.cap_indexes]
-        Ls = [data[:, ind] for ind in self.loss_indexes]
-
-        print(ts)
-        for curve, t, C in zip(self.ct_curves, ts, Cs):
-            curve.setData(x=t, y=C)
-        for curve, t, L in zip(self.lt_curves, ts, Ls):
-            curve.setData(x=t, y=L)
-        for curve, T, C in zip(self.c_curves, Ts, Cs):
-            curve.setData(x=T, y=C)
-        for curve, T, L in zip(self.l_curves, Ts, Ls):
-            curve.setData(x=T, y=L)
-        if TBs:
-            data = np.column_stack((np.concatenate(ts),
-                                    np.concatenate(Ts),
-                                    np.concatenate(TBs)))
-        else:
-            data = np.column_stack((np.concatenate(ts),
-                                    np.concatenate(Ts)))
-        data = np.array(sorted(data, key=lambda row: row[0]))
-        for ii, curve in enumerate(self.T_curves):
-            curve.setData(x=data[:, 0], y=data[:, ii+1])
+            # print(ts)
+            for curve, t, C in zip(self.ct_curves, ts, Cs):
+                curve.setData(x=t, y=C)
+            for curve, t, L in zip(self.lt_curves, ts, Ls):
+                curve.setData(x=t, y=L)
+            for curve, T, C in zip(self.c_curves, Ts, Cs):
+                curve.setData(x=T, y=C)
+            for curve, T, L in zip(self.l_curves, Ts, Ls):
+                curve.setData(x=T, y=L)
+            if TBs:
+                data = np.column_stack((np.concatenate(ts),
+                                        np.concatenate(Ts),
+                                        np.concatenate(TBs)))
+            else:
+                data = np.column_stack((np.concatenate(ts),
+                                        np.concatenate(Ts)))
+            data = np.array(sorted(data, key=lambda row: row[0]))
+            for ii, curve in enumerate(self.T_curves):
+                curve.setData(x=data[:, 0], y=data[:, ii+1])
 

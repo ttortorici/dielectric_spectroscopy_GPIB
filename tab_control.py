@@ -64,13 +64,17 @@ class ControlTab(qtw.QWidget):
         self.heaterRangeChoice.addItems(self.heater_range_choices)
         self.heaterRangeChoice.activated.connect(self.set_heater_range)
 
-        self.rampSpeed = qtw.QSpinBox()
+        self.rampSpeed = qtw.QDoubleSpinBox()
+        self.rampSpeed.setDecimals(1)
+        self.rampSpeed.setMaximum(100.0)
         self.rampSetButton = qtw.QPushButton()
         self.rampSetButton.setText('Apply')
         self.rampSetButton.setFixedWidth(100)
         self.rampSetButton.clicked.connect(self.set_ramp_speed)
 
-        self.setpointEntry = qtw.QSpinBox()
+        self.setpointEntry = qtw.QDoubleSpinBox()
+        self.setpointEntry.setDecimals(2)
+        self.setpointEntry.setMaximum(400.00)
         self.setpointButton = qtw.QPushButton()
         self.setpointButton.setText('Apply')
         self.setpointButton.setFixedWidth(100)
@@ -79,6 +83,12 @@ class ControlTab(qtw.QWidget):
         self.pValue = qtw.QSpinBox()
         self.iValue = qtw.QSpinBox()
         self.dValue = qtw.QSpinBox()
+        self.pValue.setDecimals(1)
+        self.iValue.setDecimals(1)
+        self.dValue.setDecimals(1)
+        self.pValue.setMaximum(1000.0)
+        self.iValue.setMaximum(1000.0)
+        self.dValue.setMaximum(1000.0)
         self.pidButton = qtw.QPushButton()
         self.pidButton.setText('Apply')
         self.pidButton.setFixedWidth(100)
@@ -139,7 +149,7 @@ class ControlTab(qtw.QWidget):
         self.layout.addWidget(live_rowW)
         self.setLayout(self.layout)
 
-    @pyqtSlot()
+    @pyqtSlot(float, float, float, bool)
     def update_values(self, temperature, heater, setpoint, ramp):
         print(temperature)
         self.tempValue.setText('%.2f K' % temperature)
@@ -174,6 +184,7 @@ class ControlTab(qtw.QWidget):
         t.start()
 
     def set_heater_range_thread(self):
+        print('Setting heater')
         self.button_handler.deactivate('heater')
         hstring = self.heaterRangeChoice.currentText()
         if hstring == 'Off':
@@ -183,6 +194,7 @@ class ControlTab(qtw.QWidget):
         else:
             hrange = float(hstring.strip('W'))
         self.ls.set_heater_range(hrange)
+        print('Set heater')
         self.button_handler.activate('heater')
 
     @pyqtSlot()
@@ -216,18 +228,18 @@ class ControlTab(qtw.QWidget):
         self.ls.set_PID(float(self.pValue.text()), float(self.iValue.text(), float(self.dValue.text())))
         self.button_handler.activate('pid')
 
-    @pyqtSlot()
+    @pyqtSlot(bool)
     def heater_button_active(self, activate):
         self.heaterRangeChoice.setEnabled(activate)
 
-    @pyqtSlot()
+    @pyqtSlot(bool)
     def ramp_button_active(self, activate):
         self.rampSetButton.setEnabled(activate)
 
-    @pyqtSlot()
+    @pyqtSlot(bool)
     def setpt_button_active(self, activate):
         self.setpointButton.setEnabled(activate)
 
-    @pyqtSlot()
+    @pyqtSlot(bool)
     def pid_button_active(self, activate):
         self.pidButton.setEnabled(activate)

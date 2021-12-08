@@ -123,7 +123,7 @@ class MeasureTab(qtw.QWidget):
     def write(self, text):
         self.write_thread.write(text)
 
-    @pyqtSlot()
+    @pyqtSlot(str)
     def writeFromThread(self, text):
         self.measureTextStream.append(text)
         self.measureTextStream.verticalScrollBar().setValue(self.measureTextStream.verticalScrollBar().maximum())
