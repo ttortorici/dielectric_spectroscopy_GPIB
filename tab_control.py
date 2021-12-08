@@ -225,7 +225,10 @@ class ControlTab(qtw.QWidget):
 
     def set_PID_thread(self):
         self.button_handler.deactivate('pid')
-        self.ls.set_PID(float(self.pValue.text()), float(self.iValue.text(), float(self.dValue.text())))
+        P = float(self.pValue.text())
+        I = float(self.iValue.text())
+        D = float(self.dValue.text())
+        self.ls.set_PID(P, I, D)
         self.button_handler.activate('pid')
 
     @pyqtSlot(bool)
