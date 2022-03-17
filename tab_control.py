@@ -80,9 +80,9 @@ class ControlTab(qtw.QWidget):
         self.setpointButton.setFixedWidth(100)
         self.setpointButton.clicked.connect(self.set_setpoint)
 
-        self.pValue = qtw.QSpinBox()
-        self.iValue = qtw.QSpinBox()
-        self.dValue = qtw.QSpinBox()
+        self.pValue = qtw.QDoubleSpinBox()
+        self.iValue = qtw.QDoubleSpinBox()
+        self.dValue = qtw.QDoubleSpinBox()
         self.pValue.setDecimals(1)
         self.iValue.setDecimals(1)
         self.dValue.setDecimals(1)
