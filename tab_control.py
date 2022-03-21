@@ -63,22 +63,37 @@ class ControlTab(qtw.QWidget):
         self.heater_range_choices = ['Off', '500 mW', '5 W']
         self.heaterRangeChoice.addItems(self.heater_range_choices)
         self.heaterRangeChoice.activated.connect(self.set_heater_range)
+        self.heaterRangeUpdateButton = qtw.QPushButton()
+        self.heaterRangeUpdateButton.setText('Refresh')
+        self.heaterRangeUpdateButton.setFixedWidth(100)
+        self.heaterRangeUpdateButton.clicked.connect(self.update_heater_range)
 
         self.rampSpeed = qtw.QDoubleSpinBox()
         self.rampSpeed.setDecimals(1)
         self.rampSpeed.setMaximum(100.0)
         self.rampSetButton = qtw.QPushButton()
         self.rampSetButton.setText('Apply')
+        self.rampSetButton.setStyleSheet("QPushButton{font-weight : bold}")
         self.rampSetButton.setFixedWidth(100)
+        self.rampSetButton.setFixedHeight(30)
         self.rampSetButton.clicked.connect(self.set_ramp_speed)
+        self.rampUpdateButton = qtw.QPushButton()
+        self.rampUpdateButton.setText('Refresh')
+        self.rampUpdateButton.setFixedWidth(100)
+        self.rampUpdateButton.clicked.connect(self.update_ramp_speed)
 
         self.setpointEntry = qtw.QDoubleSpinBox()
         self.setpointEntry.setDecimals(2)
         self.setpointEntry.setMaximum(400.00)
         self.setpointButton = qtw.QPushButton()
         self.setpointButton.setText('Apply')
+        self.setpointButton.setStyleSheet("QPushButton{font-weight : bold}")
         self.setpointButton.setFixedWidth(100)
         self.setpointButton.clicked.connect(self.set_setpoint)
+        self.setptUpdateBotton = qtw.QPushButton()
+        self.setptUpdateBotton.setText('Refresh')
+        self.setptUpdateBotton.setFixedWidth(100)
+        self.setptUpdateBotton.clicked.connect(self.update_setpoint)
 
         self.pValue = qtw.QDoubleSpinBox()
         self.iValue = qtw.QDoubleSpinBox()
@@ -91,14 +106,19 @@ class ControlTab(qtw.QWidget):
         self.dValue.setMaximum(1000.0)
         self.pidButton = qtw.QPushButton()
         self.pidButton.setText('Apply')
+        self.pidButton.setStyleSheet("QPushButton{font-weight : bold}")
         self.pidButton.setFixedWidth(100)
         self.pidButton.clicked.connect(self.set_PID)
+        self.pidUpdateButton = qtw.QPushButton()
+        self.pidUpdateButton.setText('Refresh')
+        self.pidUpdateButton.setFixedWidth(100)
+        self.pidUpdateButton.clicked.connect(self.update_PID)
 
         widgets = [[self.modelChoice],
-                   [self.heaterRangeChoice],
-                   [self.rampSpeed, self.rampSetButton],
-                   [self.setpointEntry, self.setpointButton],
-                   [self.pValue, self.iValue, self.dValue, self.pidButton]]
+                   [self.heaterRangeChoice, self.heaterRangeUpdateButton],
+                   [self.rampSpeed, self.rampSetButton, self.rampUpdateButton],
+                   [self.setpointEntry, self.setpointButton, self.setptUpdateBotton],
+                   [self.pValue, self.iValue, self.dValue, self.pidButton, self.pidUpdateButton]]
 
         grid = qtw.QGridLayout()
 
@@ -143,8 +163,9 @@ class ControlTab(qtw.QWidget):
             widget.setStyleSheet("QLineEdit{background : %s;}" % color)
             widget.setAlignment(Qt.AlignRight)
             widget.setFixedWidth(width)
-            live_rowL.addWidget(labelW)
+            # live_rowL.addWidget(labelW)
             live_rowL.addWidget(widget)
+            live_rowL.addWidget(labelW)
         live_rowW.setLayout(live_rowL)
         self.layout.addWidget(live_rowW)
         self.setLayout(self.layout)
@@ -190,12 +211,23 @@ class ControlTab(qtw.QWidget):
         if hstring == 'Off':
             hrange = 0.
         elif 'mW' in hstring:
-            hrange = float(hstring.strip('mW'))
+            hrange = float(hstring.strip('mW')) / 1000.
         else:
             hrange = float(hstring.strip('W'))
         self.ls.set_heater_range(hrange)
         print('Set heater')
         self.button_handler.activate('heater')
+
+    @pyqtSlot()
+    def update_heater_range(self):
+        hrange = self.ls.read_heater_range()
+        if hrange > 1:
+            hstring = f'{int(hrange)} W'
+        elif not hrange:
+            hstring = 'Off'
+        else:
+            hstring = f'{int(hrange * 1000)} mW'
+        self.heaterRangeChoice.setCurrentIndex(self.heater_range_choices.index(hstring))
 
     @pyqtSlot()
     def set_ramp_speed(self):
@@ -208,15 +240,22 @@ class ControlTab(qtw.QWidget):
         self.button_handler.activate('ramp')
 
     @pyqtSlot()
+    def update_ramp_speed(self):
+        self.rampSpeed.setValue(self.ls.read_ramp_speed())
+
+    @pyqtSlot()
     def set_setpoint(self):
         t = threading.Thread(target=self.set_setpoint_thread, args=())
         t.start()
-
 
     def set_setpoint_thread(self):
         self.button_handler.deactivate('setpoint')
         self.ls.set_setpoint(float(self.setpointEntry.text()))
         self.button_handler.activate('setpoint')
+
+    @pyqtSlot()
+    def update_setpoint(self):
+        self.setpointEntry.setValue(self.ls.read_setpoint())
 
     @pyqtSlot()
     def set_PID(self):
@@ -230,6 +269,13 @@ class ControlTab(qtw.QWidget):
         D = float(self.dValue.text())
         self.ls.set_PID(P, I, D)
         self.button_handler.activate('pid')
+
+    @pyqtSlot()
+    def update_PID(self):
+        pid = self.ls.read_PID()
+        self.pValue.setValue(pid[0])
+        self.iValue.setValue(pid[1])
+        self.dValue.setValue(pid[2])
 
     @pyqtSlot(bool)
     def heater_button_active(self, activate):
