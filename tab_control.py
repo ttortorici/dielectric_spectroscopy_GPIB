@@ -6,6 +6,7 @@ import threading
 
 class ButtonHandler(qtw.QWidget):
 
+    ave = pyqtSignal(bool)
     heater = pyqtSignal(bool)
     ramp = pyqtSignal(bool)
     setpt = pyqtSignal(bool)
@@ -13,7 +14,9 @@ class ButtonHandler(qtw.QWidget):
 
     def activate(self, label):
         label = label.lower()
-        if 'heat' in label:
+        if 'ave' in label:
+            self.ave.emit(True)
+        elif 'heat' in label:
             self.heater.emit(True)
         elif 'ramp' in label:
             self.ramp.emit(True)
@@ -24,7 +27,9 @@ class ButtonHandler(qtw.QWidget):
 
     def deactivate(self, label):
         label = label.lower()
-        if 'heat' in label:
+        if 'ave' in label:
+            self.ave.emit(False)
+        elif 'heat' in label:
             self.heater.emit(False)
         elif 'ramp' in label:
             self.ramp.emit(False)
@@ -40,6 +45,7 @@ class ControlTab(qtw.QWidget):
 
         self.ls = None  # lakeshore class will pull from measure tabs .data class
         self.button_handler = ButtonHandler()
+        self.button_handler.ave.connect(self.averaging_button_active)
         self.button_handler.heater.connect(self.heater_button_active)
         self.button_handler.ramp.connect(self.ramp_button_active)
         self.button_handler.setpt.connect(self.setpt_button_active)
@@ -47,10 +53,52 @@ class ControlTab(qtw.QWidget):
 
         self.layout = qtw.QVBoxLayout(self)
 
-        intro = qtw.QLabel("LakeShore Remote Control")
-        intro.setAlignment(Qt.AlignCenter)
-        intro.setFont(qtg.QFont('Arial', 20))
-        self.layout.addWidget(intro)
+        bridge_intro = qtw.QLabel("Bridge Remote Control")
+        bridge_intro.setAlignment(Qt.AlignCenter)
+        bridge_intro.setFont(qtg.QFont('Arial', 20))
+        self.layout.addWidget(bridge_intro)
+
+        labels = ['Averaging']
+
+        self.averagingTime = qtw.QSpinBox()
+        self.averagingTime.setMaximum(15)
+        self.averagingButton = qtw.QPushButton()
+        self.averagingButton.setText('Apply')
+        self.averagingButton.setStyleSheet("QPushButton{font-weight : bold}")
+        self.averagingButton.setFixedWidth(100)
+        self.averagingButton.setFixedHeight(30)
+        self.averagingButton.clicked.connect(self.set_averaging)
+        self.aveUpdateButton = qtw.QPushButton()
+        self.aveUpdateButton.setText('Refresh')
+        self.aveUpdateButton.setFixedWidth(100)
+        self.aveUpdateButton.clicked.connect(self.update_averaging)
+
+        widgets = [[self.averagingTime, self.averagingButton, self. aveUpdateButton]]
+
+        grid = qtw.QGridLayout()
+
+        for ii, label, widget in zip(range(len(labels)), labels, widgets):
+            labelW = qtw.QLabel(label)
+            labelW.setAlignment(Qt.AlignRight | Qt.AlignCenter)
+            # labelW.setSizePolicy(qtg.QSizePolicy.Expanding, qtg.QSizePolicy.Expanding)
+            labelW.setFont(qtg.QFont('Arial', 16))
+            row_widget = qtw.QWidget()
+            row_layout = qtw.QHBoxLayout()
+            for w in widget:
+                if not (isinstance(w, qtw.QComboBox) or isinstance(w, qtw.QPushButton)):
+                    w.setAlignment(Qt.AlignCenter)
+                w.setFont(qtg.QFont('Arial', 16))
+                row_layout.addWidget(w)
+            row_widget.setLayout(row_layout)
+            grid.addWidget(labelW, ii, 0)
+            grid.addWidget(row_widget, ii, 1)
+        self.layout.addLayout(grid)
+
+
+        ls_intro = qtw.QLabel("LakeShore Remote Control")
+        ls_intro.setAlignment(Qt.AlignCenter)
+        ls_intro.setFont(qtg.QFont('Arial', 20))
+        self.layout.addWidget(ls_intro)
 
         """CONTROLS"""
         labels = ['Model', 'Heater Power Range [W]', 'Ramp Speed [K/min]', 'Setpoint [K]', 'PID']
@@ -182,6 +230,9 @@ class ControlTab(qtw.QWidget):
     def initialize(self):
         print('\n\n initialize received \n\n')
         self.ls = self.parent.tabMeas.data.ls
+        self.bridge = self.parent.tabMeas.data.bridge
+
+        self.averagingTime.setValue(self.bridge.read_ave())
 
         self.modelChoice.setCurrentIndex(self.model_choices.index(f'LS{self.ls.inst_num}'))
         hrange = self.ls.read_heater_range()
@@ -198,6 +249,21 @@ class ControlTab(qtw.QWidget):
         self.pValue.setValue(pid[0])
         self.iValue.setValue(pid[1])
         self.dValue.setValue(pid[2])
+
+    @pyqtSlot()
+    def set_averaging(self):
+        t = threading.Thread(target=self.set_averaging_thread, args=())
+        t.start()
+
+    def set_averaging_thread(self):
+        print('Setting Averaging')
+        self.button_handler.deactivate('ave')
+        self.bridge.set_ave(float(self.averagingTime.text()))
+        self.button_handler.activate('ave')
+
+    @pyqtSlot()
+    def update_averaging(self):
+        self.averagingTime.setValue(self.bridge.read_ave())
 
     @pyqtSlot()
     def set_heater_range(self):
@@ -276,6 +342,10 @@ class ControlTab(qtw.QWidget):
         self.pValue.setValue(pid[0])
         self.iValue.setValue(pid[1])
         self.dValue.setValue(pid[2])
+
+    @pyqtSlot(bool)
+    def averaging_button_active(self, activate):
+        self.averagingButton.setEnabled(activate)
 
     @pyqtSlot(bool)
     def heater_button_active(self, activate):
