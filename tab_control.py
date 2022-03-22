@@ -4,8 +4,10 @@ import PyQt5.QtGui as qtg
 import threading
 
 
-class ButtonHandler(qtw.QWidget):
+"""class ButtonHandler(qtw.QWidget):
 
+    send_b = pyqtSignal(bool)
+    send_ls = pyqtSignal(bool)
     ave = pyqtSignal(bool)
     heater = pyqtSignal(bool)
     ramp = pyqtSignal(bool)
@@ -24,6 +26,14 @@ class ButtonHandler(qtw.QWidget):
             self.setpt.emit(True)
         elif 'pid' in label:
             self.pid.emit(True)
+        elif 'send' in label:
+            if 'ls' in label:
+                self.send_ls.emit(True)
+            else:
+                self.send_b.emit(True)
+        elif 'reset' in label:
+            if 'ls' in label:
+                self.reset_ls.emit(True)
 
     def deactivate(self, label):
         label = label.lower()
@@ -37,6 +47,23 @@ class ButtonHandler(qtw.QWidget):
             self.setpt.emit(False)
         elif 'pid' in label:
             self.pid.emit(False)
+        elif 'send' in label:
+            if 'ls' in label:
+                self.send_ls.emit(False)
+            else:
+                self.send_b.emit(False)"""
+
+
+class ButtonHandler(qtw.QWidget):
+
+    active = pyqtSignal(bool)
+
+    def activate(self):
+        self.active.emit(True)
+
+    def deactivate(self):
+        self.active.emit(False)
+
 
 class ControlTab(qtw.QWidget):
     def __init__(self, parent):
@@ -45,11 +72,14 @@ class ControlTab(qtw.QWidget):
 
         self.ls = None  # lakeshore class will pull from measure tabs .data class
         self.button_handler = ButtonHandler()
-        self.button_handler.ave.connect(self.averaging_button_active)
-        self.button_handler.heater.connect(self.heater_button_active)
-        self.button_handler.ramp.connect(self.ramp_button_active)
-        self.button_handler.setpt.connect(self.setpt_button_active)
-        self.button_handler.pid.connect(self.pid_button_active)
+        self.button_handler.active.connect(self.buttons_active)
+        # self.button_handler.ave.connect(self.averaging_button_active)
+        # self.button_handler.heater.connect(self.heater_button_active)
+        # self.button_handler.ramp.connect(self.ramp_button_active)
+        # self.button_handler.setpt.connect(self.setpt_button_active)
+        # self.button_handler.pid.connect(self.pid_button_active)
+        # self.button_handler.send_b.connect(self.send_bridge_button_active)
+        # self.button_handler.send_ls.connect(self.send_ls_button_active)
 
         self.layout = qtw.QVBoxLayout(self)
 
@@ -58,7 +88,7 @@ class ControlTab(qtw.QWidget):
         bridge_intro.setFont(qtg.QFont('Arial', 20))
         self.layout.addWidget(bridge_intro)
 
-        labels = ['Averaging']
+        labels = ['Averaging', 'Send Message']
 
         self.averagingTime = qtw.QSpinBox()
         self.averagingTime.setMaximum(15)
@@ -66,14 +96,27 @@ class ControlTab(qtw.QWidget):
         self.averagingButton.setText('Apply')
         self.averagingButton.setStyleSheet("QPushButton{font-weight : bold}")
         self.averagingButton.setFixedWidth(100)
-        self.averagingButton.setFixedHeight(30)
         self.averagingButton.clicked.connect(self.set_averaging)
         self.aveUpdateButton = qtw.QPushButton()
         self.aveUpdateButton.setText('Refresh')
         self.aveUpdateButton.setFixedWidth(100)
         self.aveUpdateButton.clicked.connect(self.update_averaging)
 
-        widgets = [[self.averagingTime, self.averagingButton, self. aveUpdateButton]]
+        self.sendBridge = qtw.QLineEdit()
+        self.sendBridgeButton = qtw.QPushButton()
+        self.sendBridgeButton.setText('Send')
+        self.sendBridgeButton.setStyleSheet("QPushButton{font-weight : bold}")
+        self.sendBridgeButton.setFixedWidth(100)
+        self.sendBridgeButton.clicked.connect(self.send_bridge)
+        self.sendBridgeReset = qtw.QPushButton()
+        self.sendBridgeReset.setText('Reset')
+        self.sendBridgeReset.setFixedWidth(100)
+        self.sendBridgeReset.clicked.connect(self.send_bridge_reset)
+
+        widgets = [[self.averagingTime, self.averagingButton, self.aveUpdateButton],
+                   [self.sendBridge, self.sendBridgeButton, self.sendBridgeReset]]
+
+        self.buttons = [self.averagingButton, self.aveUpdateButton, self.sendBridgeButton, self.sendBridgeReset]
 
         grid = qtw.QGridLayout()
 
@@ -101,7 +144,7 @@ class ControlTab(qtw.QWidget):
         self.layout.addWidget(ls_intro)
 
         """CONTROLS"""
-        labels = ['Model', 'Heater Power Range [W]', 'Ramp Speed [K/min]', 'Setpoint [K]', 'PID']
+        labels = ['Model', 'Heater Power Range [W]', 'Ramp Speed [K/min]', 'Setpoint [K]', 'PID', 'Send Message']
 
         self.modelChoice = qtw.QComboBox()
         self.model_choices = ['LS331', 'LS340']
@@ -123,7 +166,6 @@ class ControlTab(qtw.QWidget):
         self.rampSetButton.setText('Apply')
         self.rampSetButton.setStyleSheet("QPushButton{font-weight : bold}")
         self.rampSetButton.setFixedWidth(100)
-        self.rampSetButton.setFixedHeight(30)
         self.rampSetButton.clicked.connect(self.set_ramp_speed)
         self.rampUpdateButton = qtw.QPushButton()
         self.rampUpdateButton.setText('Refresh')
@@ -162,11 +204,27 @@ class ControlTab(qtw.QWidget):
         self.pidUpdateButton.setFixedWidth(100)
         self.pidUpdateButton.clicked.connect(self.update_PID)
 
+        self.sendLs = qtw.QLineEdit()
+        self.sendLsButton = qtw.QPushButton()
+        self.sendLsButton.setText('Send')
+        self.sendLsButton.setStyleSheet("QPushButton{font-weight : bold}")
+        self.sendLsButton.setFixedWidth(100)
+        self.sendLsButton.clicked.connect(self.send_ls)
+        self.sendLsReset = qtw.QPushButton()
+        self.sendLsReset.setText('Reset')
+        self.sendLsReset.setFixedWidth(100)
+        self.sendLsReset.clicked.connect(self.send_ls_reset)
+
         widgets = [[self.modelChoice],
                    [self.heaterRangeChoice, self.heaterRangeUpdateButton],
                    [self.rampSpeed, self.rampSetButton, self.rampUpdateButton],
                    [self.setpointEntry, self.setpointButton, self.setptUpdateBotton],
-                   [self.pValue, self.iValue, self.dValue, self.pidButton, self.pidUpdateButton]]
+                   [self.pValue, self.iValue, self.dValue, self.pidButton, self.pidUpdateButton],
+                   [self.sendLs, self.sendLsButton, self.sendLsReset]]
+
+        self.buttons += [self.heaterRangeUpdateButton, self.rampSetButton, self.rampUpdateButton,
+                         self.setpointButton, self.setptUpdateBotton, self.pidButton, self.pidUpdateButton,
+                         self.sendLsButton, self.sendLsReset]
 
         grid = qtw.QGridLayout()
 
@@ -251,19 +309,55 @@ class ControlTab(qtw.QWidget):
         self.dValue.setValue(pid[2])
 
     @pyqtSlot()
+    def send_bridge(self):
+        t = threading.Thread(target=self.send_bridge_thread, args=())
+        t.start()
+
+    def send_bridge_thread(self):
+        self.button_handler.deactivate()
+        msg_out = self.sendBridge.text()
+        if msg_out:
+            msg_back = self.bridge.query(str(msg_out))
+            self.sendBridge.setText(str(msg_back))
+        self.button_handler.activate()
+
+    @pyqtSlot()
+    def send_bridge_reset(self):
+        self.sendBridge.setText('')
+
+    @pyqtSlot()
+    def send_ls(self):
+        t = threading.Thread(target=self.send_ls_thread, args=())
+        t.start()
+
+    def send_ls_thread(self):
+        self.button_handler.deactivate()
+        msg_out = self.sendLs.text()
+        if msg_out:
+            msg_back = self.ls.query(str(msg_out))
+            self.sendLs.setText(str(msg_back))
+        self.button_handler.activate()
+
+    @pyqtSlot()
+    def send_ls_reset(self):
+        self.sendLs.setText('')
+
+    @pyqtSlot()
     def set_averaging(self):
         t = threading.Thread(target=self.set_averaging_thread, args=())
         t.start()
 
     def set_averaging_thread(self):
         print('Setting Averaging')
-        self.button_handler.deactivate('ave')
+        self.button_handler.deactivate()
         self.bridge.set_ave(float(self.averagingTime.text()))
-        self.button_handler.activate('ave')
+        self.button_handler.activate()
 
     @pyqtSlot()
     def update_averaging(self):
+        self.button_handler.deactivate()
         self.averagingTime.setValue(self.bridge.read_ave())
+        self.button_handler.activate()
 
     @pyqtSlot()
     def set_heater_range(self):
@@ -272,7 +366,7 @@ class ControlTab(qtw.QWidget):
 
     def set_heater_range_thread(self):
         print('Setting heater')
-        self.button_handler.deactivate('heater')
+        self.button_handler.deactivate()
         hstring = self.heaterRangeChoice.currentText()
         if hstring == 'Off':
             hrange = 0.
@@ -282,10 +376,11 @@ class ControlTab(qtw.QWidget):
             hrange = float(hstring.strip('W'))
         self.ls.set_heater_range(hrange)
         print('Set heater')
-        self.button_handler.activate('heater')
+        self.button_handler.activate()
 
     @pyqtSlot()
     def update_heater_range(self):
+        self.button_handler.deactivate()
         hrange = self.ls.read_heater_range()
         if hrange > 1:
             hstring = f'{int(hrange)} W'
@@ -294,6 +389,7 @@ class ControlTab(qtw.QWidget):
         else:
             hstring = f'{int(hrange * 1000)} mW'
         self.heaterRangeChoice.setCurrentIndex(self.heater_range_choices.index(hstring))
+        self.button_handler.activate()
 
     @pyqtSlot()
     def set_ramp_speed(self):
@@ -301,13 +397,15 @@ class ControlTab(qtw.QWidget):
         t.start()
 
     def set_ramp_speed_thread(self):
-        self.button_handler.deactivate('ramp')
+        self.button_handler.deactivate()
         self.ls.set_ramp_speed(float(self.rampSpeed.text()))
-        self.button_handler.activate('ramp')
+        self.button_handler.activate()
 
     @pyqtSlot()
     def update_ramp_speed(self):
+        self.button_handler.deactivate()
         self.rampSpeed.setValue(self.ls.read_ramp_speed())
+        self.button_handler.activate()
 
     @pyqtSlot()
     def set_setpoint(self):
@@ -315,13 +413,15 @@ class ControlTab(qtw.QWidget):
         t.start()
 
     def set_setpoint_thread(self):
-        self.button_handler.deactivate('setpoint')
+        self.button_handler.deactivate()
         self.ls.set_setpoint(float(self.setpointEntry.text()))
-        self.button_handler.activate('setpoint')
+        self.button_handler.activate()
 
     @pyqtSlot()
     def update_setpoint(self):
+        self.button_handler.deactivate()
         self.setpointEntry.setValue(self.ls.read_setpoint())
+        self.button_handler.activate()
 
     @pyqtSlot()
     def set_PID(self):
@@ -329,23 +429,31 @@ class ControlTab(qtw.QWidget):
         t.start()
 
     def set_PID_thread(self):
-        self.button_handler.deactivate('pid')
+        self.button_handler.deactivate()
         P = float(self.pValue.text())
         I = float(self.iValue.text())
         D = float(self.dValue.text())
         self.ls.set_PID(P, I, D)
-        self.button_handler.activate('pid')
+        self.button_handler.activate()
 
     @pyqtSlot()
     def update_PID(self):
+        self.button_handler.deactivate()
         pid = self.ls.read_PID()
         self.pValue.setValue(pid[0])
         self.iValue.setValue(pid[1])
         self.dValue.setValue(pid[2])
+        self.button_handler.activate()
 
     @pyqtSlot(bool)
+    def buttons_active(self, activate):
+        for button in self.buttons:
+            button.setEnabled(activate)
+
+    """@pyqtSlot(bool)
     def averaging_button_active(self, activate):
         self.averagingButton.setEnabled(activate)
+        self.aveUpdateButton.setEnabled(activate)
 
     @pyqtSlot(bool)
     def heater_button_active(self, activate):
@@ -362,3 +470,11 @@ class ControlTab(qtw.QWidget):
     @pyqtSlot(bool)
     def pid_button_active(self, activate):
         self.pidButton.setEnabled(activate)
+
+    @pyqtSlot(bool)
+    def send_bridge_button_active(self, activate):
+        self.sendBridgeButton.setEnabled(activate)
+
+    @pyqtSlot(bool)
+    def send_ls_button_active(self, activate):
+        self.sendLsButton.setEnabled(activate)"""
