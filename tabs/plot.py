@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QT
 from PySide6.QtCore import Slot
 import gui.icons as built_in
 from gui.plotting import Plot, RightAxisPlot
+from data_files import CSVFile
 import sys
 import numpy as np
 import pyqtgraph as pg
@@ -129,13 +130,7 @@ class PlotTab(QWidget):
     def load_data(self) -> np.ndarray:
         """Loads data from filename. Will make attempts to load data and if it fails, it will add to the amount of lines
         needed to skip. After the first attempt to load data, it should succeed on the first attempt every time"""
-        data = None
-        while not data:
-            try:
-                data = np.loadtxt(self.filename, comments="#", delimiter=",", skiprows=self.data_line_skip)
-                break
-            except ValueError:
-                self.data_line_skip += 1
+        data, self.data_line_skip = CSVFile.load_data_np(self.filename, self.data_line_skip)
         return data
 
 

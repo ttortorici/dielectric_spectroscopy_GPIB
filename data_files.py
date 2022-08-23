@@ -62,6 +62,44 @@ class CSVFile:
         with open(self.name, "w") as f:
             f.write(f"# This data file was created on {time.ctime(time.time())}\n")
 
+    @staticmethod
+    def load_data_np(filename: str, line_skip: int = 0, attempts: int = 10) -> tuple[np.ndarray, int]:
+        """
+        Load data from a csv file into a numpy array
+        :param filename: path+name of file
+        :param line_skip: will skip this many lines on first attempt. If it fails to load, it will repeat skipping one
+                          more line until it succeeds.
+        :param attempts: maximum times it will try to load
+        :return: numpy array of data, int of how many lines were skipped
+        """
+        data = None
+        lines_skipped = None
+        for skip_amount in range(line_skip, attempts):
+            try:
+                data = np.loadtxt(filename, comments="#", delimiter=",", skiprows=skip_amount)
+                lines_skipped = skip_amount
+                break
+            except ValueError:
+                pass
+        return data, lines_skipped
+
+    @staticmethod
+    def get_labels(filename: str, attempts: int = 10) -> list[str]:
+        """
+        Returns the column labels from the file
+        :param filename: path + name for file
+        :param attempts: how many rows to attempt to read from
+        :return: list of labels
+        """
+        labels = None
+        with open(filename, "r") as f:
+            for attempt in range(attempts):
+                row = f.readline()
+                if row[0] != "#":
+                    labels = [label.strip() for label in row.strip("\n").split(",")]
+                    break
+        return labels
+
 
 class DataFile(CSVFile):
 
@@ -236,56 +274,6 @@ class DielectricConstant(DataFile):
         self.bare_cap_fit = bare_cap_fit
         self.bare_loss_fit = bare_loss_fit
 
-        '''print('Starting frequency sweep measurements')
-        data_to_write = []
-        for ii, freq in enumerate(self.unique_frequencies):
-            self.bridge.set_freq(freq)
-            print('frequency set')
-
-            bridge_data = self.bridge.read_front_panel()
-            if bridge_data == [-1, -1, -1, -1]:
-                bridge_data = self.bridge.read_front_panel()
-            print('read front panel')
-
-            temperatures = [self.ls.read_temp('A')]
-            if self.cryo != '40K':
-                temperatures.append(self.ls.read_temp('B'))
-            print('read temperatures')
-
-            """Write time elapsed"""
-            data_f = [time.time()-self.start_time]
-
-            """Write Temperatures"""
-            for temperature in temperatures:
-                data_f.append(temperature)
-
-            """Write data from bridge"""
-            data_f.extend(bridge_data[1:-1])
-
-            cBare = 0
-            for ii, c in enumerate(self.bare_cap_fit):
-                cBare += c[ii]*temperatures[0]**ii
-            lBare = 0
-            for ii, c in enumerate(self.bare_loss_fit):
-                lBare += c[ii]*temperatures[0]**ii
-
-            reEps = 1 + (bridge_data[1] - cBare) / self.geometric_cap
-            imEps = (bridge_data[2] * bridge_data[1] - lBare * cBare) / self.geometric_cap
-
-            data_f.extend([reEps, imEps])
-
-            """Write LabJack Data if using it"""
-            if type(self.lj_chs) == list:
-                if len(self.lj_chs) > 0:
-                    lj_val, lj_err = list(np.array(list(chain(*self.lj.read_voltages_ave(self.lj_chs)))) * amp)
-                    data_f.extend([lj_val + offset, lj_err])
-
-            """Write frequency measured at"""
-            data_f.append(bridge_data[0])
-
-            print(data_f)
-            data_to_write.extend(data_f)
-        self.write_row(data_to_write)'''
     def measure_at_frequency(self, frequency: int, attempts: int = 3, silent: bool = True):  # , amp=1, offset=0):
         """
         Just measure at one frequency
@@ -308,6 +296,8 @@ class DielectricConstant(DataFile):
             time.sleep(1)
 
         """Make attempts to read from the bridge"""
+        if attempts < 1:
+            attempts = 1
         for _ in range(attempts):
             bridge_data = self.bridge.read_front_panel()
             if bridge_data[-1] != -1:
@@ -322,9 +312,24 @@ class DielectricConstant(DataFile):
         if not silent:
             print('read temperatures')
 
+        bare_capacitance = 0
+        for ii, c in enumerate(self.bare_cap_fit):
+            bare_capacitance += c[ii] * temperatures[0] ** ii
+
+        bare_capacitance = sum
+
+        bare_loss = 0
+        for ii, a in enumerate(self.bare_loss_fit):
+            bare_loss += a[ii] * temperatures[0] ** ii
+
+        re_eps = 1 + (bridge_data[1] - bare_capacitance) / self.geometric_cap
+        im_eps = (bridge_data[2] * bridge_data[1] - bare_loss * bare_capacitance) / self.geometric_cap
+
         data[0] = time.time()
         data[1:3] = temperatures
         data[3:6] = bridge_data[1:]     # capacitance, loss, voltage
-        data[6] = bridge_data[0]        # frequency
+        data[6] = re_eps
+        data[7] = im_eps
+        data[-1] = bridge_data[0]        # frequency
 
         return data
