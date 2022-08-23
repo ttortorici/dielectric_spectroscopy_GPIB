@@ -25,7 +25,7 @@ class App(qtw.QMainWindow):
         self.width = 1200
         self.height = 800
 
-        self.setWindowIcon(QIcon(os.path.join('icons', 'app.png')))
+        self.setWindowIcon(QIcon(os.path.join('custom_icons', 'app.png')))
 
         self.setGeometry(self.left, self.top, self.width, self.height)
 
@@ -39,11 +39,11 @@ class App(qtw.QMainWindow):
         # File
         fileMenu = mainMenu.addMenu('File')
 
-        newDataButton = qtw.QAction(QIcon(os.path.join('icons', 'new_data.png')), 'New Data Set', self)
+        newDataButton = qtw.QAction(QIcon(os.path.join('custom_icons', 'new_data.png')), 'New Data Set', self)
         newDataButton.setShortcut('Ctrl+N')
         newDataButton.triggered.connect(self.tabs.tabMeas.startNewData)
 
-        exitButton = qtw.QAction(QIcon(os.path.join('icons', 'quit.png')), 'Exit', self)
+        exitButton = qtw.QAction(QIcon(os.path.join('custom_icons', 'quit.png')), 'Exit', self)
         exitButton.setShortcut('Ctrl+Q')
         exitButton.triggered.connect(self.quit)
 
@@ -54,17 +54,17 @@ class App(qtw.QMainWindow):
         # Data
         dataMenu = mainMenu.addMenu('Data')
 
-        self.pauseButton = qtw.QAction(QIcon(os.path.join('icons', 'pause.png')), 'Pause', self)
+        self.pauseButton = qtw.QAction(QIcon(os.path.join('custom_icons', 'pause.png')), 'Pause', self)
         self.pauseButton.setShortcut('Ctrl+P')
         self.pauseButton.triggered.connect(self.tabs.tabMeas.pauseData)
         self.pauseButton.setEnabled(False)
 
-        self.continueButton = qtw.QAction(QIcon(os.path.join('icons', 'play.png')), 'Continue', self)
+        self.continueButton = qtw.QAction(QIcon(os.path.join('custom_icons', 'play.png')), 'Continue', self)
         self.continueButton.setShortcut('Ctrl+P')
         self.continueButton.triggered.connect(self.tabs.tabMeas.continueData)
         self.continueButton.setEnabled(False)
 
-        self.stopButton = qtw.QAction(QIcon(os.path.join('icons', 'stop.png')), 'Stop', self)
+        self.stopButton = qtw.QAction(QIcon(os.path.join('custom_icons', 'stop.png')), 'Stop', self)
         self.stopButton.setShortcut('Ctrl+W')
         self.stopButton.triggered.connect(self.tabs.tabMeas.stopData)
         self.stopButton.setEnabled(False)

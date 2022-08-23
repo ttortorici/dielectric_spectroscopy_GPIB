@@ -7,8 +7,7 @@ import numpy as np
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QFont
-from start_meas_dialog import StartMeasDialog
-import client_tools
+from dialogs.new_file import StartMeasDialog
 import data_files
 import gpib_tools as GPIB
 import calculations as calc
@@ -227,9 +226,9 @@ class MeasureTab(qtw.QWidget):
             self.data = data_files.DielectricConstant(path=self.data_path,
                                                       filename=self.data_filename,
                                                       port=MeasureTab.port,
-                                                      unique_freqs=self.dialog.freq_entry,
+                                                      frequencies=self.dialog.freq_entry,
                                                       film_thickness=self.dialog.thick_entry,
-                                                      gap_width=gapW, bare_Cfit=fitC, bare_Lfit=fitD,
+                                                      gap_width=gapW, bare_cap_fit=fitC, bare_loss_fit=fitD,
                                                       bridge=self.dialog.bridge_choice,
                                                       cryo=self.dialog.cryo_choice,
                                                       comment=comment_line,
@@ -238,7 +237,7 @@ class MeasureTab(qtw.QWidget):
             self.data = data_files.DataFile(path=self.data_path,
                                             filename=self.data_filename,
                                             port=MeasureTab.port,
-                                            unique_freqs=self.dialog.freq_entry,
+                                            frequencies=self.dialog.freq_entry,
                                             bridge=self.dialog.bridge_choice,
                                             cryo=self.dialog.cryo_choice,
                                             comment=comment_line,
@@ -274,7 +273,7 @@ class MeasureTab(qtw.QWidget):
             while not self.paused:
                 data_to_write = []
                 for ii, frequency in enumerate(self.dialog.freq_entry[::-1]):
-                    data_at_f = self.data.measure_at_freq(frequency)
+                    data_at_f = self.data.measure_at_frequency(frequency)
 
                     msgout = ''
                     for item, unit, exp_len in zip(data_at_f, units, expected_lens):

@@ -35,7 +35,7 @@ class StartMeasDialog(qtw.QDialog):
         self.ljEntry2 = qtw.QLineEdit()
         self.ljEntry3 = qtw.QLineEdit()
 
-        self.setWindowIcon(QIcon(os.path.join('icons', 'app.png')))
+        self.setWindowIcon(QIcon(os.path.join('custom_icons', 'app.png')))
 
         self.base_path = base_path
         self.cal_path = os.path.join(base_path, '1-Calibrations')

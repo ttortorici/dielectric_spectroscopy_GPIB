@@ -3,7 +3,7 @@ import u6
 import time
 import numpy as np
 import struct
-
+from comm.socket_client import Device as DeviceClient
 # import sys
 # import threading
 
@@ -129,6 +129,17 @@ def toDouble(buffer):
     """
     right, left = struct.unpack("<Ii", struct.pack("B" * 8, *buffer[0:8]))
     return float(left) + float(right) / (2 ** 32)
+
+
+class Client(DeviceClient):
+    def __init__(self, port):
+        super(self.__class__, self).__init__('LJ', port)
+
+    def read_id(self):
+        return 'LabJack U6'
+
+    def reset(self):
+        print('One cannot simply reset a LabJack with a command')
 
 
 if __name__ == '__main__':

@@ -3,22 +3,24 @@
 import sys
 import os
 
+port = 62538
+
 
 def serialport():
     """Finds the serialport depending on what system you're running on"""
     if os.name == 'posix':
         if sys.platform == 'linux2' or sys.platform == 'linux': # for linux, may need to change ending number
             # platform = 'lin'
-            port = '/dev/ttyUSB0'
-        elif sys.platform == 'darwin': # it is possible that the serial number is different, "ls /dev" in a terminal to find out
+            serial_port = '/dev/ttyUSB0'
+        elif sys.platform == 'darwin':
             # platform = 'mac'
-            port = '/dev/tty.usbserial-PX9HMPBU'
+            serial_port = '/dev/tty.usbserial-PX9HMPBU'
     elif os.name == 'nt':
-            # platform = 'win'
-            port = ''
+        # platform = 'win'
+        serial_port = ''
     else:
-        port = ''
-    return port
+        serial_port = ''
+    return serial_port
 
 
 def googledrive():
@@ -29,19 +31,15 @@ def googledrive():
     user = getpass.getuser()
     if sys.platform == 'darwin':  # for mac users
         path = '/Users/%s/Google_Drive/' % (user)
-    # elif (user == 'etortorici' or user == 'root') and sys.platform == 'linux2':  # legacy for linux
-    #     # path = '/home/etortorici/Google_Drive/'
-    #     path = '/home/etortorici/Documents/'
     elif sys.platform == 'linux':
         if user == 'etortoric':
             path = '/home/etortoric/Documents/Google_Drive'
         else:
             path = ''
     else:
-        #if user == 'Chuck':
         if os.name == 'nt':
             if user == 'etcto':
-                path = 'G:\\My Drive'
+                path = f"D:\\Google Drive\\My Drive"
             # elif user == 'Chuck':
             else:
                 path = 'C:\\Users\\%s\\Google Drive' % user
