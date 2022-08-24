@@ -1,41 +1,73 @@
-import PyQt5.QtWidgets as qtw
+from PySide6.QtWidgets import (QDialog, QSizePolicy, QGroupBox, QComboBox, QLineEdit, QDialogButtonBox, QFileDialog,
+                               QLabel, QSpinBox, QPushButton, QFormLayout, QVBoxLayout)
+from PySide6.QtCore import Slot
+from gui.icons import custom as custom_icon
 import sys
 import yaml
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtGui import QIcon
 import os
 import glob
 import datetime
 import time
 
 
-class StartMeasDialog(qtw.QDialog):
+class ComboBox(QComboBox):
+    def __init__(self, label: str, choices: list[str], shortcuts: list[str] = None, whats_this: str = None):
+        """
+        ComboBox with label and stores it's own information
+        :param label: a string that will be placed before the combobox in the form
+        :param choices: The labels of the options that appear in the combo box
+        :param shortcuts: option shortcuts for storing
+        """
+        super(self.__class__, self).__init__()
+        self.label = QLabel(label)
+        if whats_this:
+            self.label.setWhatsThis(whats_this)
+        self.choices = choices
+        self.shortcuts = shortcuts
+        self.addItems(choices)
+
+    def get_shortcut(self) -> str:
+        """
+        Get the active entry
+        :return: returns the shortcut of the selection if there are shortcuts. Otherwise, it returns the actual value
+        """
+        if self.shortcuts:
+            shortcut = self.shortcuts[self.currentIndex()]
+        else:
+            shortcut = self.choices[self.currentIndex()]
+        return shortcut
+
+    def set(self, shortcut):
+
+
+class NewFileDialog(QDialog):
     def __init__(self, base_path):
-        super(StartMeasDialog, self).__init__()
-        self.setGeometry(50, 100, 800, qtw.QSizePolicy.Maximum)
+        super(NewFileDialog, self).__init__()
+        # self.set
+        # self.setGeometry(50, 100, 800, QSizePolicy.Maximum)
 
         self.date = None        # will fill in once Okay is pressed
 
-        self.formGroupBox = qtw.QGroupBox("Enter Measurement Details")
-        self.bridgeChoices = qtw.QComboBox()
-        self.cryoChoices = qtw.QComboBox()
-        self.purpChoices = qtw.QComboBox()
-        self.chipIDEntry = qtw.QLineEdit()
-        self.sampleEntry = qtw.QLineEdit()
-        self.freqEntry = qtw.QLineEdit()
-        self.calButton = qtw.QPushButton()
-        self.filmThickEntry = qtw.QLineEdit()
-        self.voltEntry = qtw.QLineEdit()
-        self.aveSetting = qtw.QSpinBox()
-        self.dcBiasChoice = qtw.QComboBox()
-        self.dcBiasEntry = qtw.QLineEdit()
-        self.ampEntry = qtw.QLineEdit()
-        self.ljEntry0 = qtw.QLineEdit()
-        self.ljEntry1 = qtw.QLineEdit()
-        self.ljEntry2 = qtw.QLineEdit()
-        self.ljEntry3 = qtw.QLineEdit()
+        self.formGroupBox = QGroupBox("Enter Measurement Details")
+        self.bridgeChoices = QComboBox()
+        self.cryoChoices = QComboBox()
+        self.purpChoices = QComboBox()
+        self.chipIDEntry = QLineEdit()
+        self.sampleEntry = QLineEdit()
+        self.freqEntry = QLineEdit()
+        self.calButton = QPushButton()
+        self.filmThickEntry = QLineEdit()
+        self.voltEntry = QLineEdit()
+        self.aveSetting = QSpinBox()
+        self.dcBiasChoice = QComboBox()
+        self.dcBiasEntry = QLineEdit()
+        self.ampEntry = QLineEdit()
+        self.ljEntry0 = QLineEdit()
+        self.ljEntry1 = QLineEdit()
+        self.ljEntry2 = QLineEdit()
+        self.ljEntry3 = QLineEdit()
 
-        self.setWindowIcon(QIcon(os.path.join('custom_icons', 'app.png')))
+        self.setWindowIcon(custom_icon('app.png'))
 
         self.base_path = base_path
         self.cal_path = os.path.join(base_path, '1-Calibrations')
@@ -46,8 +78,8 @@ class StartMeasDialog(qtw.QDialog):
         with open(yaml_f, 'r') as f:
             preset = yaml.safe_load(f)
 
-        self.bridge_choice = preset['inst']
-        self.cryo_choice = preset['cryo']
+        self.bridge_choice = preset['bridge']
+        self.cryo_choice = preset['ls']
         self.purp_choice = preset['purp']
         self.chipID_entry = preset['id']
         self.sample_entry = preset['sample']
@@ -64,11 +96,11 @@ class StartMeasDialog(qtw.QDialog):
 
         self.createFormGroupBox()
 
-        buttonBox = qtw.QDialogButtonBox(qtw.QDialogButtonBox.Ok | qtw.QDialogButtonBox.Cancel)
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept_click)
         buttonBox.rejected.connect(self.reject)
 
-        mainLayout = qtw.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.addWidget(self.formGroupBox)
         mainLayout.addWidget(buttonBox)
         self.setLayout(mainLayout)
@@ -76,7 +108,7 @@ class StartMeasDialog(qtw.QDialog):
         self.setWindowTitle("Measurement Details")
 
     def createFormGroupBox(self):
-        layout = qtw.QFormLayout()
+        layout = QFormLayout()
 
         """Select Bridge being used"""
         self.bridgeChoices.addItems(["Andeen-Hagerling 2500A", "HP 4275A", "Fake Bridge"])
@@ -84,14 +116,16 @@ class StartMeasDialog(qtw.QDialog):
         self.bridgeChoices.setCurrentIndex(bridge_setting[self.bridge_choice])
 
         """Select Cryostat Being Used"""
-        self.cryoChoices.addItems(["DesertCryo-LN", "DesertCryo-He", "Frankenstein", "Dan's", "Fake Cryo"])
-        cryo_setting = {'Desert-LN': 0, 'Desert-He': 1, '40K': 2, '4K': 3, 'fake': 4}
-        self.cryoChoices.setCurrentIndex(cryo_setting[self.cryo_choice])
+        cryo_choices = ["LS331", "LS340"]
+        self.cryoChoices.addItems(cryo_choices)
+        cryo_setting = {"LS331": 331, "LS340": 340}
+        self.cryoChoices.setCurrentIndex(cryo_choices.index(self.cryo_choice))
 
         """Select Purpose of Measurement"""
-        self.purpChoices.addItems(["Calibration", "Powder Sample", "Film Sample", "Other"])
+        purp_choices = ["Calibration", "Powder Sample", "Film Sample", "Other"]
+        self.purpChoices.addItems(purp_choices)
         purp_setting = {'cal': 0, 'powder': 1, 'film': 2, 'other': 3}
-        self.purpChoices.setCurrentIndex(purp_setting[self.purp_choice])
+        self.purpChoices.setCurrentIndex(purp_choices.index(self.purp_choice))
 
         """Specify Chip iD"""
         self.chipIDEntry.setText(self.chipID_entry)
@@ -133,27 +167,27 @@ class StartMeasDialog(qtw.QDialog):
         self.ljEntry3.setText(self.lj_entry[3])
 
         """Comments"""
-        self.commentEntry = qtw.QLineEdit()
+        self.commentEntry = QLineEdit()
         self.commentEntry.setText(self.comment_entry)
 
-        labels = [qtw.QLabel("Bridge:"),
-                  qtw.QLabel("Cryostat:"),
-                  qtw.QLabel("Purpose:"),
-                  qtw.QLabel("Chip iD:"),
-                  qtw.QLabel("Sample:"),
-                  qtw.QLabel("Frequencies [Hz]:"),
-                  qtw.QLabel("Use Calibration:"),
-                  qtw.QLabel("Film Thickness [\u0b3cm]:"),
-                  qtw.QLabel("Measurement Voltage [V]:"),
-                  qtw.QLabel("Averaging Setting:"),
-                  qtw.QLabel("DC Bias Setting:"),
-                  qtw.QLabel("DC Bias Value [V]"),
-                  qtw.QLabel("Amplification"),
-                  qtw.QLabel("Labjack CH0:"),
-                  qtw.QLabel("Labjack CH1:"),
-                  qtw.QLabel("Labjack CH2:"),
-                  qtw.QLabel("Labjack CH3:"),
-                  qtw.QLabel("Comments:")]
+        labels = [QLabel("Bridge:"),
+                  QLabel("Cryostat:"),
+                  QLabel("Purpose:"),
+                  QLabel("Chip iD:"),
+                  QLabel("Sample:"),
+                  QLabel("Frequencies [Hz]:"),
+                  QLabel("Use Calibration:"),
+                  QLabel("Film Thickness [\u0b3cm]:"),
+                  QLabel("Measurement Voltage [V]:"),
+                  QLabel("Averaging Setting:"),
+                  QLabel("DC Bias Setting:"),
+                  QLabel("DC Bias Value [V]"),
+                  QLabel("Amplification"),
+                  QLabel("Labjack CH0:"),
+                  QLabel("Labjack CH1:"),
+                  QLabel("Labjack CH2:"),
+                  QLabel("Labjack CH3:"),
+                  QLabel("Comments:")]
         choices = [self.bridgeChoices, self.cryoChoices, self.purpChoices, self.chipIDEntry, self.sampleEntry,
                    self.freqEntry, self.calButton, self.filmThickEntry, self.voltEntry, self.aveSetting,
                    self.dcBiasChoice, self.dcBiasEntry, self.ampEntry, self.ljEntry0, self.ljEntry1, self.ljEntry2,
@@ -183,11 +217,11 @@ class StartMeasDialog(qtw.QDialog):
 
         self.formGroupBox.setLayout(layout)
 
-    @pyqtSlot()
+    @Slot()
     def findCal(self):
-        options = qtw.QFileDialog.Options()
-        options |= qtw.QFileDialog.DontUseNativeDialog
-        fileName, _ = qtw.QFileDialog.getOpenFileName(self, "Find Calibration", self.cal_path,
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self, "Find Calibration", self.cal_path,
                                                       "CSV (*.csv);;All Files (*)", options=options)
         self.calButton.setText(fileName[fileName.find('1-Calibrations')+len('1-Calibrations'):])
 
@@ -275,7 +309,8 @@ class StartMeasDialog(qtw.QDialog):
 
 
 if __name__ == '__main__':
+    from PySide6.QtWidgets import QApplication
     import get
-    app = qtw.QApplication(sys.argv)
-    dialog = StartMeasDialog(os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy-2'))
+    app = QApplication(sys.argv)
+    dialog = NewFileDialog(os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy-2'))
     sys.exit(dialog.exec_())

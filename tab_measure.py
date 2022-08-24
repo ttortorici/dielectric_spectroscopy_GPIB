@@ -7,7 +7,7 @@ import numpy as np
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QFont
-from dialogs.new_file import StartMeasDialog
+from dialogs.new_file import NewFileDialog
 import data_files
 import gpib_tools as GPIB
 import calculations as calc
@@ -131,7 +131,7 @@ class MeasureTab(qtw.QWidget):
     def startNewData(self):
         if self.running:
             self.stopData()
-        self.dialog = StartMeasDialog(self.base_path)
+        self.dialog = NewFileDialog(self.base_path)
         self.dialog.exec()
         if self.dialog.result() == qtw.QDialog.Accepted:
             self.running = True

@@ -1,7 +1,7 @@
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
-from dialogs.new_file import StartMeasDialog
+from dialogs.new_file import NewFileDialog
 import numpy as np
 import os
 import sys

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPu
                                QDialog, QMessageBox, QFileDialog, QMainWindow)
 from PySide6.QtCore import Slot, Signal
 from PySide6.QtGui import QFont, QTextCursor
-from dialogs.new_file import StartMeasDialog
+from dialogs.new_file import NewFileDialog
 import gui.icons as icon
 from gui.signalers import Signaler, MessageSignaler
 import data_files
@@ -160,7 +160,7 @@ class DataTab(QWidget):
         if self.active_file:
             stopped = self.stop()
         if stopped:
-            self.dialog = StartMeasDialog(self.parent.data_base_path)
+            self.dialog = NewFileDialog(self.parent.data_base_path)
             self.dialog.exec()
 
             if self.dialog.result() == QDialog.Accepted:
@@ -173,6 +173,10 @@ class DataTab(QWidget):
                     h=creation_datetime.hour,
                     min=creation_datetime.minute,
                     s=creation_datetime.second))
+
+                """FIND PLACE TO WRITE FILE"""  # "Calibration", "Powder Sample", "Film Sample", "Other"
+                if self.dialog.purp_choice == "Calibration":
+                    path = os.path.join(self.parent.data_base_path)
 
                 sample_name = self.dialog.sample_name_entry.replace(' ', '_')
                 if not sample_name:
