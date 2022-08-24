@@ -69,3 +69,4 @@ class Device:
 if __name__ == "__main__":
     ls = Device(13, "/dev/ttyUSB0", do_print=True)
     print(ls.query("KRDG? A"))
+    
