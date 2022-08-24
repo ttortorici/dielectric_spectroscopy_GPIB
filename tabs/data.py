@@ -9,22 +9,16 @@ import os.path
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QStackedWidget, QSizePolicy,
                                QDialog, QMessageBox, QFileDialog, QMainWindow)
 from PySide6.QtCore import Slot, Signal
-from PySide6.QtGui import QFont
-from dialogs.new_file import NewDataPrompt
+from PySide6.QtGui import QFont, QTextCursor
+from dialogs.new_file import StartMeasDialog
 import gui.icons as icon
-from data_files import DataFileGuiExample as DataFile
-from server import GpibServer
+from gui.signalers import Signaler, MessageSignaler
+import data_files
+from comm.server import GpibServer
 from comm.socket_client import send as send_client
 import threading
 import time
 import datetime
-
-
-class SignalWidget(QWidget):
-    """emits a message to a connected slot allowing you to write to the text box
-    GUI's hate being altered from threads, and this is a way to avoid the issues associated with that"""
-    trigger = Signal()          # can emit an empty signal
-    message = Signal(str)       # can emit a signal containing a string
 
 
 class DataTab(QWidget):
@@ -51,12 +45,12 @@ class DataTab(QWidget):
         self.active_file = False
 
         """So we can write to the GUI from threads"""
-        self.writer_signaler = SignalWidget()
-        self.writer_signaler.message.connect(self.write_from_thread)
+        self.writer_signaler = MessageSignaler()
+        self.writer_signaler.signal.connect(self.write_from_thread)
 
         """So we can update plots when new data is taken"""
-        self.plot_updater = SignalWidget()
-        self.plot_initializer = SignalWidget()
+        self.plot_updater = Signaler()
+        self.plot_initializer = MessageSignaler()
         # Moved to activate_data_file()
         # self.plot_updater = PlotUpdaterWidget()
         # self.plot_updater.update.connect(self.parent.plot_tab.update_plots)
@@ -108,16 +102,18 @@ class DataTab(QWidget):
         self.layout.addWidget(self.data_text_stream)
         self.layout.addLayout(self.bottom_row)
 
-    def write(self, text: str):
+    def write(self, text: str, end: str = "\n"):
         """Writes to the GUI by using the write_thread widget"""
         # print(f'sending "{text}" to thread')
-        self.writer_signaler.message.emit(text)
+        self.writer_signaler.message.emit(text + end)
 
     @Slot(str)
     def write_from_thread(self, text: str):
         """Writes to GUI from the write_thread object attribute"""
         # print(f'received "{text}" fom thread')
-        self.data_text_stream.append(text)
+        self.data_text_stream.moveCursor(QTextCursor.End)
+        self.data_text_stream.insertPlainText(text)
+
         # make the scroll bar scroll with the new text as it fills past the size of the window
         self.data_text_stream.verticalScrollBar().setValue(self.data_text_stream.verticalScrollBar().maximum())
 
@@ -154,17 +150,17 @@ class DataTab(QWidget):
                 self.write(f'Opening file "{filename}"')
                 self.write(f'Using averaging setting of {self.dialog.averaging_entry}')
                 self.activate_data_file(filename)
-                self.data = DataFile(filename)
+                self.data = data_files.CalFile(filename)
                 self.data_thread.start()
 
     @Slot()
     def make_new_file(self):
         """Open a dialog to create a new data file"""
-        stop = True
+        stopped = True
         if self.active_file:
-            stop = self.stop()
-        if stop:
-            self.dialog = NewDataPrompt(self.parent.data_base_path)
+            stopped = self.stop()
+        if stopped:
+            self.dialog = StartMeasDialog(self.parent.data_base_path)
             self.dialog.exec()
 
             if self.dialog.result() == QDialog.Accepted:
@@ -200,7 +196,7 @@ class DataTab(QWidget):
 
                 file_path = os.path.join(self.parent.data_base_path, filename)
                 self.activate_data_file(file_path)
-                self.data = DataFile(file_path, comment)
+                self.data = data_files.CalFile(file_path, comment)
                 self.data_thread.start()
 
     def activate_data_file(self, filename):
@@ -208,9 +204,9 @@ class DataTab(QWidget):
         self.server_thread = threading.Thread(target=self.gpib_server.run, args=())
         self.data_thread = threading.Thread(target=self.take_data, args=())
 
-        self.plot_updater.trigger.connect(self.parent.plot_tab.update_plots)
-        self.plot_initializer.message.connect(self.parent.plot_tab.initialize_plots)
-        self.plot_initializer.message.emit(filename)
+        self.plot_updater.signal.connect(self.parent.plot_tab.update_plots)
+        self.plot_initializer.signal.connect(self.parent.plot_tab.initialize_plots)
+        self.plot_initializer.signal.emit(filename)
 
         self.active_file = True
         self.button_play.setEnabled(True)
@@ -231,12 +227,12 @@ class DataTab(QWidget):
         self.running = True
         while self.active_file:
             while self.running:
-                data_point = self.data.take_data_point(ave=self.dialog.averaging_entry)
-                print(f'Got this as data: {data_point}')
+                data_point = self.data.sweep_frequencies()
+                # print(f'Got this as data: {data_point}')
                 self.data.write_row(data_point)
                 self.write(str(data_point))
                 if self.parent.plot_tab.live_plotting:
-                    self.plot_updater.trigger.emit()
+                    self.plot_updater.signal.emit()
 
     @Slot()
     def continue_data(self):

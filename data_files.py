@@ -5,12 +5,14 @@ Classes for creating and managing data files
 """
 
 import time
+import datetime
 import os
 import numpy as np
 from devices.ah2700 import Client as BridgeAH
 from devices.hp4275 import Client as BridgeHP
 from devices.lakeshore import Client as Lakeshore
 from calculations import geometric_capacitance
+from gui.signalers import MessageSignaler
 
 
 class CSVFile:
@@ -46,6 +48,15 @@ class CSVFile:
         """APPEND OPTIONAL COMMENT"""
         if comment:
             self.write_comment(comment)
+
+    def __str__(self):
+        return f"Opened file: {self.name}"
+
+    def __len__(self):
+        with open(self.name, 'r') as f:
+            for counter, _ in enumerate(f):
+                pass
+        return counter + 1
 
     def write_row(self, row_to_write: list):
         """Turns a list into a comma delimited row to write to the csv file"""
@@ -107,7 +118,7 @@ class DataFile(CSVFile):
     labels = ('Time [s]', 'Temperature A [K]', 'Temperature B [K]',
               'Capacitance [pF]', 'Loss Tangent', 'Voltage [V]', 'Frequency [Hz]')
 
-    def __init__(self, path: str, filename: str, frequencies: list,
+    def __init__(self, path: str, filename: str, frequencies: list, gui_signaler: MessageSignaler = None,
                  bridge: str = 'AH', cryo: str = '40K', comment: str = "", lj_chs: list = None):
         """
         Create data file, and instances of the Bridge and Lakeshore for communication
@@ -124,6 +135,7 @@ class DataFile(CSVFile):
         unique_frequencies = list(set(frequencies))         # remove repeated entries
         unique_frequencies.sort()                           # sort the list
         self.unique_frequencies = unique_frequencies[::-1]  # reverse order (big to small)
+        self.gui_signaler = gui_signaler
 
         if bridge.upper()[0:2] == 'AH' or bridge == 'fake':
             self.bridge = BridgeAH()
@@ -213,7 +225,7 @@ class DataFile(CSVFile):
 
         return data
 
-    def sweep_freq(self):  # , amp=1, offset=0):
+    def sweep_frequencies(self):  # , amp=1, offset=0):
         """
         Repeat measurements at each frequency in self.unique_frequencies
         """
@@ -222,8 +234,24 @@ class DataFile(CSVFile):
             start_index = ff * len(self.__class__.labels)
             end_index = (ff + 1) * len(self.__class__.labels)
             partial_data = self.measure_at_frequency(frequency)
+            if self.gui_signaler:
+                converted_list = [""] * len(self.__class__.labels)
+                for ii, label in enumerate(self.__class__.labels):
+                    if "time" in label.lower():
+                        converted_list[ii] = str(datetime.datetime.fromtimestamp(partial_data[ii]))
+                    elif "temperature" in label.lower():
+                        converted_list[ii] = f"{partial_data[ii]:.2f}".rjust(7)
+                    elif "frequency" in label.lower():
+                        converted_list[ii] = f"{int(partial_data[ii])}".rjust(12)
+                    elif "voltage" in label.lower():
+                        converted_list[ii] = f"{partial_data:.3f}".rjust(7)
+                    else:
+                        converted_list[ii] = f"{partial_data:.5f}".rjust(8)
+                self.gui_signaler.signal.emit(", ".join(converted_list) + "\n")
             full_data[start_index:end_index] = partial_data
         self.write_row(full_data)
+        # if self.gui_signaler:
+        #     self.gui_signaler.signal.emit("\n")
         return full_data
 
 
@@ -250,8 +278,8 @@ class DielectricConstant(DataFile):
               'Capacitance [pF]', 'Loss Tangent', 'Voltage [V]',
               'Re[dielectric constant]', 'Im[dielectric constant]', 'Frequency [Hz]')
 
-    def __init__(self, path: str, filename: str, frequencies: list,
-                 film_thickness: float, gap_width: float, bare_cap_fit: list, bare_loss_fit: list,
+    def __init__(self, path: str, filename: str, frequencies: list, film_thickness: float, gap_width: float,
+                 bare_cap_fit: list, bare_loss_fit: list, gui_signaler: ListSignaler = None,
                  bridge: str = 'AH', cryo: str = '40K', comment: str = "", lj_chs: list = None):
         """
         Data file for measuring a well characterized sample after calibrating the bare capacitor
@@ -267,7 +295,7 @@ class DielectricConstant(DataFile):
         :param comment: optional comment to append to datafile when started
         :param lj_chs: not supported currently
         """
-        super(self.__class__, self).__init__(path, filename, frequencies, bridge, cryo, comment, lj_chs)
+        super(self.__class__, self).__init__(path, filename, frequencies, gui_signaler, bridge, cryo, comment, lj_chs)
 
         self.geometric_cap = geometric_capacitance(gap_width, film_thickness)
 
