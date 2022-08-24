@@ -30,7 +30,7 @@ class Device:
         print(f"Established connection with Prologix with version: {version}")
 
     def write_raw(self, message: str, line_end: str = "\n"):
-        self.dev.write(f"{message}{line_end}")
+        self.dev.write(f"{message}{line_end}".encode())
 
     def query(self, message: str) -> str:
         self.write_raw(f"++addr {self.address}")
@@ -39,12 +39,13 @@ class Device:
         self.write_raw(message)
 
         while True:
+            print("trying")
             message_back = self.dev.readlines()
             if message_back:
                 if self.do_print:
                     print("Got response")
                 break
-        return message_back.rstrip("\n\r")
+        return message_back[0].decode().rstrip("\r\n")
 
     def read(self) -> str:
         self.write_raw(f"++addr {self.address}")
@@ -63,3 +64,8 @@ class Device:
 
     def get_id(self):
         return self.query("*IDN?")
+
+
+if __name__ == "__main__":
+    ls = Device(13, "/dev/ttyUSB0", do_print=True)
+    print(ls.query("KRDG? A"))
