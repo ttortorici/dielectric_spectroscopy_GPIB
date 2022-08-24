@@ -32,12 +32,29 @@ class ComboBox(QComboBox):
         :return: returns the shortcut of the selection if there are shortcuts. Otherwise, it returns the actual value
         """
         if self.shortcuts:
-            shortcut = self.shortcuts[self.currentIndex()]
+            return self.shortcuts[self.currentIndex()]
         else:
-            shortcut = self.choices[self.currentIndex()]
-        return shortcut
+            return self.choices[self.currentIndex()]
 
-    def set(self, shortcut):
+    def set(self, option):
+        """
+        Sets the combobox option based off the shortcut given. If there aren't shortcuts, then it takes the actual value
+        instead
+        :param option: shortcut or box value
+        """
+        try:
+            self.setCurrentIndex(self.shortcuts.index(option))
+        except ValueError:
+            self.setCurrentIndex(self.choices.index(option))
+
+
+class Entry(QLineEdit):
+    def __init__(self, label: str, whats_this: str = None):
+        super(self.__class__, self).__init__()
+        self.label = QLabel(label)
+        if whats_this:
+            self.label.setWhatsThis(whats_this)
+        
 
 
 class NewFileDialog(QDialog):
