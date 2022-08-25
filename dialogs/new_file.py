@@ -54,7 +54,7 @@ class DropDown(QComboBox):
             self.setCurrentIndex(self.choices.index(option))
 
 
-class Entry(QLineEdit):
+class TextEntry(QLineEdit):
     def __init__(self, label: str = "", whats_this: str = None):
         """
         Create a line edit entry box
@@ -200,9 +200,54 @@ class NewFileDialog(QDialog):
                                shortcuts=[331, 340],
                                label="Temperature Controller being used",
                                whats_this="Which Lakeshore Temperature Controller is being used?")
-        self.purp_box = DropDown(choices=["Calibration", "Powder Sample", "Thin Film", "Other", "Test"],
+        self.purp_box = DropDown(choices=["Calibratio (bare capacitor)", "Powder Sample", "Thin Film", "Other", "Test"],
                                  shortcuts=["CAL", "POW", "FILM", "OTHER", "TEST"],
-                                 label="")
+                                 label="Purpose of Measurement",
+                                 whats_this="What kind of measurement is this")
+        self.chip_id_box = TextEntry(label="Capacitor Chip ID",
+                                     whats_this="This is the identifier for the capacitor being used")
+        self.sample_box = TextEntry(label="Sample Name",
+                                    whats_this="Name of sample")
+        self.frequncy_box = TextEntry(label="Frequencies to measure at",
+                                      whats_this="Type frequencies in Hz separated by commas")
+        self.cal_file_box = FileButton(base_path=os.path.join(base_path, "1-Calibrations"),
+                                       title="Locate Calibration File",
+                                       label="Path to Calibration File",
+                                       whats_this="This is used for film measurements to remove the background and"
+                                                  "reveal the dielectric constant")
+        self.film_thickness_box = FloatBox(precision=6,
+                                           maximum=10.,
+                                           label="Film Thickness [\u0b3cm]",
+                                           whats_this="Thickness of the film in microns")
+        self.voltage_box = FloatBox(precision=2,
+                                    maximum=15.,
+                                    label="Measurement Voltage [V]",
+                                    whats_this="Maximum test voltage of the AH. Not used by the HP bridge")
+        self.ave_box = IntBox(label="Averaging Setting",
+                              whats_this="On the AH this corresponds to an averaging time. On the HP, it will be the"
+                                         "number of measurements to average.")
+        self.dc_bias_setting_box = DropDown(choices=["Off", "On: Low Curront", "On: High Current"],
+                                            shortcuts=["OFF", "LOW", "HIGH"],
+                                            label="DC Bias Setting",
+                                            whats_this="Enables or disables a user-supplied DC bias voltage of up to"
+                                                       "±100 VDC to be applied to the measured unknown. The external"
+                                                       "source is connected to the rear panel DC BIAS input. This"
+                                                       "command also selects the value of an internal resistor"
+                                                       "that is placed in series with the externally applied voltage"
+                                                       "source.")
+        self.dc_bias_value_box = FloatBox(precision=2,
+                                          maximum=100.,
+                                          label="DC Bias Voltage Amount [V]",
+                                          whats_this="If you are using the DC Bias, what is the value of the voltage"
+                                                     "that you will bias with.")
+        self.amp_box = FloatBox(precision=2,
+                                maximum=1000.,
+                                label="DC Bias Amplification",
+                                whats_this="Value of the amplification being used for the DC Bias.")
+        # self.ljEntry0 = QLineEdit()
+        # self.ljEntry1 = QLineEdit()
+        # self.ljEntry2 = QLineEdit()
+        # self.ljEntry3 = QLineEdit()
 
 class NewFileDialog2(QDialog):
     def __init__(self, base_path):
