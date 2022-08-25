@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (QDialog, QSizePolicy, QGroupBox, QComboBox, QLineEdit, QDialogButtonBox, QFileDialog,
                                QLabel, QSpinBox, QPushButton, QFormLayout, QVBoxLayout)
 from PySide6.QtCore import Slot
+from PySide6.QtGui import QIcon
 from gui.icons import custom as custom_icon
 import sys
 import yaml
@@ -10,6 +11,10 @@ import datetime
 import time
 
 
+def datetime_from_yaml_name(yaml_name):
+    return datetime.datetime.fromisoformat(yaml_name.split(os.sep)[-1].lstrip('presets').rstrip('.yml'))
+
+
 class ComboBox(QComboBox):
     def __init__(self, label: str, choices: list[str], shortcuts: list[str] = None, whats_this: str = None):
         """
@@ -17,6 +22,7 @@ class ComboBox(QComboBox):
         :param label: a string that will be placed before the combobox in the form
         :param choices: The labels of the options that appear in the combo box
         :param shortcuts: option shortcuts for storing
+        :param whats_this: description
         """
         super(self.__class__, self).__init__()
         self.label = QLabel(label)
@@ -26,7 +32,7 @@ class ComboBox(QComboBox):
         self.shortcuts = shortcuts
         self.addItems(choices)
 
-    def get_shortcut(self) -> str:
+    def get(self) -> str:
         """
         Get the active entry
         :return: returns the shortcut of the selection if there are shortcuts. Otherwise, it returns the actual value
@@ -50,11 +56,76 @@ class ComboBox(QComboBox):
 
 class Entry(QLineEdit):
     def __init__(self, label: str, whats_this: str = None):
+        """
+        Create a line edit entry box
+        :param label: label to go next to it
+        :param whats_this: description
+        """
         super(self.__class__, self).__init__()
         self.label = QLabel(label)
         if whats_this:
             self.label.setWhatsThis(whats_this)
-        
+
+    def get(self):
+        """
+        get the text that has been entered by the user
+        :return: user entered text
+        """
+        return self.text()
+
+    def set(self, text: str):
+        """
+        set the text of the box from the software. Overrides current text
+        :param text: text to write
+        """
+        self.setText(text)
+
+
+class FileButton(QPushButton):
+    def __init__(self, base_path: str, title: str = "", label: str = "",
+                 whats_this: str = None, filetypes: str = "CSV (*.csv)"):
+        """
+        Create a button for opening a file
+        :param base_path: base path for file dialog
+        :param title: Default text of button (and title of dialog window)
+        :param label: text to the side
+        :param whats_this: description
+        :param filetypes: types of files to filter separated by ';;'
+        """
+        super(self.__class__, self).__init__()
+        self.base_path = base_path
+        self.title = title
+        self.setText(title)
+        self.label = QLabel(label)
+        if whats_this:
+            self.label.setWhatsThis(whats_this)
+        self.filetypes = filetypes
+
+        self.filename = None
+
+        self.clicked.connect(self.open_file)
+
+    @Slot()
+    def open_file(self):
+        """
+        Open file
+        """
+        self.filename, _ = QFileDialog.getOpenFileName(self, self.title, self.base_path,
+                                                       f"{self.filetypes};;All Files (*)")
+        filename_display = self.filename.lstrip(self.base_path)
+        self.setText(filename_display)
+
+    def get(self):
+        if self.filename:
+            return self.filename
+        elif self.text() == self.title or not self.text():
+            return ""
+        else:
+            return os.path.join(self.base_path, self.text())
+
+
+    def set(self, text: str):
+        self.setText(text)
 
 
 class NewFileDialog(QDialog):
@@ -89,7 +160,7 @@ class NewFileDialog(QDialog):
         self.base_path = base_path
         self.cal_path = os.path.join(base_path, '1-Calibrations')
         """LOAD PRESETS"""
-        yaml_fname = max(glob.glob(os.path.join(self.base_path, 'presets', '*yml')), key=os.path.getctime)
+        yaml_fname = max(glob.glob(os.path.join(self.base_path, 'presets', '*yml')), key=datetime_from_yaml_name)
         yaml_f = os.path.join(self.base_path, 'presets', yaml_fname)
         print(yaml_f)
         with open(yaml_f, 'r') as f:
@@ -330,4 +401,4 @@ if __name__ == '__main__':
     import get
     app = QApplication(sys.argv)
     dialog = NewFileDialog(os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy-2'))
-    sys.exit(dialog.exec_())
+    sys.exit(dialog.exec())

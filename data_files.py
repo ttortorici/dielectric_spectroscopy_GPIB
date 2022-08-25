@@ -279,7 +279,7 @@ class DielectricConstant(DataFile):
               'Re[dielectric constant]', 'Im[dielectric constant]', 'Frequency [Hz]')
 
     def __init__(self, path: str, filename: str, frequencies: list, film_thickness: float, gap_width: float,
-                 bare_cap_fit: list, bare_loss_fit: list, gui_signaler: ListSignaler = None,
+                 bare_cap_fit: list, bare_loss_fit: list, gui_signaler: MessageSignaler = None,
                  bridge: str = 'AH', cryo: str = '40K', comment: str = "", lj_chs: list = None):
         """
         Data file for measuring a well characterized sample after calibrating the bare capacitor
@@ -361,3 +361,65 @@ class DielectricConstant(DataFile):
         data[-1] = bridge_data[0]        # frequency
 
         return data
+
+
+class Calibration:
+    def __init__(self, filename: str, capacitance_fit_order: int = 2, loss_fit_order: int = 1):
+        cal_data, _ = CSVFile.load_data_np(filename)
+        labels = CSVFile.get_labels(filename)
+
+        temperature_indices = []    # indices for temperatures
+        capacitance_indices = []    # indices for capacitance
+        loss_indices = []           # indices for loss tangent
+        frequency_indices = []      # indices for frequency
+
+        for ii, label in enumerate(labels):
+            if 'temperature' in label.lower() and 'B' not in label:
+                temperature_indices.append(ii)
+            elif 'capacitance' in label.lower():
+                capacitance_indices.append(ii)
+            elif 'loss tangent' in label.lower():
+                loss_indices.append(ii)
+            elif 'frequency' in label.lower():
+                frequency_indices.append(ii)
+
+        self.capacitance_fit_parameters = {}
+        self.loss_fit_parameters = {}
+
+        # Get the frequencies then use those as keys for the fits
+        self.frequencies = np.zeros(len(frequency_indices))
+        for ii, f_index in enumerate(frequency_indices):
+            frequency = int(cal_data[:, f_index][0])
+            self.frequencies[ii] = frequency
+            self.capacitance_fit_parameters[frequency] = np.polyfit(cal_data[:, temperature_indices[ii]],
+                                                                    cal_data[:, capacitance_indices[ii]],
+                                                                    capacitance_fit_order)
+            self.loss_fit_parameters[frequency] = np.polyfit(cal_data[:, temperature_indices[ii]],
+                                                             cal_data[:, loss_indices[ii]],
+                                                             loss_fit_order)
+
+    def __str__(self):
+        """
+        What gets printed when you print the object
+        :return: prints this
+        """
+        string_to_print = ""
+        for frequency in self.frequencies:
+            if frequency < 1e3:
+                f_string = f"{frequency} Hz"
+            elif frequency < 1e6:
+                f_string = f"{int(frequency/1e3)} kHz"
+            elif frequency < 1e9:
+                f_string = f"{int(frequency/1e6)} MHz"
+            else:
+                f_string = f"{int(frequency/1e9)} GHz"
+            string_to_print += f"At {f_string}\n" \
+                               f"The Capacitance fit is\n"
+            for ii, a in self.capacitance_fit_parameters[frequency]:
+                string_to_print += f"{a} * x^{ii} + "
+            string_to_print.rstrip(" + ")
+            string_to_print += "\nThe Loss fit is\n"
+            for ii, a in self.loss_fit_parameters[frequency]:
+                string_to_print += f"{a} * x^{ii} + "
+            string_to_print.rstrip(" + ")
+        return string_to_print
