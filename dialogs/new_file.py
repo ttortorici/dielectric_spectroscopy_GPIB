@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QDialog, QSizePolicy, QGroupBox, QComboBox, QLineEdit, QDialogButtonBox, QFileDialog,
-                               QLabel, QSpinBox, QPushButton, QFormLayout, QVBoxLayout)
+                               QLabel, QSpinBox, QPushButton, QFormLayout, QVBoxLayout, QDoubleSpinBox)
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QIcon
 from gui.icons import custom as custom_icon
@@ -15,8 +15,8 @@ def datetime_from_yaml_name(yaml_name):
     return datetime.datetime.fromisoformat(yaml_name.split(os.sep)[-1].lstrip('presets').rstrip('.yml'))
 
 
-class ComboBox(QComboBox):
-    def __init__(self, label: str, choices: list[str], shortcuts: list[str] = None, whats_this: str = None):
+class DropDown(QComboBox):
+    def __init__(self, choices: list[str], shortcuts: list[str] = None, label: str = "", whats_this: str = None):
         """
         ComboBox with label and stores it's own information
         :param label: a string that will be placed before the combobox in the form
@@ -25,7 +25,7 @@ class ComboBox(QComboBox):
         :param whats_this: description
         """
         super(self.__class__, self).__init__()
-        self.label = QLabel(label)
+        self.label = QLabel(label + ":")
         if whats_this:
             self.label.setWhatsThis(whats_this)
         self.choices = choices
@@ -55,18 +55,18 @@ class ComboBox(QComboBox):
 
 
 class Entry(QLineEdit):
-    def __init__(self, label: str, whats_this: str = None):
+    def __init__(self, label: str = "", whats_this: str = None):
         """
         Create a line edit entry box
         :param label: label to go next to it
         :param whats_this: description
         """
         super(self.__class__, self).__init__()
-        self.label = QLabel(label)
+        self.label = QLabel(label + ":")
         if whats_this:
             self.label.setWhatsThis(whats_this)
 
-    def get(self):
+    def get(self) -> str:
         """
         get the text that has been entered by the user
         :return: user entered text
@@ -96,7 +96,7 @@ class FileButton(QPushButton):
         self.base_path = base_path
         self.title = title
         self.setText(title)
-        self.label = QLabel(label)
+        self.label = QLabel(label + ":")
         if whats_this:
             self.label.setWhatsThis(whats_this)
         self.filetypes = filetypes
@@ -108,14 +108,18 @@ class FileButton(QPushButton):
     @Slot()
     def open_file(self):
         """
-        Open file
+        Open file dialog and replace button text with the filename
         """
         self.filename, _ = QFileDialog.getOpenFileName(self, self.title, self.base_path,
                                                        f"{self.filetypes};;All Files (*)")
         filename_display = self.filename.lstrip(self.base_path)
         self.setText(filename_display)
 
-    def get(self):
+    def get(self) -> str:
+        """
+        Get the filepath
+        :return: Will return the filepath given from the button
+        """
         if self.filename:
             return self.filename
         elif self.text() == self.title or not self.text():
@@ -123,12 +127,84 @@ class FileButton(QPushButton):
         else:
             return os.path.join(self.base_path, self.text())
 
-
     def set(self, text: str):
         self.setText(text)
 
 
+class IntBox(QSpinBox):
+    def __init__(self, label: str = "", whats_this: str = None):
+        """
+        Create a spinbox for entering integer values
+        :param label: Label to the left
+        :param whatsthis: Description
+        """
+        super(self.__class__, self).__init__()
+        self.label = QLabel(label + ":")
+        if whats_this:
+            self.label.setWhatsThis(whats_this)
+
+    def get(self) -> int:
+        """
+        return the integer value
+        :return: The user defined value
+        """
+        return self.value()
+
+    def set(self, value: int):
+        """
+        Sets the value in the box
+        :param value: an integer value to display
+        """
+        self.setValue(value)
+
+
+class FloatBox(QDoubleSpinBox):
+    def __init__(self, precision: int = 1, minimum: float = 0., maximum: float = 100.,
+                 label: str = "", whats_this: str = None):
+        super(self.__class__, self).__init__()
+        self.setDecimals(precision)
+        self.setMaximum(maximum)
+        self.setMinimum(minimum)
+        self.label = QLabel(label + ":")
+        if whats_this:
+            self.label.setWhatsThis(whats_this)
+
+    def get(self) -> float:
+        """
+        Get the float value stored in the box
+        :return: the float value given by the user
+        """
+        return self.value()
+
+    def set(self, value: float):
+        """
+        Set the value in the box
+        :param value: set the float value in the box
+        """
+        self.setValue(value)
+
+
 class NewFileDialog(QDialog):
+    def __init__(self, base_path):
+        super(self.__class__, self).__init__()
+
+        self.date = None        # will fill once Okay is hit
+
+        self.formGroupBox = QGroupBox("Enter measurement details for the dataset")
+
+        self.bridge_box = DropDown(choices=["Andeen-Hagerling 2500A", "Hewlett Packard 4275", "Fake"],
+                                   shortcuts=["AH", "HP", "FAKE"],
+                                   label="Capacitance Bridge",
+                                   whats_this="What capacitance bridge model are you interacting with?")
+        self.ls_box = DropDown(choices=["LS331", "LS340"],
+                               shortcuts=[331, 340],
+                               label="Temperature Controller being used",
+                               whats_this="Which Lakeshore Temperature Controller is being used?")
+        self.purp_box = DropDown(choices=["Calibration", "Powder Sample", "Thin Film", "Other", "Test"],
+                                 shortcuts=["CAL", "POW", "FILM", "OTHER", "TEST"],
+                                 label="")
+
+class NewFileDialog2(QDialog):
     def __init__(self, base_path):
         super(NewFileDialog, self).__init__()
         # self.set
