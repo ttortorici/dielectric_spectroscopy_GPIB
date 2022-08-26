@@ -8,7 +8,7 @@ import os.path
 
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QStackedWidget, QSizePolicy,
                                QDialog, QMessageBox, QFileDialog, QMainWindow)
-from PySide6.QtCore import Slot, Signal
+from PySide6.QtCore import Slot
 from PySide6.QtGui import QFont, QTextCursor
 from dialogs.new_file import NewFileDialog
 import gui.icons as icon
@@ -19,6 +19,23 @@ from comm.socket_client import send as send_client
 import threading
 import time
 import datetime
+
+
+class TextStream(QTextEdit):
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        self.setReadOnly(True)
+        self.setFont(DataTab.font)
+
+    @Slot(str)
+    def write(self, text: str):
+        """Writes to GUI from the write_thread object attribute"""
+        # print(f'received "{text}" fom thread')
+        self.moveCursor(QTextCursor.End)
+        self.insertPlainText(text)
+
+        # make the scroll bar scroll with the new text as it fills past the size of the window
+        self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
 
 
 class DataTab(QWidget):
@@ -46,7 +63,7 @@ class DataTab(QWidget):
 
         """So we can write to the GUI from threads"""
         self.writer_signaler = MessageSignaler()
-        self.writer_signaler.signal.connect(self.write_from_thread)
+        self.writer_signaler.signal.connect(self.data_text_stream.write)
 
         """So we can update plots when new data is taken"""
         self.plot_updater = Signaler()
@@ -59,9 +76,7 @@ class DataTab(QWidget):
         """Create the layout of what goes in this tab"""
         self.layout = QVBoxLayout(self)
 
-        self.data_text_stream = QTextEdit()     # this will be where data gets printed as it's collected
-        self.data_text_stream.setReadOnly(True)
-        self.data_text_stream.setFont(DataTab.font)
+        self.data_text_stream = TextStream()     # this will be where data gets printed as it's collected
 
         self.bottom_row = QHBoxLayout()         # this will be a row to add widgets to bellow the text stream
         self.bottom_row.addStretch(1)
@@ -106,16 +121,6 @@ class DataTab(QWidget):
         """Writes to the GUI by using the write_thread widget"""
         # print(f'sending "{text}" to thread')
         self.writer_signaler.message.emit(text + end)
-
-    @Slot(str)
-    def write_from_thread(self, text: str):
-        """Writes to GUI from the write_thread object attribute"""
-        # print(f'received "{text}" fom thread')
-        self.data_text_stream.moveCursor(QTextCursor.End)
-        self.data_text_stream.insertPlainText(text)
-
-        # make the scroll bar scroll with the new text as it fills past the size of the window
-        self.data_text_stream.verticalScrollBar().setValue(self.data_text_stream.verticalScrollBar().maximum())
 
     @Slot()
     def open_file(self):
@@ -164,7 +169,7 @@ class DataTab(QWidget):
             self.dialog.exec()
 
             if self.dialog.result() == QDialog.Accepted:
-                creation_time = time.time()
+                creation_time = self.dialog.date
                 creation_datetime = datetime.datetime.fromtimestamp(creation_time)
                 self.write('Starting new data file on {m:02}/{d:02}/{y:04} at {h:02}:{min:02}:{s}'.format(
                     m=creation_datetime.month,

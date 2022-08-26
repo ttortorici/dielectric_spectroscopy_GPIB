@@ -16,7 +16,8 @@ def datetime_from_yaml_name(yaml_name):
 
 
 class DropDown(QComboBox):
-    def __init__(self, choices: list[str], shortcuts: list[str] = None, label: str = "", whats_this: str = None):
+    def __init__(self, choices: list[str], shortcuts: list[str | int] = None, label: str = "", whats_this: str = None,
+                 default_value: str | int = None):
         """
         ComboBox with label and stores it's own information
         :param label: a string that will be placed before the combobox in the form
@@ -31,6 +32,8 @@ class DropDown(QComboBox):
         self.choices = choices
         self.shortcuts = shortcuts
         self.addItems(choices)
+        if default_value is not None:
+            self.set(default_value)
 
     def get(self) -> str:
         """
@@ -55,7 +58,7 @@ class DropDown(QComboBox):
 
 
 class TextEntry(QLineEdit):
-    def __init__(self, label: str = "", whats_this: str = None):
+    def __init__(self, label: str = "", whats_this: str = None, default_value: str = None):
         """
         Create a line edit entry box
         :param label: label to go next to it
@@ -65,6 +68,8 @@ class TextEntry(QLineEdit):
         self.label = QLabel(label + ":")
         if whats_this:
             self.label.setWhatsThis(whats_this)
+        if default_value is not None:
+            self.set(default_value)
 
     def get(self) -> str:
         """
@@ -81,9 +86,38 @@ class TextEntry(QLineEdit):
         self.setText(text)
 
 
+class IntListBox(QLineEdit):
+    def __init__(self, label: str = "", whats_this: str = None, default_value: list = None):
+        """
+        Create a line edit entry box that converts comma delimited text into a list of ints
+        :param label: label to go next to it
+        :param whats_this: description
+        """
+        super(self.__class__, self).__init__()
+        self.label = QLabel(label + ":")
+        if whats_this:
+            self.label.setWhatsThis(whats_this)
+        if default_value is not None:
+            self.set(default_value)
+
+    def get(self) -> list:
+        """
+        get the text that has been entered by the user
+        :return: user entered text
+        """
+        return [int(float(entry)) for entry in self.text().split(",")]
+
+    def set(self, list_of_ints: list):
+        """
+        set the text of the box from the software. Overrides current text
+        :param list_of_ints: writes list as a string
+        """
+        self.setText(str(list_of_ints).lstrip("[").rstrip("]"))
+
+
 class FileButton(QPushButton):
     def __init__(self, base_path: str, title: str = "", label: str = "",
-                 whats_this: str = None, filetypes: str = "CSV (*.csv)"):
+                 whats_this: str = None, filetypes: str = "CSV (*.csv)", default_value: str = None):
         """
         Create a button for opening a file
         :param base_path: base path for file dialog
@@ -105,6 +139,9 @@ class FileButton(QPushButton):
 
         self.clicked.connect(self.open_file)
 
+        if default_value is not None:
+            self.set(default_value)
+
     @Slot()
     def open_file(self):
         """
@@ -113,7 +150,7 @@ class FileButton(QPushButton):
         self.filename, _ = QFileDialog.getOpenFileName(self, self.title, self.base_path,
                                                        f"{self.filetypes};;All Files (*)")
         filename_display = self.filename.lstrip(self.base_path)
-        self.setText(filename_display)
+        self.set(filename_display)
 
     def get(self) -> str:
         """
@@ -128,11 +165,14 @@ class FileButton(QPushButton):
             return os.path.join(self.base_path, self.text())
 
     def set(self, text: str):
-        self.setText(text)
+        if text:
+            self.setText(text)
+        else:
+            self.setText(self.title)
 
 
 class IntBox(QSpinBox):
-    def __init__(self, label: str = "", whats_this: str = None):
+    def __init__(self, label: str = "", whats_this: str = None, default_value: int = None):
         """
         Create a spinbox for entering integer values
         :param label: Label to the left
@@ -142,6 +182,8 @@ class IntBox(QSpinBox):
         self.label = QLabel(label + ":")
         if whats_this:
             self.label.setWhatsThis(whats_this)
+        if default_value is not None:
+            self.set(default_value)
 
     def get(self) -> int:
         """
@@ -159,15 +201,18 @@ class IntBox(QSpinBox):
 
 
 class FloatBox(QDoubleSpinBox):
-    def __init__(self, precision: int = 1, minimum: float = 0., maximum: float = 100.,
-                 label: str = "", whats_this: str = None):
+    def __init__(self, precision: int = 1, minimum: float = 0., maximum: float = 100., step_size: float = 1.,
+                 label: str = "", whats_this: str = None, default_value: float = None):
         super(self.__class__, self).__init__()
         self.setDecimals(precision)
         self.setMaximum(maximum)
         self.setMinimum(minimum)
+        self.setSingleStep(step_size)
         self.label = QLabel(label + ":")
         if whats_this:
             self.label.setWhatsThis(whats_this)
+        if default_value is not None:
+            self.set(default_value)
 
     def get(self) -> float:
         """
@@ -186,46 +231,80 @@ class FloatBox(QDoubleSpinBox):
 
 class NewFileDialog(QDialog):
     def __init__(self, base_path):
+        """
+        Create a form dialog box that you can fill out to prompt the code with the details of a new dataset
+        :param base_path: base path to data
+        """
         super(self.__class__, self).__init__()
-
+        self.base_path = base_path
         self.date = None        # will fill once Okay is hit
+        self.setWindowTitle("Measurement Details")
 
-        self.formGroupBox = QGroupBox("Enter measurement details for the dataset")
+        """DEFAULT VALUES"""
+        self.bridge_choice = "AH"
+        self.ls_choice = 331
+        self.purp_choice = "TEST"
+        self.chip_id = ""
+        self.sample = ""
+        self.frequencies = [400, 1400, 14000]
+        self.calibration_path = ""
+        self.film_thickness = 0.
+        self.voltage = 1.
+        self.averaging = 7
+        self.dc_bias_setting = "OFF"
+        self.dc_bias_voltage = 0.
+        self.amplification = 0.
+        self.comment = ""
 
+        """OVERRIDE PRESETS FROM MOST RECENT YAML FILE"""
+        self.load_yaml()
+
+        """CREATE FORM ENTRY BOXES"""
         self.bridge_box = DropDown(choices=["Andeen-Hagerling 2500A", "Hewlett Packard 4275", "Fake"],
                                    shortcuts=["AH", "HP", "FAKE"],
                                    label="Capacitance Bridge",
-                                   whats_this="What capacitance bridge model are you interacting with?")
+                                   whats_this="What capacitance bridge model are you interacting with?",
+                                   default_value=self.bridge_choice)
         self.ls_box = DropDown(choices=["LS331", "LS340"],
                                shortcuts=[331, 340],
                                label="Temperature Controller being used",
-                               whats_this="Which Lakeshore Temperature Controller is being used?")
+                               whats_this="Which Lakeshore Temperature Controller is being used?",
+                               default_value=self.ls_choice)
         self.purp_box = DropDown(choices=["Calibratio (bare capacitor)", "Powder Sample", "Thin Film", "Other", "Test"],
                                  shortcuts=["CAL", "POW", "FILM", "OTHER", "TEST"],
                                  label="Purpose of Measurement",
-                                 whats_this="What kind of measurement is this")
+                                 whats_this="What kind of measurement is this",
+                                 default_value=self.purp_choice)
         self.chip_id_box = TextEntry(label="Capacitor Chip ID",
-                                     whats_this="This is the identifier for the capacitor being used")
+                                     whats_this="This is the identifier for the capacitor being used",
+                                     default_value=self.chip_id)
         self.sample_box = TextEntry(label="Sample Name",
-                                    whats_this="Name of sample")
-        self.frequncy_box = TextEntry(label="Frequencies to measure at",
-                                      whats_this="Type frequencies in Hz separated by commas")
+                                    whats_this="Name of sample",
+                                    default_value=self.sample)
+        self.frequency_box = IntListBox(label="Frequencies to measure at",
+                                        whats_this="Type frequencies in Hz separated by commas",
+                                        default_value=self.frequencies)
         self.cal_file_box = FileButton(base_path=os.path.join(base_path, "1-Calibrations"),
                                        title="Locate Calibration File",
                                        label="Path to Calibration File",
                                        whats_this="This is used for film measurements to remove the background and"
-                                                  "reveal the dielectric constant")
+                                                  "reveal the dielectric constant",
+                                       default_value=self.calibration_path)
         self.film_thickness_box = FloatBox(precision=6,
                                            maximum=10.,
-                                           label="Film Thickness [\u0b3cm]",
-                                           whats_this="Thickness of the film in microns")
+                                           step_size=0.001,
+                                           label="Film Thickness [\u03BCm]",
+                                           whats_this="Thickness of the film in microns",
+                                           default_value=self.film_thickness)
         self.voltage_box = FloatBox(precision=2,
                                     maximum=15.,
                                     label="Measurement Voltage [V]",
-                                    whats_this="Maximum test voltage of the AH. Not used by the HP bridge")
+                                    whats_this="Maximum test voltage of the AH. Not used by the HP bridge",
+                                    default_value=self.voltage)
         self.ave_box = IntBox(label="Averaging Setting",
                               whats_this="On the AH this corresponds to an averaging time. On the HP, it will be the"
-                                         "number of measurements to average.")
+                                         "number of measurements to average.",
+                              default_value=self.averaging)
         self.dc_bias_setting_box = DropDown(choices=["Off", "On: Low Curront", "On: High Current"],
                                             shortcuts=["OFF", "LOW", "HIGH"],
                                             label="DC Bias Setting",
@@ -234,53 +313,47 @@ class NewFileDialog(QDialog):
                                                        "source is connected to the rear panel DC BIAS input. This"
                                                        "command also selects the value of an internal resistor"
                                                        "that is placed in series with the externally applied voltage"
-                                                       "source.")
+                                                       "source.",
+                                            default_value=self.dc_bias_setting)
         self.dc_bias_value_box = FloatBox(precision=2,
                                           maximum=100.,
                                           label="DC Bias Voltage Amount [V]",
                                           whats_this="If you are using the DC Bias, what is the value of the voltage"
-                                                     "that you will bias with.")
+                                                     "that you will bias with.",
+                                          default_value=self.dc_bias_voltage)
         self.amp_box = FloatBox(precision=2,
                                 maximum=1000.,
                                 label="DC Bias Amplification",
-                                whats_this="Value of the amplification being used for the DC Bias.")
-        # self.ljEntry0 = QLineEdit()
-        # self.ljEntry1 = QLineEdit()
-        # self.ljEntry2 = QLineEdit()
-        # self.ljEntry3 = QLineEdit()
+                                whats_this="Value of the amplification being used for the DC Bias.",
+                                default_value=self.amplification)
+        self.comment_box = TextEntry(label="Comment",
+                                     whats_this="Any comment you would like to add at the header of the file.",
+                                     default_value=self.comment)
+        boxes = [self.bridge_box, self.ls_box, self.purp_box, self.chip_id_box, self.sample_box, self.frequency_box,
+                 self.cal_file_box, self.film_thickness_box, self.voltage_box, self.ave_box, self.dc_bias_setting_box,
+                 self.dc_bias_value_box, self.amp_box, self.comment_box]
 
-class NewFileDialog2(QDialog):
-    def __init__(self, base_path):
-        super(NewFileDialog, self).__init__()
-        # self.set
-        # self.setGeometry(50, 100, 800, QSizePolicy.Maximum)
+        """GENERATE FORM"""
+        self.form = QGroupBox("Enter measurement details for the dataset")
+        form_layout = QFormLayout()
+        for box in boxes:
+            form_layout.addRow(box.label, box)
+        self.form.setLayout(form_layout)
 
-        self.date = None        # will fill in once Okay is pressed
+        """PLACE BUTTONS IN THE BOX"""
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self.accept_click)
+        button_box.rejected.connect(self.reject)
 
-        self.formGroupBox = QGroupBox("Enter Measurement Details")
-        self.bridgeChoices = QComboBox()
-        self.cryoChoices = QComboBox()
-        self.purpChoices = QComboBox()
-        self.chipIDEntry = QLineEdit()
-        self.sampleEntry = QLineEdit()
-        self.freqEntry = QLineEdit()
-        self.calButton = QPushButton()
-        self.filmThickEntry = QLineEdit()
-        self.voltEntry = QLineEdit()
-        self.aveSetting = QSpinBox()
-        self.dcBiasChoice = QComboBox()
-        self.dcBiasEntry = QLineEdit()
-        self.ampEntry = QLineEdit()
-        self.ljEntry0 = QLineEdit()
-        self.ljEntry1 = QLineEdit()
-        self.ljEntry2 = QLineEdit()
-        self.ljEntry3 = QLineEdit()
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self.form)
+        main_layout.addWidget(button_box)
+        self.setLayout(main_layout)
 
-        self.setWindowIcon(custom_icon('app.png'))
-
-        self.base_path = base_path
-        self.cal_path = os.path.join(base_path, '1-Calibrations')
-        """LOAD PRESETS"""
+    def load_yaml(self):
+        """
+        Load presets
+        """
         yaml_fname = max(glob.glob(os.path.join(self.base_path, 'presets', '*yml')), key=datetime_from_yaml_name)
         yaml_f = os.path.join(self.base_path, 'presets', yaml_fname)
         print(yaml_f)
@@ -288,232 +361,65 @@ class NewFileDialog2(QDialog):
             preset = yaml.safe_load(f)
 
         self.bridge_choice = preset['bridge']
-        self.cryo_choice = preset['ls']
+        self.ls_choice = preset['ls']
         self.purp_choice = preset['purp']
-        self.chipID_entry = preset['id']
-        self.sample_entry = preset['sample']
-        self.freq_entry = preset['freqs']
-        self.cal_entry = preset['cal']
-        self.thick_entry = preset['filmT']
-        self.volt_entry = preset['v']
-        self.ave_entry = preset['ave']
-        self.dcBias_choice = preset['dc']
-        self.dcBias_entry = preset['dcv']
-        self.amp_entry = preset['amp']
-        self.lj_entry = preset['lj']
-        self.comment_entry = preset['comment']
+        self.chip_id = preset['id']
+        self.sample = preset['sample']
+        self.frequencies = preset['freqs']
+        self.calibration_path = preset['cal']
+        self.film_thickness = preset['filmT']
+        self.voltage = preset['v']
+        self.averaging = preset['ave']
+        self.dc_bias_setting = preset['dc']
+        self.dc_bias_voltage = preset['dcv']
+        self.amplification = preset['amp']
+        self.comment = preset['comment']
 
-        self.createFormGroupBox()
-
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        buttonBox.accepted.connect(self.accept_click)
-        buttonBox.rejected.connect(self.reject)
-
-        mainLayout = QVBoxLayout()
-        mainLayout.addWidget(self.formGroupBox)
-        mainLayout.addWidget(buttonBox)
-        self.setLayout(mainLayout)
-
-        self.setWindowTitle("Measurement Details")
-
-    def createFormGroupBox(self):
-        layout = QFormLayout()
-
-        """Select Bridge being used"""
-        self.bridgeChoices.addItems(["Andeen-Hagerling 2500A", "HP 4275A", "Fake Bridge"])
-        bridge_setting = {'ah': 0, 'hp': 1, 'fake': 2}
-        self.bridgeChoices.setCurrentIndex(bridge_setting[self.bridge_choice])
-
-        """Select Cryostat Being Used"""
-        cryo_choices = ["LS331", "LS340"]
-        self.cryoChoices.addItems(cryo_choices)
-        cryo_setting = {"LS331": 331, "LS340": 340}
-        self.cryoChoices.setCurrentIndex(cryo_choices.index(self.cryo_choice))
-
-        """Select Purpose of Measurement"""
-        purp_choices = ["Calibration", "Powder Sample", "Film Sample", "Other"]
-        self.purpChoices.addItems(purp_choices)
-        purp_setting = {'cal': 0, 'powder': 1, 'film': 2, 'other': 3}
-        self.purpChoices.setCurrentIndex(purp_choices.index(self.purp_choice))
-
-        """Specify Chip iD"""
-        self.chipIDEntry.setText(self.chipID_entry)
-
-        """Specify Sample"""
-        self.sampleEntry.setText(self.sample_entry)
-
-        """Specify Frequencies"""
-        self.freqEntry.setText(str(self.freq_entry).strip('[').strip(']'))
-
-        """Calibration File"""
-        self.calButton.clicked.connect(self.findCal)
-        self.calButton.setText(self.cal_entry)
-
-        """Film Thickness"""
-        self.filmThickEntry.setText(str(self.thick_entry))
-
-        """Measurement Voltage"""
-        self.voltEntry.setText(str(self.volt_entry))
-
-        """Averaging"""
-        self.aveSetting.setValue(int(self.ave_entry))
-
-        """DC Bias Setting"""
-        self.dcBiasChoice.addItems(["Off", "I-Low", "I-High"])
-        dc_setting = {'off': 0, 'low': 1, 'high': 2}
-        self.dcBiasChoice.setCurrentIndex(dc_setting[self.dcBias_choice])
-
-        """DC Bias Value"""
-        self.dcBiasEntry.setText(str(self.dcBias_entry))
-
-        """Amplifier"""
-        self.ampEntry.setText(str(self.amp_entry))
-
-        """Labjack Channels"""
-        self.ljEntry0.setText(self.lj_entry[0])
-        self.ljEntry1.setText(self.lj_entry[1])
-        self.ljEntry2.setText(self.lj_entry[2])
-        self.ljEntry3.setText(self.lj_entry[3])
-
-        """Comments"""
-        self.commentEntry = QLineEdit()
-        self.commentEntry.setText(self.comment_entry)
-
-        labels = [QLabel("Bridge:"),
-                  QLabel("Cryostat:"),
-                  QLabel("Purpose:"),
-                  QLabel("Chip iD:"),
-                  QLabel("Sample:"),
-                  QLabel("Frequencies [Hz]:"),
-                  QLabel("Use Calibration:"),
-                  QLabel("Film Thickness [\u0b3cm]:"),
-                  QLabel("Measurement Voltage [V]:"),
-                  QLabel("Averaging Setting:"),
-                  QLabel("DC Bias Setting:"),
-                  QLabel("DC Bias Value [V]"),
-                  QLabel("Amplification"),
-                  QLabel("Labjack CH0:"),
-                  QLabel("Labjack CH1:"),
-                  QLabel("Labjack CH2:"),
-                  QLabel("Labjack CH3:"),
-                  QLabel("Comments:")]
-        choices = [self.bridgeChoices, self.cryoChoices, self.purpChoices, self.chipIDEntry, self.sampleEntry,
-                   self.freqEntry, self.calButton, self.filmThickEntry, self.voltEntry, self.aveSetting,
-                   self.dcBiasChoice, self.dcBiasEntry, self.ampEntry, self.ljEntry0, self.ljEntry1, self.ljEntry2,
-                   self.ljEntry3, self.commentEntry]
-        whats = ["Capacitive bridge being used for primary measurement",
-                 "Cryostat being used so the code knows which Lakeshore to import",
-                 "Will this measurement be used as a calibration of a bare capacitor, or to measure a poweder or film?",
-                 "The name of the capacitor",
-                 "If calibrating, what is the substrate; if measuring a powder or film, what is it?",
-                 "What frequencies would you like to measure at [Hz]? separate by commas",
-                 "Click to open prompt to find csv file used to calibrate. Open the dialog and click cancel to clear",
-                 "Thickness of the film grown in \u0b3cm.",
-                 "The voltage the bridge will use to measure. AH: VRMS, HP: V",
-                 "AH: a value from 0 to 15 which will set the averaging amount; HP: number of averages",
-                 "This only works with the AH; I-low uses a 100 M\u03A9 resistor; I-high uses a 1 M\u03A9 resistor",
-                 "The voltage you would like applied as a DC offset for the measurement in volts",
-                 "If using an amplifier to get desired DC offset voltage, what is the amplification amount?",
-                 "If using LabJack Channel 0, what is the label? (leave blank if not using)",
-                 "If using LabJack Channel 1, what is the label? (leave blank if not using)",
-                 "If using LabJack Channel 2, what is the label? (leave blank if not using)",
-                 "If using LabJack Channel 3, what is the label? (leave blank if not using)",
-                 "Any additional information you'd like saved to the file."]
-
-        for label, choice, what in zip(labels, choices, whats):
-            label.setWhatsThis(what)
-            layout.addRow(label, choice)
-
-        self.formGroupBox.setLayout(layout)
-
-    @Slot()
-    def findCal(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Find Calibration", self.cal_path,
-                                                      "CSV (*.csv);;All Files (*)", options=options)
-        self.calButton.setText(fileName[fileName.find('1-Calibrations')+len('1-Calibrations'):])
-
-    def accept_click(self):
-        self.date = datetime.datetime.fromtimestamp(time.time())
-        if self.bridgeChoices.currentIndex() == 0:
-            self.bridge_choice = 'ah'
-        elif self.bridgeChoices.currentIndex() == 1:
-            self.bridge_choice = 'hp'
-        elif self.bridgeChoices.currentIndex() == 2:
-            self.bridge_choice = 'fake'
-
-        if self.cryoChoices.currentIndex() == 0:
-            self.cryo_choice = 'Desert-LN'
-        elif self.cryoChoices.currentIndex() == 1:
-            self.cryo_choice = 'Desert-He'
-        elif self.cryoChoices.currentIndex() == 2:
-            self.cryo_choice = '40K'
-        elif self.cryoChoices.currentIndex() == 3:
-            self.cryo_choice = '4K'
-        elif self.cryoChoices.currentIndex() == 4:
-            self.cryo_choice = 'fake'
-
-        if self.purpChoices.currentIndex() == 0:
-            self.purp_choice = 'cal'
-        elif self.purpChoices.currentIndex() == 1:
-            self.purp_choice = 'powder'
-        elif self.purpChoices.currentIndex() == 2:
-            self.purp_choice = 'film'
-        else:
-            self.purp_choice = 'other'
-
-        self.chipID_entry = self.chipIDEntry.text()
-        self.sample_entry = self.sampleEntry.text()
-
-        unsorted_freq_entry = [float(freq) for freq in self.freqEntry.text().split(',')]
-        self.freq_entry = sorted(unsorted_freq_entry)[::-1]
-        if len(self.freq_entry) == 0:
-            raise IOError('Invalid frequency input')
-
-        self.cal_entry = self.calButton.text()
-        self.thick_entry = float(self.filmThickEntry.text())
-
-        self.volt_entry = float(self.voltEntry.text())
-        if self.volt_entry > 15.:
-            self.volt_entry = 15.
-
-        self.ave_entry = int(self.aveSetting.text())
-
-        if self.dcBiasChoice.currentIndex() == 0:
-            self.dcBias_choice = 'off'
-        elif self.dcBiasChoice.currentIndex() == 1:
-            self.dcBias_choice = 'low'
-        else:
-            self.dcBias_choice = 'high'
-        self.dcBias_entry = float(self.dcBiasEntry.text())
-        self.amp_entry = float(self.ampEntry.text())
-        self.lj_entry = [self.ljEntry0.text(), self.ljEntry1.text(), self.ljEntry2.text(), self.ljEntry3.text()]
-        self.comment_entry = self.commentEntry.text()
-
+    def save_yaml(self):
+        """
+        Save Presets
+        """
         presets = {'inst': self.bridge_choice,
-                   'cryo': self.cryo_choice,
+                   'cryo': self.ls_choice,
                    'purp': self.purp_choice,
-                   'id': self.chipID_entry,
-                   'sample': self.sample_entry,
-                   'freqs': self.freq_entry,
-                   'cal': self.cal_entry,
-                   'filmT': self.thick_entry,
-                   'v': self.volt_entry,
-                   'ave': self.ave_entry,
-                   'dc': self.dcBias_choice,
-                   'dcv': self.dcBias_entry,
-                   'amp': self.amp_entry,
-                   'lj': self.lj_entry,
-                   'comment': self.comment_entry}
+                   'id': self.chip_id,
+                   'sample': self.sample,
+                   'freqs': self.frequencies,
+                   'cal': self.calibration_path,
+                   'filmT': self.film_thickness,
+                   'v': self.voltage,
+                   'ave': self.averaging,
+                   'dc': self.dc_bias_setting,
+                   'dcv': self.dc_bias_voltage,
+                   'amp': self.amplification,
+                   'lj': [0, 0, 0, 0],
+                   'comment': self.comment}
 
         save_name = f'presets{self.date.year:04}-{self.date.month:02}-{self.date.day:02}_{self.date.hour:02}.yml'
         save_presets = os.path.join(self.base_path, 'presets', save_name)
         with open(save_presets, 'w') as f:
             yaml.dump(presets, f, default_flow_style=False)
 
-        self.cal_entry = os.path.join(self.cal_path, self.cal_entry)
-
+    def accept_click(self):
+        """
+        What happens when you click accept
+        """
+        self.date = datetime.datetime.fromtimestamp(time.time())
+        self.bridge_choice = self.bridge_box.get()
+        self.ls_choice = self.ls_box.get()
+        self.purp_choice = self.purp_box.get()
+        self.chip_id = self.chip_id_box.get()
+        self.sample = self.sample_box.get()
+        self.frequencies = self.frequency_box.get()
+        self.calibration_path = self.cal_file_box.get()
+        self.film_thickness = self.film_thickness_box.get()
+        self.voltage = self.voltage_box.get()
+        self.averaging = self.ave_box.get()
+        self.dc_bias_setting = self.dc_bias_setting_box.get()
+        self.dc_bias_voltage = self.dc_bias_value_box.get()
+        self.amplification = self.amp_box.get()
+        self.comment = self.comment_box.get()
+        self.save_yaml()
         self.accept()
 
 
