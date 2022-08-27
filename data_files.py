@@ -11,7 +11,7 @@ import numpy as np
 from devices.ah2700 import Client as BridgeAH
 from devices.hp4275 import Client as BridgeHP
 from devices.lakeshore import Client as Lakeshore
-from calculations import geometric_capacitance
+from calculations import geometric_capacitance, fit
 from gui.signalers import MessageSignaler
 
 
@@ -23,7 +23,7 @@ class CSVFile:
         """
         Create or open a csv file and manage it.
         :param path: file path to where you want to save the file
-        :param name: name of the file you wish to create or open
+        :param filename: name of the file you wish to create or open
         :param comment: an optional comment to put in the file
         """
 
@@ -114,20 +114,19 @@ class CSVFile:
 
 class DataFile(CSVFile):
 
-    cryo_to_ls = {'DESERT-LN': 340, 'DESERT-HE': 340, '40K': 331, '4K': None, 'FAKE': 331}
     labels = ('Time [s]', 'Temperature A [K]', 'Temperature B [K]',
               'Capacitance [pF]', 'Loss Tangent', 'Voltage [V]', 'Frequency [Hz]')
 
     def __init__(self, path: str, filename: str, frequencies: list, gui_signaler: MessageSignaler = None,
-                 bridge: str = 'AH', cryo: str = '40K', comment: str = "", lj_chs: list = None):
+                 bridge: str = 'AH', ls_model: int = 331, comment: str = "", lj_chs: list = None):
         """
-        Create data file, and instances of the Bridge and Lakeshore for communication
-        :param path: path you want to save the file
-        :param filename: name of the file
+        Create data file, and instances of the Bridge and Lakeshore for communication.
+        :param path: path you want to save the file.
+        :param filename: name of the file.
         :param frequencies: list of ints. frequencies to measure at. Will remove duplicates and reverse sort them
                             so measurements are made from the highest frequency to the lowest frequency.
         :param bridge: "AH" or "HP" to select which bridge to use.
-        :param cryo: Which cryostat you're using.
+        :param ls_model: integer value of the lakeshore model number.
         :param comment: Will write the comment after opening the file with the # header so that is ignored.
         :param lj_chs: Not currently supported.
         """
@@ -141,8 +140,8 @@ class DataFile(CSVFile):
             self.bridge = BridgeAH()
         elif bridge.upper()[0:2] == 'HP':
             self.bridge = BridgeHP()
-        self.cryo = cryo.upper()
-        self.ls = Lakeshore(self.cryo_to_ls[self.cryo])
+        self.ls_model = ls_model
+        self.ls = Lakeshore(model_num=ls_model)
 
         self.lj_chs = lj_chs
         # if len(lj_chs) > 0:
@@ -255,23 +254,6 @@ class DataFile(CSVFile):
         return full_data
 
 
-class CalFile(DataFile):
-    def __init__(self, path: str, filename: str, frequencies: list,
-                 bridge: str = 'AH', cryo: str = '40K', comment: str = "", lj_chs: list = None):
-        """
-        Calibration files are generically the same as the DataFile class.
-        :param path: path you want to save the file
-        :param filename: name of the file
-        :param frequencies: list of ints. frequencies to measure at. Will remove duplicates and reverse sort them
-                            so measurements are made from the highest frequency to the lowest frequency.
-        :param bridge: "AH" or "HP" to select which bridge to use.
-        :param cryo: Which cryostat you're using.
-        :param comment: Will write the comment after opening the file with the # header so that is ignored.
-        :param lj_chs: Not currently supported.
-        """
-        super(self.__class__, self).__init__(path, filename, frequencies, bridge, cryo, comment, lj_chs)
-
-
 class DielectricConstant(DataFile):
 
     labels = ('Time [s]', 'Temperature A [K]', 'Temperature B [K]',
@@ -280,22 +262,23 @@ class DielectricConstant(DataFile):
 
     def __init__(self, path: str, filename: str, frequencies: list, film_thickness: float, gap_width: float,
                  bare_cap_fit: list, bare_loss_fit: list, gui_signaler: MessageSignaler = None,
-                 bridge: str = 'AH', cryo: str = '40K', comment: str = "", lj_chs: list = None):
+                 bridge: str = 'AH', ls_model: int = 331, comment: str = "", lj_chs: list = None):
         """
-        Data file for measuring a well characterized sample after calibrating the bare capacitor
-        :param path: file path where you want to write the file
-        :param filename: name of the file
-        :param frequencies: list of int. frequencies to measure at
-        :param film_thickness: measured film thickness in [um]
-        :param gap_width: distance between interdigital fingers in [um]
-        :param bare_cap_fit: [c0, c1, c2, ...] which are fit params for C vs T: sum(c_i * T^i)
-        :param bare_loss_fit: [a0, a1, a2, ...] which are fit params for L vs T: sum(a_i * T^i)
-        :param bridge: 'AH' or 'HP': Two character string signifying which bridge to use
-        :param cryo: string signifying which experimental setup being used
-        :param comment: optional comment to append to datafile when started
-        :param lj_chs: not supported currently
+        Data file for measuring a well characterized sample after calibrating the bare capacitor.
+        :param path: file path where you want to write the file.
+        :param filename: name of the file.
+        :param frequencies: list of int. frequencies to measure at.
+        :param film_thickness: measured film thickness in [um].
+        :param gap_width: distance between interdigital fingers in [um].
+        :param bare_cap_fit: [c0, c1, c2, ...] which are fit params for C vs T: sum(c_i * T^i).
+        :param bare_loss_fit: [a0, a1, a2, ...] which are fit params for L vs T: sum(a_i * T^i).
+        :param bridge: 'AH' or 'HP': Two character string signifying which bridge to use.
+        :param ls_model: integer value of the lakeshore model number.
+        :param comment: optional comment to append to datafile when started.
+        :param lj_chs: not supported currently.
         """
-        super(self.__class__, self).__init__(path, filename, frequencies, gui_signaler, bridge, cryo, comment, lj_chs)
+        super(self.__class__, self).__init__(path, filename, frequencies, gui_signaler,
+                                             bridge, ls_model, comment, lj_chs)
 
         self.geometric_cap = geometric_capacitance(gap_width, film_thickness)
 

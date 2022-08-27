@@ -23,6 +23,7 @@ class Holder:
     def __init__(self, signaler: Signaler1):
         signaler.signal.emit([1,2,3,4,5,6])
 
+
 class A:
 
     class_attr = "inside A"
@@ -47,8 +48,23 @@ class B(A):
         super(self.__class__, self).__init__("B")
 
 
+class A1:
+    def __init__(self, name):
+        self.name = name
+        self.self = "A1"
+
+class A2:
+    def __init__(self, name):
+        self.name = name
+        self.self = "A2"
+
+
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    doer = Doer()
-    # doer.signaler.signal.emit([1,2,3,4])
-    holder = Holder(doer.signaler)
+    x = 0
+    if x:
+        C=A1
+    else:
+        C=A2
+    c=C("test")
+    print(c.name)
+    print(c.self)

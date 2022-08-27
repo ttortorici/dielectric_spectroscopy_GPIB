@@ -241,6 +241,7 @@ class NewFileDialog(QDialog):
         self.setWindowTitle("Measurement Details")
 
         """DEFAULT VALUES"""
+        self.presets = {}
         self.bridge_choice = "AH"
         self.ls_choice = 331
         self.purp_choice = "TEST"
@@ -260,6 +261,13 @@ class NewFileDialog(QDialog):
         self.load_yaml()
 
         """CREATE FORM ENTRY BOXES"""
+        # ALWAYS
+        self.purp_box = DropDown(choices=["Calibration (bare capacitor)", "Powder Sample",
+                                          "Thin Film", "Other", "Test"],
+                                 shortcuts=["CAL", "POW", "FILM", "OTHER", "TEST"],
+                                 label="Purpose of Measurement",
+                                 whats_this="What kind of measurement is this",
+                                 default_value=self.purp_choice)
         self.bridge_box = DropDown(choices=["Andeen-Hagerling 2500A", "Hewlett Packard 4275", "Fake"],
                                    shortcuts=["AH", "HP", "FAKE"],
                                    label="Capacitance Bridge",
@@ -270,32 +278,9 @@ class NewFileDialog(QDialog):
                                label="Temperature Controller being used",
                                whats_this="Which Lakeshore Temperature Controller is being used?",
                                default_value=self.ls_choice)
-        self.purp_box = DropDown(choices=["Calibratio (bare capacitor)", "Powder Sample", "Thin Film", "Other", "Test"],
-                                 shortcuts=["CAL", "POW", "FILM", "OTHER", "TEST"],
-                                 label="Purpose of Measurement",
-                                 whats_this="What kind of measurement is this",
-                                 default_value=self.purp_choice)
-        self.chip_id_box = TextEntry(label="Capacitor Chip ID",
-                                     whats_this="This is the identifier for the capacitor being used",
-                                     default_value=self.chip_id)
-        self.sample_box = TextEntry(label="Sample Name",
-                                    whats_this="Name of sample",
-                                    default_value=self.sample)
         self.frequency_box = IntListBox(label="Frequencies to measure at",
                                         whats_this="Type frequencies in Hz separated by commas",
                                         default_value=self.frequencies)
-        self.cal_file_box = FileButton(base_path=os.path.join(base_path, "1-Calibrations"),
-                                       title="Locate Calibration File",
-                                       label="Path to Calibration File",
-                                       whats_this="This is used for film measurements to remove the background and"
-                                                  "reveal the dielectric constant",
-                                       default_value=self.calibration_path)
-        self.film_thickness_box = FloatBox(precision=6,
-                                           maximum=10.,
-                                           step_size=0.001,
-                                           label="Film Thickness [\u03BCm]",
-                                           whats_this="Thickness of the film in microns",
-                                           default_value=self.film_thickness)
         self.voltage_box = FloatBox(precision=2,
                                     maximum=15.,
                                     label="Measurement Voltage [V]",
@@ -329,6 +314,39 @@ class NewFileDialog(QDialog):
         self.comment_box = TextEntry(label="Comment",
                                      whats_this="Any comment you would like to add at the header of the file.",
                                      default_value=self.comment)
+
+        # FOR SAMPLES
+        self.chip_id_box = TextEntry(label="Capacitor Chip ID",
+                                     whats_this="This is the identifier for the capacitor being used",
+                                     default_value=self.chip_id)
+        self.sample_box = TextEntry(label="Sample Name",
+                                    whats_this="Name of sample",
+                                    default_value=self.sample)
+
+        # FOR FILMS
+        self.cal_file_box = FileButton(base_path=os.path.join(base_path, "1-Calibrations"),
+                                       title="Locate Calibration File",
+                                       label="Path to Calibration File",
+                                       whats_this="This is used for film measurements to remove the background and"
+                                                  "reveal the dielectric constant",
+                                       default_value=self.calibration_path)
+        self.film_thickness_box = FloatBox(precision=6,
+                                           maximum=10.,
+                                           step_size=0.001,
+                                           label="Film Thickness [\u03BCm]",
+                                           whats_this="Thickness of the film in microns",
+                                           default_value=self.film_thickness)
+        self.gap_width_box = FloatBox(precision=1,
+                                      maximum=20.,
+                                      label="Gap Width")
+
+
+        self.always_display = [self.purp_box, self.bridge_box, self.ls_box, ]
+        self.display = {"CAL": [],
+                        "POW": [],
+                        "FILM": [],
+                        "OTHER": [],
+                        "TEST": []}
         boxes = [self.bridge_box, self.ls_box, self.purp_box, self.chip_id_box, self.sample_box, self.frequency_box,
                  self.cal_file_box, self.film_thickness_box, self.voltage_box, self.ave_box, self.dc_bias_setting_box,
                  self.dc_bias_value_box, self.amp_box, self.comment_box]
@@ -379,26 +397,26 @@ class NewFileDialog(QDialog):
         """
         Save Presets
         """
-        presets = {'inst': self.bridge_choice,
-                   'cryo': self.ls_choice,
-                   'purp': self.purp_choice,
-                   'id': self.chip_id,
-                   'sample': self.sample,
-                   'freqs': self.frequencies,
-                   'cal': self.calibration_path,
-                   'filmT': self.film_thickness,
-                   'v': self.voltage,
-                   'ave': self.averaging,
-                   'dc': self.dc_bias_setting,
-                   'dcv': self.dc_bias_voltage,
-                   'amp': self.amplification,
-                   'lj': [0, 0, 0, 0],
-                   'comment': self.comment}
+        self.presets = {'inst': self.bridge_choice,
+                        'ls': self.ls_choice,
+                        'purp': self.purp_choice,
+                        'id': self.chip_id,
+                        'sample': self.sample,
+                        'freqs': self.frequencies,
+                        'cal': self.calibration_path,
+                        'filmT': self.film_thickness,
+                        'v': self.voltage,
+                        'ave': self.averaging,
+                        'dc': self.dc_bias_setting,
+                        'dcv': self.dc_bias_voltage,
+                        'amp': self.amplification,
+                        'lj': [0, 0, 0, 0],
+                        'comment': self.comment}
 
         save_name = f'presets{self.date.year:04}-{self.date.month:02}-{self.date.day:02}_{self.date.hour:02}.yml'
         save_presets = os.path.join(self.base_path, 'presets', save_name)
         with open(save_presets, 'w') as f:
-            yaml.dump(presets, f, default_flow_style=False)
+            yaml.dump(self.presets, f, default_flow_style=False)
 
     def accept_click(self):
         """

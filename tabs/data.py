@@ -4,8 +4,6 @@ A tab widget for taking data in app.py
 @author: Teddy Tortorici
 """
 
-import os.path
-
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QStackedWidget, QSizePolicy,
                                QDialog, QMessageBox, QFileDialog, QMainWindow)
 from PySide6.QtCore import Slot
@@ -18,6 +16,8 @@ from comm.server import GpibServer
 from comm.socket_client import send as send_client
 import threading
 import time
+import ast
+import os
 import datetime
 
 
@@ -169,8 +169,22 @@ class DataTab(QWidget):
             self.dialog.exec()
 
             if self.dialog.result() == QDialog.Accepted:
-                creation_time = self.dialog.date
-                creation_datetime = datetime.datetime.fromtimestamp(creation_time)
+                bridge = self.dialog.bridge_choice
+                ls_num = self.dialog.ls_choice
+                purpose = self.dialog.purp_choice
+                cid = self.dialog.chip_id.replace(" ", "_")
+                sample = self.dialog.sample.replace(" ", "_")
+                frequencies = self.dialog.frequencies
+                cal_file = self.dialog.calibration_path
+                thickness = self.dialog.film_thickness
+                volt = self.dialog.voltage
+                ave = self.dialog.averaging
+                dc_setting = self.dialog.dc_bias_setting
+                dc_voltage = self.dialog.dc_bias_voltage
+                amp = self.dialog.amplification
+                comment = self.dialog.comment
+
+                creation_datetime = self.dialog.date
                 self.write('Starting new data file on {m:02}/{d:02}/{y:04} at {h:02}:{min:02}:{s}'.format(
                     m=creation_datetime.month,
                     d=creation_datetime.day,
@@ -180,42 +194,50 @@ class DataTab(QWidget):
                     s=creation_datetime.second))
 
                 """FIND PLACE TO WRITE FILE"""  # "Calibration", "Powder Sample", "Film Sample", "Other"
-                if self.dialog.purp_choice == "Calibration":
-                    path = os.path.join(self.parent.data_base_path)
+                path = self.parent.data_base_path
+                if purpose == "CAL":
+                    path = os.path.join(path, "1-Calibrations")
+                elif purpose == "POW":
+                    path = os.path.join(path, "2-Powders")
+                elif purpose == "FILM":
+                    path = os.path.join(path, "3-Films")
+                elif purpose == "TEST":
+                    path = os.path.join(path, "Tests")
+                else:
+                    path = os.path.join(path, "Other")
+                path = os.path.join(path,
+                                    str(creation_datetime.year),
+                                    f"{creation_datetime.month} - {creation_datetime.strftime('%B')}")
 
-                sample_name = self.dialog.sample_name_entry.replace(' ', '_')
-                if not sample_name:
-                    sample_name = 'none'
-                filename = '{sample}_{m:02}-{d:02}-{y:04}_{h:02}-{min:02}-{s}.csv'.format(sample=sample_name,
-                                                                                          m=creation_datetime.month,
-                                                                                          d=creation_datetime.day,
-                                                                                          y=creation_datetime.year,
-                                                                                          h=creation_datetime.hour,
-                                                                                          min=creation_datetime.minute,
-                                                                                          s=creation_datetime.second)
-                comment = 'Experiment performed on the {setup} setup with sample: {sample}.'.format(
-                    setup=self.dialog.setup_choice_entry,
-                    sample=self.dialog.sample_name_entry)
-                if self.dialog.averaging_entry > 1:
-                    comment += f' Data is taken with {self.dialog.averaging_entry} averages.'
-                if self.dialog.calibration_file_entry:
-                    comment += f' Using calibration file: {self.dialog.calibration_file_entry}.'
-                if self.dialog.comment_entry:
-                    comment += f' ... {self.dialog.comment_entry}.'
+                """CREATE FILENAME"""
+                day = f"{creation_datetime.day:02}"
+                start_time = f"{self.dialog.date.hour:02}-{self.dialog.date.min:02}"
+                if not sample:
+                    sample = "Bare"
+                if not cid:
+                    cid = "test"
+                filename = f"{sample}__D-{day}__{cid}__{bridge}__LS{ls_num}__T-{start_time}.csv"
 
-                file_path = os.path.join(self.parent.data_base_path, filename)
-                self.activate_data_file(file_path)
-                self.data = data_files.CalFile(file_path, comment)
+                """CREATE COMMENT LINE"""
+                full_comment = str(self.dialog.presets)
+
+                self.activate_data_file(path, filename)
+
+                """Create data file"""
+                if purpose == "FILM":
+                    self.data = data_files.DielectricConstant(path, filename, frequencies, thickness, )
+                else:
+                    self.data = data_files.DataFile()
                 self.data_thread.start()
 
-    def activate_data_file(self, filename):
+    def activate_data_file(self, path: str, filename: str):
         """Whether we open a file or make a new one, we need to do all these things"""
         self.server_thread = threading.Thread(target=self.gpib_server.run, args=())
         self.data_thread = threading.Thread(target=self.take_data, args=())
 
         self.plot_updater.signal.connect(self.parent.plot_tab.update_plots)
         self.plot_initializer.signal.connect(self.parent.plot_tab.initialize_plots)
-        self.plot_initializer.signal.emit(filename)
+        self.plot_initializer.signal.emit(os.path.join(path, filename))
 
         self.active_file = True
         self.button_play.setEnabled(True)
@@ -291,8 +313,23 @@ class DataTab(QWidget):
 
 class FakeDialog:
     """This is for when we open a file so we can mimic pulling the averaging entry from the dialog for a new file"""
-    def __init__(self):
-        self.averaging_entry = 1
+    def __init__(self, comment_line: str):
+        preset = ast.literal_eval(comment_line.lstrip("# ").rstrip("\n"))
+        self.preset = preset
+        self.bridge_choice = preset['bridge']
+        self.ls_choice = preset['ls']
+        self.purp_choice = preset['purp']
+        self.chip_id = preset['id']
+        self.sample = preset['sample']
+        self.frequencies = preset['freqs']
+        self.calibration_path = preset['cal']
+        self.film_thickness = preset['filmT']
+        self.voltage = preset['v']
+        self.averaging = preset['ave']
+        self.dc_bias_setting = preset['dc']
+        self.dc_bias_voltage = preset['dcv']
+        self.amplification = preset['amp']
+        self.comment = preset['comment']
 
 
 if __name__ == "__main__":

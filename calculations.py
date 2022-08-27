@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import special
 from scipy import optimize
+from decimal import Decimal
 import os
 import csv
 
@@ -22,14 +23,25 @@ def elliptic_over_comp(k):
     return special.ellipk(k) / special.ellipk(np.sqrt(1 - k**2))
 
 
-def find_gap(bareC):
+def elliptic_over_comp_small_k(k: float) -> float:
+    """
+    Small k approximation to the elliptic integral divided by its complement
+    :param k: inputs of elliptic integrals calculated from k_ functions
+    :return: approximation of elliptic integral divided by its compliment
+    """
+    ellip_integral = np.pi / 2 * (1 + k / 4 + 9 * k / 64)
+    ellip_integral_comp = 5 / 2 * np.log(2) - np.log(k)
+    return ellip_integral / ellip_integral_comp
+
+
+def find_gap(bare_c_val):
     def func(g):
-        return bare_capacitance(g) - bareC
-    return optimize.fsolve(func, 10)[0]
+        return bare_capacitance(g) - bare_c_val
+    return optimize.fsolve(func, np.array([10.]))[0]
 
 
 def geometric_capacitance(g, h):
-    """Calculates the geometric capacitance for an interdigital capacitor given
+    """Calculates the geometric capacitance for an interdigital capacitor using the small k
     h - the thickness of the film
     g - gap size of the capacitor"""
     k = k_mat(h, g)
@@ -42,12 +54,33 @@ def k_air(g):
     return (u - g) / (u + g) * np.sqrt(2 * (u - g) / (2 * u - g))
 
 
-def k_mat(g, h):
-    """Calculates k for K(k) calculation
-    h - thickness of film
-    g - gap size"""
+def k_mat(g: float, h: float) -> float:
+    """
+    Calculates k for K(k) calculation down to 0.1 um material thickness
+    :param g: gap size [um]
+    :param h: thickness of film [um]
+    :return: argument for elliptic integral
+    """
+
     return sinhpi4(u - g, h) / sinhpi4(u + g, h) * np.sqrt((sinhpi4(3 * u - g, h) ** 2 - sinhpi4(u + g, h) ** 2)
                                                            / (sinhpi4(3 * u - g, h) ** 2 - sinhpi4(u - g, h) ** 2))
+
+
+def k_film(g: float, h: float) -> float:
+    """
+    Calculates k for K(k) calculation for thin films down to 60 nm
+    :param g: gap size [um]
+    :param h: thickness of film [nm]
+    :return: argument for elliptic integral
+    """
+    h /= 1e3    # convert from nm to um
+    part1 = sinhpi4(3 * u - g, h)
+    part2 = sinhpi4(u + g, h)
+    part3 = sinhpi4(3 * u - g, h)
+    part4 = sinhpi4(u - g, h)
+    outside_sqrt = part4 / part2
+    inside_sqrt = float((Decimal(part1) ** 2 - Decimal(part2) ** 2) / (Decimal(part3) ** 2 - Decimal(part4) ** 2))
+    return outside_sqrt * np.sqrt(inside_sqrt)
 
 
 def sinhpi4(x, h):
@@ -92,3 +125,14 @@ def load_calibration(name: str, capacitance_order: int = 2, loss_order: int = 1)
                                              1)
 
     return capacitance_fit_parameters[::-1], loss_fit_parameters[::-1]
+
+
+if __name__ == "__main__":
+    print(find_gap(.8))
+    # import decimal
+    # print(k_film(10, 57))
+    # for ii in range(1, 21):
+    #     try:
+    #         print(k_film(ii, 80))
+    #     except decimal.InvalidOperation:
+    #         print("failed")
