@@ -7,7 +7,7 @@ import numpy as np
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QFont
-from dialogs.new_file import NewFileDialog
+from gui.dialogs.new_file import NewFileDialog
 import data_files
 import gpib_tools as GPIB
 import calculations as calc

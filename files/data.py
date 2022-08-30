@@ -6,110 +6,13 @@ Classes for creating and managing data files
 
 import time
 import datetime
-import os
-import numpy as np
-from devices.ah2700 import Client as BridgeAH
-from devices.hp4275 import Client as BridgeHP
-from devices.lakeshore import Client as Lakeshore
-from calculations import geometric_capacitance, fit
+from comm.devices.ah2700 import Client as BridgeAH
+from comm.devices.hp4275 import Client as BridgeHP
+from comm.devices.lakeshore import Client as Lakeshore
 from gui.signalers import MessageSignaler
-
-
-class CSVFile:
-
-    file_type = ".csv"
-
-    def __init__(self, path: str, filename: str, comment: str = ""):
-        """
-        Create or open a csv file and manage it.
-        :param path: file path to where you want to save the file
-        :param filename: name of the file you wish to create or open
-        :param comment: an optional comment to put in the file
-        """
-
-        """MAKE SURE THE FILE NAME IS VALID"""
-        filename = filename.rstrip(CSVFile.file_type)
-        filename = filename.replace(".", "")
-        filename += CSVFile.file_type
-        self.name = os.path.join(path, filename)
-
-        """CHECK IF PATH TO FILE AND FILE EXIST"""
-        # Check if path exists, if it doesn't, make all the directories necessary to make it
-        if not os.path.isdir(path):
-            os.makedirs(path)
-
-        # Check if file exists, if it doesn't, make it
-        if os.path.exists(self.name):
-            self.new = False
-        else:
-            self.new = True
-            self.create_file()
-
-        """APPEND OPTIONAL COMMENT"""
-        if comment:
-            self.write_comment(comment)
-
-    def __str__(self):
-        return f"Opened file: {self.name}"
-
-    def __len__(self):
-        with open(self.name, 'r') as f:
-            for counter, _ in enumerate(f):
-                pass
-        return counter + 1
-
-    def write_row(self, row_to_write: list):
-        """Turns a list into a comma delimited row to write to the csv file"""
-        with open(self.name, 'a') as f:
-            f.write(str(row_to_write).lstrip("[").rstrip("]") + '\n')
-
-    def write_comment(self, comment: str):
-        """Writes a comment line in the csv file"""
-        with open(self.name, "a") as f:
-            f.write(f"# {comment}\n")
-
-    def create_file(self):
-        """Creates file by writing the first comment line"""
-        with open(self.name, "w") as f:
-            f.write(f"# This data file was created on {time.ctime(time.time())}\n")
-
-    @staticmethod
-    def load_data_np(filename: str, line_skip: int = 0, attempts: int = 10) -> tuple[np.ndarray, int]:
-        """
-        Load data from a csv file into a numpy array
-        :param filename: path+name of file
-        :param line_skip: will skip this many lines on first attempt. If it fails to load, it will repeat skipping one
-                          more line until it succeeds.
-        :param attempts: maximum times it will try to load
-        :return: numpy array of data, int of how many lines were skipped
-        """
-        data = None
-        lines_skipped = None
-        for skip_amount in range(line_skip, attempts):
-            try:
-                data = np.loadtxt(filename, comments="#", delimiter=",", skiprows=skip_amount)
-                lines_skipped = skip_amount
-                break
-            except ValueError:
-                pass
-        return data, lines_skipped
-
-    @staticmethod
-    def get_labels(filename: str, attempts: int = 10) -> list[str]:
-        """
-        Returns the column labels from the file
-        :param filename: path + name for file
-        :param attempts: how many rows to attempt to read from
-        :return: list of labels
-        """
-        labels = None
-        with open(filename, "r") as f:
-            for attempt in range(attempts):
-                row = f.readline()
-                if row[0] != "#":
-                    labels = [label.strip() for label in row.strip("\n").split(",")]
-                    break
-        return labels
+from files.csv import CSVFile
+from calculations.calibration import Calibration
+from calculations.capacitors import geometric_capacitance
 
 
 class DataFile(CSVFile):
@@ -136,9 +39,10 @@ class DataFile(CSVFile):
         self.unique_frequencies = unique_frequencies[::-1]  # reverse order (big to small)
         self.gui_signaler = gui_signaler
 
-        if bridge.upper()[0:2] == 'AH' or bridge == 'fake':
+        self.bridge_type = bridge.upper()
+        if self.bridge_type[0:2] == 'AH' or self.bridge_type == 'FAKE':
             self.bridge = BridgeAH()
-        elif bridge.upper()[0:2] == 'HP':
+        elif self.bridge_type[0:2] == 'HP':
             self.bridge = BridgeHP()
         self.ls_model = ls_model
         self.ls = Lakeshore(model_num=ls_model)
@@ -155,6 +59,38 @@ class DataFile(CSVFile):
         if self.new:
             self.write_labels()
         self.start_time = time.time()
+
+    def initiate_devices(self, voltage_rms: float = None, averaging_setting: int = None, dc_setting: str = None):
+        """
+        Initiate the bridge by setting its formatting, units, and the following options
+        :param voltage_rms: This is the maximum AC voltage in volts RMS that the bridge will apply to the DUT. Any
+                            voltage may be entered, but the bridge will limit the maximum measurement voltage to a value
+                            equal to or below the amount specified.
+                            0-15.
+        :param averaging_setting: Set the approximate time used to make a measurement. Set a number between 0 and 15.
+                                  See table A-1 in the Firmware manual on A-10 (pg 246 of the pdf)
+                                  0-15.
+        :param dc_setting: Enables or disables a user-supplied DC bias voltage of up to ±100 VDC to be applied to the
+                           measured unknown. The external source is connected to the rear panel DC BIAS input. This
+                           command also selects the value of an internal resistor that is placed in series with the
+                           externally applied voltage source.
+                           [OFF, LOW, HIGH]
+        """
+        if self.bridge_type == "AH":
+            self.bridge.format(notation="ENG")
+            self.bridge.set_units("DS")
+            if voltage_rms is not None:
+                self.bridge.set_voltage(voltage_rms)
+            if averaging_setting is not None:
+                self.bridge.set_ave(averaging_setting)
+            if dc_setting is not None:
+                self.bridge.dcbias(dc_setting)
+        elif self.bridge_type == "HP":
+            self.bridge.set_dispA(self.bridge.dispA)
+            self.bridge.set_dispB(self.bridge.dispB)
+            self.bridge.write('C1')  # set to auto circuit mode (C1: auto, C2: series, C3: parallel)
+            self.bridge.write('H1')  # turn on high res mode (H0: off, H1: on)
+            self.bridge.set_ave(averaging_setting)
 
     def write_labels(self):
         """
@@ -194,7 +130,7 @@ class DataFile(CSVFile):
         data = [0] * len(self.__class__.labels)
 
         """Set the frequency"""
-        self.bridge.set_freq(frequency)
+        self.bridge.set_frequency(frequency)
 
         if not silent:
             print(f'Frequency set to {frequency} Hz')
@@ -224,7 +160,7 @@ class DataFile(CSVFile):
 
         return data
 
-    def sweep_frequencies(self):  # , amp=1, offset=0):
+    def sweep_frequencies(self, silent: bool = True):  # , amp=1, offset=0):
         """
         Repeat measurements at each frequency in self.unique_frequencies
         """
@@ -232,20 +168,22 @@ class DataFile(CSVFile):
         for ff, frequency in enumerate(self.unique_frequencies):
             start_index = ff * len(self.__class__.labels)
             end_index = (ff + 1) * len(self.__class__.labels)
-            partial_data = self.measure_at_frequency(frequency)
+            partial_data = self.measure_at_frequency(frequency, silent=silent)
             if self.gui_signaler:
                 converted_list = [""] * len(self.__class__.labels)
                 for ii, label in enumerate(self.__class__.labels):
                     if "time" in label.lower():
                         converted_list[ii] = str(datetime.datetime.fromtimestamp(partial_data[ii]))
                     elif "temperature" in label.lower():
-                        converted_list[ii] = f"{partial_data[ii]:.2f}".rjust(7)
+                        converted_list[ii] = f"{partial_data[ii]:.2f} K".rjust(20)
                     elif "frequency" in label.lower():
-                        converted_list[ii] = f"{int(partial_data[ii])}".rjust(12)
+                        converted_list[ii] = f"{int(partial_data[ii])} Hz".rjust(20)
                     elif "voltage" in label.lower():
-                        converted_list[ii] = f"{partial_data:.3f}".rjust(7)
+                        converted_list[ii] = f"{partial_data[ii]:.1f} V<sub>RMS</sub>".rjust(25)
+                    elif "capacitance" in label.lower():
+                        converted_list[ii] = f"{partial_data[ii]:.6f} pF".rjust(20)
                     else:
-                        converted_list[ii] = f"{partial_data:.5f}".rjust(8)
+                        converted_list[ii] = f"{partial_data[ii]:.6f}".rjust(17)
                 self.gui_signaler.signal.emit(", ".join(converted_list) + "\n")
             full_data[start_index:end_index] = partial_data
         self.write_row(full_data)
@@ -260,8 +198,8 @@ class DielectricConstant(DataFile):
               'Capacitance [pF]', 'Loss Tangent', 'Voltage [V]',
               'Re[dielectric constant]', 'Im[dielectric constant]', 'Frequency [Hz]')
 
-    def __init__(self, path: str, filename: str, frequencies: list, film_thickness: float, gap_width: float,
-                 bare_cap_fit: list, bare_loss_fit: list, gui_signaler: MessageSignaler = None,
+    def __init__(self, path: str, filename: str, frequencies: list, film_thickness: float,
+                 capacitor_calibration: Calibration, gui_signaler: MessageSignaler = None,
                  bridge: str = 'AH', ls_model: int = 331, comment: str = "", lj_chs: list = None):
         """
         Data file for measuring a well characterized sample after calibrating the bare capacitor.
@@ -269,9 +207,7 @@ class DielectricConstant(DataFile):
         :param filename: name of the file.
         :param frequencies: list of int. frequencies to measure at.
         :param film_thickness: measured film thickness in [um].
-        :param gap_width: distance between interdigital fingers in [um].
-        :param bare_cap_fit: [c0, c1, c2, ...] which are fit params for C vs T: sum(c_i * T^i).
-        :param bare_loss_fit: [a0, a1, a2, ...] which are fit params for L vs T: sum(a_i * T^i).
+        :param capacitor_calibration: calibration for the capacitor being use.
         :param bridge: 'AH' or 'HP': Two character string signifying which bridge to use.
         :param ls_model: integer value of the lakeshore model number.
         :param comment: optional comment to append to datafile when started.
@@ -279,11 +215,9 @@ class DielectricConstant(DataFile):
         """
         super(self.__class__, self).__init__(path, filename, frequencies, gui_signaler,
                                              bridge, ls_model, comment, lj_chs)
-
+        self.calibration = capacitor_calibration
+        gap_width = self.calibration.gap_estimate()
         self.geometric_cap = geometric_capacitance(gap_width, film_thickness)
-
-        self.bare_cap_fit = bare_cap_fit
-        self.bare_loss_fit = bare_loss_fit
 
     def measure_at_frequency(self, frequency: int, attempts: int = 3, silent: bool = True):  # , amp=1, offset=0):
         """
@@ -298,7 +232,8 @@ class DielectricConstant(DataFile):
         data = [0] * len(self.__class__.labels)
 
         """Set the frequency"""
-        self.bridge.set_freq(frequency)
+        self.bridge.set_frequency(frequency)
+        frequency = self.bridge.frequency
 
         if not silent:
             print(f'Frequency set to {frequency} Hz')
@@ -323,15 +258,8 @@ class DielectricConstant(DataFile):
         if not silent:
             print('read temperatures')
 
-        bare_capacitance = 0
-        for ii, c in enumerate(self.bare_cap_fit):
-            bare_capacitance += c[ii] * temperatures[0] ** ii
-
-        bare_capacitance = sum
-
-        bare_loss = 0
-        for ii, a in enumerate(self.bare_loss_fit):
-            bare_loss += a[ii] * temperatures[0] ** ii
+        bare_capacitance = self.calibration.bare_capacitance(temperature=temperatures[0], frequency=frequency)
+        bare_loss = self.calibration.bare_loss(temperature=temperatures[0], frequency=frequency)
 
         re_eps = 1 + (bridge_data[1] - bare_capacitance) / self.geometric_cap
         im_eps = (bridge_data[2] * bridge_data[1] - bare_loss * bare_capacitance) / self.geometric_cap
@@ -344,65 +272,3 @@ class DielectricConstant(DataFile):
         data[-1] = bridge_data[0]        # frequency
 
         return data
-
-
-class Calibration:
-    def __init__(self, filename: str, capacitance_fit_order: int = 2, loss_fit_order: int = 1):
-        cal_data, _ = CSVFile.load_data_np(filename)
-        labels = CSVFile.get_labels(filename)
-
-        temperature_indices = []    # indices for temperatures
-        capacitance_indices = []    # indices for capacitance
-        loss_indices = []           # indices for loss tangent
-        frequency_indices = []      # indices for frequency
-
-        for ii, label in enumerate(labels):
-            if 'temperature' in label.lower() and 'B' not in label:
-                temperature_indices.append(ii)
-            elif 'capacitance' in label.lower():
-                capacitance_indices.append(ii)
-            elif 'loss tangent' in label.lower():
-                loss_indices.append(ii)
-            elif 'frequency' in label.lower():
-                frequency_indices.append(ii)
-
-        self.capacitance_fit_parameters = {}
-        self.loss_fit_parameters = {}
-
-        # Get the frequencies then use those as keys for the fits
-        self.frequencies = np.zeros(len(frequency_indices))
-        for ii, f_index in enumerate(frequency_indices):
-            frequency = int(cal_data[:, f_index][0])
-            self.frequencies[ii] = frequency
-            self.capacitance_fit_parameters[frequency] = np.polyfit(cal_data[:, temperature_indices[ii]],
-                                                                    cal_data[:, capacitance_indices[ii]],
-                                                                    capacitance_fit_order)
-            self.loss_fit_parameters[frequency] = np.polyfit(cal_data[:, temperature_indices[ii]],
-                                                             cal_data[:, loss_indices[ii]],
-                                                             loss_fit_order)
-
-    def __str__(self):
-        """
-        What gets printed when you print the object
-        :return: prints this
-        """
-        string_to_print = ""
-        for frequency in self.frequencies:
-            if frequency < 1e3:
-                f_string = f"{frequency} Hz"
-            elif frequency < 1e6:
-                f_string = f"{int(frequency/1e3)} kHz"
-            elif frequency < 1e9:
-                f_string = f"{int(frequency/1e6)} MHz"
-            else:
-                f_string = f"{int(frequency/1e9)} GHz"
-            string_to_print += f"At {f_string}\n" \
-                               f"The Capacitance fit is\n"
-            for ii, a in self.capacitance_fit_parameters[frequency]:
-                string_to_print += f"{a} * x^{ii} + "
-            string_to_print.rstrip(" + ")
-            string_to_print += "\nThe Loss fit is\n"
-            for ii, a in self.loss_fit_parameters[frequency]:
-                string_to_print += f"{a} * x^{ii} + "
-            string_to_print.rstrip(" + ")
-        return string_to_print

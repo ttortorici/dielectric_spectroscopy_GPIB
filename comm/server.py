@@ -7,29 +7,30 @@ author: Teddy Tortorici
 import time
 import socket
 import get
-# import gpib
-import fake_gpib_devices as gpib    # delete this for real implementation
+import comm.gpib as gpib
+import comm.fake_gpib as fake
 
 
 class GpibServer:
 
     shutdown_command = b"shutdown"
 
-    def __init__(self, host: str = "localhost", port: int = get.port, do_print=True):
-        self.host_port = (host, port)
+    """ADDRESSES"""
+    addr_bridge = {"AH": 28, "HP": 5}
+    addr_ls = {331: 13, 340: 12}
+
+    def __init__(self, bridge_type: str = "AH", ls_model: int = 331, silent: bool = True):
+        self.host_port = ("localhost", get.port)
         self.running = False
-        self.do_print = do_print
+        self.silent = silent
 
         """create objects for devices"""
-        # self.lakeshore = gpib.Device(get.gpib_address["LS"])
-        # self.voltage_supply = gpib.Device(get.gpib_address["VS"])
-        self.lakeshore = gpib.LakeShore(0)
-        self.voltage_supply = gpib.VoltageSupply(0)
-        self.photon_counter = gpib.PhotonCounter(0)
-
-        """Add any set up commands you want to have done once the server starts running
-        ie, you may want to set certain settings by default when the system starts up"""
-        # Put start up commands to devices here
+        if bridge_type == "FAKE":
+            self.bridge = fake.Bridge()
+            self.ls = fake.Lakeshore()
+        else:
+            self.bridge = gpib.Device(GpibServer.addr_bridge[bridge_type])
+            self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
 
     def handle(self, message_to_parse: str) -> str:
         """Parse a message of the format
@@ -42,34 +43,31 @@ class GpibServer:
         except IndexError:
             message = ""
 
-        """MUST EDIT THE FOLLOWING LINES TO MATCH THE DEVICES YOU ARE USING"""
+        """SELECT DEVICE (instrument)"""
         if dev_id == "LS":
-            instrument = self.lakeshore
-            dev_name = "Fake Lakeshore Temperature Controller"
-        elif dev_id == "VS":
-            instrument = self.voltage_supply
-            dev_name = "Fake Voltage Supply"
-        elif dev_id == "PC":
-            instrument = self.photon_counter
-            dev_name = "Fake Photon Counter"
+            instrument = self.ls
+            dev_name = "Lakeshore Temperature Controller"
+        elif dev_id == "AH" or dev_id == "HP":
+            instrument = self.bridge
+            dev_name = f"{dev_id} Capacitance Bridge"
         else:
             instrument = None
             dev_name = "Failed to find an instument"
-        if self.do_print:
+        if not self.silent:
             print(f"Connecting to: {dev_name}")
 
         if instrument:
             if command[0] == "W":
-                if self.do_print:
+                if not self.silent:
                     print(f'Writing "{message}" to {dev_id}')
                 instrument.write(message)
                 msgout = 'empty'
             elif command[0] == "Q":
-                if self.do_print:
+                if not self.silent:
                     print(f'Querying {dev_id} with "{message}"')
                 msgout = instrument.query(message)
             elif command[0] == "R":
-                if self.do_print:
+                if not self.silent:
                     print(f'Reading from {dev_id}')
                 msgout = instrument.read()
         else:
@@ -94,11 +92,11 @@ class GpibServer:
                 # establish a connection with a client
                 conn, addr = s.accept()
                 with conn:
-                    if self.do_print:
+                    if not self.silent:
                         print(f"Connected to: {addr[0]}:{addr[1]}  : {time.ctime(time.time())}")
                     while True:
                         msg_client = conn.recv(1024)
-                        if self.do_print:
+                        if not self.silent:
                             print(repr(msg_client))
                         if not msg_client:
                             break
@@ -108,7 +106,7 @@ class GpibServer:
                             break
                         else:
                             msg_client = msg_client.decode()
-                            if self.do_print:
+                            if not self.silent:
                                 print(f'Received message: {msg_client}')
                             msg_server = self.handle(msg_client)
                             conn.sendall(msg_server.encode())

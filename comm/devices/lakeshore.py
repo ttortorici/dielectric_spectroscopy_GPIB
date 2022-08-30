@@ -37,13 +37,16 @@ class Client(Device):
         if units not in ['K', 'C']:
             raise ValueError('Must give units "K" or "C"')
 
-        temperature_a = float(self.query('{}RDG? A'.format(units)))
-        temperature_b = float(self.query('{}RDG? B'.format(units)))
+        temperature_a = float(self.query(f'{units}RDG? A'))
+        temperature_b = float(self.query(f'{units}RDG? B'))
         return [temperature_a, temperature_b]
 
     def read_heater_output(self) -> float:
-        """Query the percent power being output to the heater"""
-        return float(self.query('HTR?'))
+        """
+        Query the percent power being output to the heater
+        :return: decimal form (i.e. 1. == 100%
+        """
+        return float(self.query('HTR?')) / 100.
 
     def read_heater_range(self) -> float:
         """Query the heater range. Returns value in Watts"""

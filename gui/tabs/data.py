@@ -4,38 +4,22 @@ A tab widget for taking data in app.py
 @author: Teddy Tortorici
 """
 
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QStackedWidget, QSizePolicy,
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QSizePolicy,
                                QDialog, QMessageBox, QFileDialog, QMainWindow)
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont, QTextCursor
-from dialogs.new_file import NewFileDialog
+from PySide6.QtGui import QFont
+from gui.dialogs.new_file import NewFileDialog
 import gui.icons as icon
 from gui.signalers import Signaler, MessageSignaler
-import data_files
+from gui.text_stream import TextStream
+import files.data as data_files
 from comm.server import GpibServer
 from comm.socket_client import send as send_client
+from calculations.calibration import Calibration
 import threading
 import time
 import ast
 import os
-import datetime
-
-
-class TextStream(QTextEdit):
-    def __init__(self):
-        super(self.__class__, self).__init__()
-        self.setReadOnly(True)
-        self.setFont(DataTab.font)
-
-    @Slot(str)
-    def write(self, text: str):
-        """Writes to GUI from the write_thread object attribute"""
-        # print(f'received "{text}" fom thread')
-        self.moveCursor(QTextCursor.End)
-        self.insertPlainText(text)
-
-        # make the scroll bar scroll with the new text as it fills past the size of the window
-        self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
 
 
 class DataTab(QWidget):
@@ -50,7 +34,7 @@ class DataTab(QWidget):
         QWidget.__init__(self)
         self.parent = parent
 
-        self.gpib_server = GpibServer(do_print=False)
+        self.gpib_server = None
 
         self.dialog = None
         self.data = None            # will be an object of a data file from data_file2.py
@@ -60,10 +44,6 @@ class DataTab(QWidget):
 
         self.running = False
         self.active_file = False
-
-        """So we can write to the GUI from threads"""
-        self.writer_signaler = MessageSignaler()
-        self.writer_signaler.signal.connect(self.data_text_stream.write)
 
         """So we can update plots when new data is taken"""
         self.plot_updater = Signaler()
@@ -76,7 +56,7 @@ class DataTab(QWidget):
         """Create the layout of what goes in this tab"""
         self.layout = QVBoxLayout(self)
 
-        self.data_text_stream = TextStream()     # this will be where data gets printed as it's collected
+        self.data_text_stream = TextStream(DataTab.font)     # this will be where data gets printed as it's collected
 
         self.bottom_row = QHBoxLayout()         # this will be a row to add widgets to bellow the text stream
         self.bottom_row.addStretch(1)
@@ -92,10 +72,10 @@ class DataTab(QWidget):
         self.button_play_pause = QStackedWidget(self)
         self.button_play_pause.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
         self.button_pause = QPushButton("Pause Data")
-        self.button_pause.setIcon(icon.built_in(self, 'MediaPause'))
+        self.button_pause.setIcon(icon.custom("pause.png"))
         self.button_pause.clicked.connect(self.pause_data)
         self.button_play = QPushButton("Take Data")
-        self.button_play.setIcon(icon.built_in(self, 'MediaPlay'))
+        self.button_play.setIcon(icon.custom("play.png"))
         self.button_play.clicked.connect(self.continue_data)
         self.button_play.setEnabled(False)
         self.button_pause.setEnabled(False)
@@ -103,7 +83,7 @@ class DataTab(QWidget):
         self.button_play_pause.addWidget(self.button_pause)
 
         self.button_stop = QPushButton("Stop")
-        self.button_stop.setIcon(icon.built_in(self, 'MediaStop'))
+        self.button_stop.setIcon(icon.custom("stop.png"))
         self.button_stop.setEnabled(False)
         self.button_stop.clicked.connect(self.stop)
 
@@ -117,10 +97,14 @@ class DataTab(QWidget):
         self.layout.addWidget(self.data_text_stream)
         self.layout.addLayout(self.bottom_row)
 
+        """So we can write to the GUI from threads"""
+        self.writer_signaler = MessageSignaler()
+        self.writer_signaler.signal.connect(self.data_text_stream.write)
+
     def write(self, text: str, end: str = "\n"):
         """Writes to the GUI by using the write_thread widget"""
         # print(f'sending "{text}" to thread')
-        self.writer_signaler.message.emit(text + end)
+        self.writer_signaler.signal.emit(text + end)
 
     @Slot()
     def open_file(self):
@@ -130,32 +114,51 @@ class DataTab(QWidget):
             stop = self.stop()
         if stop:
             options = QFileDialog.Options() | QFileDialog.DontUseNativeDialog
-            filename, _ = QFileDialog.getOpenFileName(self,  # parent
+            filepath, _ = QFileDialog.getOpenFileName(self,  # parent
                                                       "Open data file",  # caption
                                                       self.parent.data_base_path,  # directory
                                                       "CSV (*.csv)",  # filters
                                                       options=options)  # dialog options
-            if filename:
+            if filepath:
                 # open file and read comment to find what the averaging setting is
-                with open(filename, 'r') as f:
+                print(filepath)
+                path = os.sep.join(filepath.split("/")[:-1])
+                print(f"path{path}")
+                filename = filepath.split("/")[-1]
+                with open(filepath, 'r') as f:
                     for ii in range(2):                 # number in range will be which line is stored at the end
                         comment_line = f.readline()
-                # see if average is specified in the comment
-                self.dialog = FakeDialog()               # with default averaging_entry = 1
-                if 'average' in comment_line:
-                    ave_num_end = comment_line.index('average') - 1
-                    # attempt to read the number of unknown size until it works
-                    for ii in range(3):
-                        try:
-                            self.dialog.averaging_entry = int(comment_line[ave_num_end-ii:ave_num_end])
-                            break
-                        except ValueError:
-                            pass
 
-                self.write(f'Opening file "{filename}"')
-                self.write(f'Using averaging setting of {self.dialog.averaging_entry}')
-                self.activate_data_file(filename)
-                self.data = data_files.CalFile(filename)
+                self.dialog = FakeDialog(comment_line)          # with default averaging_entry = 1
+
+                self.gpib_server = GpibServer(bridge_type=self.dialog.bridge_choice,
+                                              ls_model=self.dialog.ls_choice,
+                                              silent=True)
+
+                self.write(f'Opening file "{filepath}"')
+                self.write("Settings: " + comment_line.lstrip("# ").rstrip("\n"))
+
+                self.activate_data_file(path, filename)
+                if self.dialog.purp_choice == "FILM":
+                    cal = Calibration(self.dialog.calibration_path)
+                    self.data = data_files.DielectricConstant(path=path,
+                                                              filename=filename,
+                                                              frequencies=self.dialog.frequencies,
+                                                              film_thickness=self.dialog.film_thickness,
+                                                              capacitor_calibration=cal,
+                                                              gui_signaler=self.writer_signaler,
+                                                              bridge=self.dialog.bridge_choice,
+                                                              ls_model=self.dialog.ls_choice)
+                else:
+                    self.data = data_files.DataFile(path=path,
+                                                    filename=filename,
+                                                    frequencies=self.dialog.frequencies,
+                                                    gui_signaler=self.writer_signaler,
+                                                    bridge=self.dialog.bridge_choice,
+                                                    ls_model=self.dialog.ls_choice)
+                self.data.initiate_devices(voltage_rms=self.dialog.voltage,
+                                           averaging_setting=self.dialog.averaging,
+                                           dc_setting=self.dialog.dc_bias_setting)
                 self.data_thread.start()
 
     @Slot()
@@ -171,18 +174,11 @@ class DataTab(QWidget):
             if self.dialog.result() == QDialog.Accepted:
                 bridge = self.dialog.bridge_choice
                 ls_num = self.dialog.ls_choice
-                purpose = self.dialog.purp_choice
                 cid = self.dialog.chip_id.replace(" ", "_")
                 sample = self.dialog.sample.replace(" ", "_")
-                frequencies = self.dialog.frequencies
                 cal_file = self.dialog.calibration_path
-                thickness = self.dialog.film_thickness
-                volt = self.dialog.voltage
-                ave = self.dialog.averaging
-                dc_setting = self.dialog.dc_bias_setting
-                dc_voltage = self.dialog.dc_bias_voltage
-                amp = self.dialog.amplification
-                comment = self.dialog.comment
+
+                self.gpib_server = GpibServer(bridge_type=bridge, ls_model=ls_num, silent=True)
 
                 creation_datetime = self.dialog.date
                 self.write('Starting new data file on {m:02}/{d:02}/{y:04} at {h:02}:{min:02}:{s}'.format(
@@ -195,13 +191,13 @@ class DataTab(QWidget):
 
                 """FIND PLACE TO WRITE FILE"""  # "Calibration", "Powder Sample", "Film Sample", "Other"
                 path = self.parent.data_base_path
-                if purpose == "CAL":
+                if self.dialog.purp_choice == "CAL":
                     path = os.path.join(path, "1-Calibrations")
-                elif purpose == "POW":
+                elif self.dialog.purp_choice == "POW":
                     path = os.path.join(path, "2-Powders")
-                elif purpose == "FILM":
+                elif self.dialog.purp_choice == "FILM":
                     path = os.path.join(path, "3-Films")
-                elif purpose == "TEST":
+                elif self.dialog.purp_choice == "TEST":
                     path = os.path.join(path, "Tests")
                 else:
                     path = os.path.join(path, "Other")
@@ -224,10 +220,27 @@ class DataTab(QWidget):
                 self.activate_data_file(path, filename)
 
                 """Create data file"""
-                if purpose == "FILM":
-                    self.data = data_files.DielectricConstant(path, filename, frequencies, thickness, )
+                if self.dialog.purp_choice == "FILM":
+                    self.data = data_files.DielectricConstant(path=path,
+                                                              filename=filename,
+                                                              frequencies=self.dialog.frequencies,
+                                                              film_thickness=self.dialog.film_thickness,
+                                                              capacitor_calibration=Calibration(cal_file),
+                                                              gui_signaler=self.writer_signaler,
+                                                              bridge=bridge,
+                                                              ls_model=ls_num,
+                                                              comment=full_comment)
                 else:
-                    self.data = data_files.DataFile()
+                    self.data = data_files.DataFile(path=path,
+                                                    filename=filename,
+                                                    frequencies=self.dialog.frequencies,
+                                                    gui_signaler=self.writer_signaler,
+                                                    bridge=bridge,
+                                                    ls_model=ls_num,
+                                                    comment=full_comment)
+                self.data.initiate_devices(voltage_rms=self.dialog.voltage,
+                                           averaging_setting=self.dialog.averaging,
+                                           dc_setting=self.dialog.dc_bias_setting)
                 self.data_thread.start()
 
     def activate_data_file(self, path: str, filename: str):
@@ -240,7 +253,7 @@ class DataTab(QWidget):
         self.plot_initializer.signal.emit(os.path.join(path, filename))
 
         self.active_file = True
-        self.button_play.setEnabled(True)
+        self.button_play.setEnabled(False)
         self.button_pause.setEnabled(True)
         self.button_stop.setEnabled(True)
         self.button_play_pause.setCurrentWidget(self.button_pause)
@@ -261,7 +274,7 @@ class DataTab(QWidget):
                 data_point = self.data.sweep_frequencies()
                 # print(f'Got this as data: {data_point}')
                 self.data.write_row(data_point)
-                self.write(str(data_point))
+                # self.write(str(data_point))
                 if self.parent.plot_tab.live_plotting:
                     self.plot_updater.signal.emit()
 
@@ -290,6 +303,7 @@ class DataTab(QWidget):
         exit_question = QMessageBox.question(self, 'Stop', 'Are you sure you would like to close this data file?',
                                              QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
         if exit_question == QMessageBox.Yes:
+            self.write("Closing File")
             self.running = False
             self.active_file = False
             self.data_thread.join()
@@ -299,11 +313,10 @@ class DataTab(QWidget):
             self.button_pause.setEnabled(False)
             self.parent.play_action.setEnabled(True)
             self.parent.pause_action.setEnabled(True)
-            self.parent.stop_action.setEnabled(True)
+            self.parent.stop_action.setEnabled(False)
             self.parent.exit_action.setEnabled(False)
             send_client('shutdown')
             self.server_thread.join()
-            self.write("Closing File")
             self.data = None
             self.dialog = None
             return True

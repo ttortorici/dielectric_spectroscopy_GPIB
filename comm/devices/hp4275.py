@@ -14,11 +14,11 @@ class Client(Device):
     def __init__(self):
         super(self.__class__, self).__init__("HP")
         self.frequency = 0
-        self.set_freq(10e6)
+        self.set_frequency(10e6)
         self.aves = 1
         self.measure_volt = 1
-        self.dispA = 'C'
-        self.dispB = 'D'
+        self.dispA = "C"
+        self.dispB = "D"
 
     def clear(self):
         """Clears a partially entered command or parameter when used from the front panel.
@@ -61,7 +61,7 @@ class Client(Device):
         else:
             print('invalid display B message (D, Q, ESRG, XB, LC)')
 
-    def set_freq(self, inHertz):
+    def set_frequency(self, inHertz):
         """Sets the frequency on capacitor
         give inHertz None or False and give 'UP' or 'DO' to adjust frequency by one "notch"
         otherwise, just give a number for inHertz in.. Hertz"""

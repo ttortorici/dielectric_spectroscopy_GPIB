@@ -13,7 +13,7 @@ default_delm = 2.8e-6
 default_delb = 2e-5
 
 
-def calc2(T, f=[100.,1000.,10000.]):
+def calc2(T, f=(100., 1000., 10000.)):
     T = np.array(T)
     f = np.array(f)    
     inverseT = 1/T
@@ -39,6 +39,7 @@ def calculate(m, b, delm, delb):
     deltau0 = np.sqrt((tau0/m*delb)**2+(tau0*b/m**2*delm)**2)
     
     return Eb, tau0, delEb, deltau0
+
 
 def peak_Temps(c1, c2, delc1, delc2):
     T = -c1/(2*c2)

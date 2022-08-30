@@ -14,7 +14,7 @@ class Client(Device):
     default_units = "DS"
     valid_frequencies = np.array([50, 60, 70, 80, 100, 120, 140, 160, 200, 240, 300, 400, 500, 600, 700, 800,
                                   1000, 1200, 1400, 1600, 2000, 2400, 3000, 4000, 5000, 6000, 7000, 8000,
-                                  10000, 12000, 14000, 16000, 20000])
+                                  10000, 12000, 14000, 16000, 20000], dtype=int)
 
     def __init__(self, silent: bool = True):
         """
@@ -63,7 +63,7 @@ class Client(Device):
         if not self.silent:
             print(printmsg)
 
-    def format(self, notation='FLOAT', labeling='ON', ieee='OF', fwidth='FIX'):
+    def format(self, notation: str = 'FLOAT', labeling: str = 'ON', ieee: str = 'OF', fwidth: str = 'FIX'):
         """Controls the format and numeric notation of results which are sent to serial or
         GPIB ports. Front panel results are not affected
         :param notation: specifies the type of numeric notation to be used for capacitance, loss, frequency, voltage and
@@ -196,7 +196,7 @@ class Client(Device):
         if not self.silent:
             print(to_print)
 
-    def set_freq(self, in_hertz: float, up: bool = False, down: bool = False):
+    def set_frequency(self, in_hertz: float, up: bool = False, down: bool = False):
         """
         Description: Sets the test frequency at which measurements are to be taken.
         :param in_hertz: This parameter specifies the desired test frequency. The bridge will select the nearest
@@ -204,6 +204,7 @@ class Client(Device):
         :param up: Can set to True to change the in_hertz setting up to the next available frequency
         :param down: Can set to True to change the in_hertz setting down to the next available frequency
         """
+        success = True
         if not up and not down:
             differences_from_valid = abs(Client.valid_frequencies - in_hertz)
             frequency = Client.valid_frequencies[differences_from_valid.argmin()]
@@ -237,7 +238,8 @@ class Client(Device):
     def set_units(self, unit: str = 'DS'):
         """
         Description: Selects the units that will be used to report the loss component of the measurements.
-        :param unit: NS: nanosiemens, KO: series resistances in kOhms, GO: Parallel R in GOhms, JP: G/omega
+        :param unit: NS: nanosiemens, DS: loss tangent, KO: series resistances in kOhms,
+                     GO: Parallel R in GOhms, JP: G/omega
         """
         unit_choices = ["NS", "DS", "KO", "GO", "JP"]
         if unit not in unit_choices:

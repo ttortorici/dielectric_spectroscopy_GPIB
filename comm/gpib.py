@@ -42,7 +42,7 @@ class Device:
         except pyvisa.errors.VisaIOError:
             return "timed out"
 
-    def query_ascii(self, msg: str, sep=',', converter='f') -> np.ndarray:
+    def query_ascii(self, msg: str, sep=',', converter='f') -> np.ndarray | str:
         """Return an array of values from ascii request for large requests. Converter 'f' is to store floats."""
         try:
             return np.array(self.dev.query_ascii_values(msg, separator=sep, converter=converter))
@@ -54,9 +54,9 @@ class Device:
 
 
 class Fake:
-    def __init__(self, address: int, gpib_num: int = 0):
-        self.address = address
-        self.gpib_num = gpib_num
+    def __init__(self):
+        self.address = 0
+        self.gpib_num = 0
         self.rm = None
         self.dev = None
 

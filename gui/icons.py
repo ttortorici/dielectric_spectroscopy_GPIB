@@ -8,4 +8,4 @@ def built_in(parent: QWidget, icon_name: str) -> QIcon:
 
 
 def custom(icon_name: str) -> QIcon:
-    return QIcon(os.path.join('custom_icons', icon_name))
+    return QIcon(os.path.join('gui', 'custom_icons', icon_name))

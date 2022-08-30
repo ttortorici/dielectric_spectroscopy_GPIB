@@ -10,7 +10,7 @@ from main_tabs import MainTabs
 class App(qtw.QMainWindow):
     def __init__(self):
         super(App, self).__init__()
-        self.base_path = os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy-2')
+        self.base_path = os.path.join(get.google_drive(), 'Dielectric_data', 'Teddy-2')
         self.lj_chs = []  # will be used later
         self.path = self.base_path  # will be added on to later
 

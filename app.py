@@ -9,11 +9,11 @@ import os
 import sys
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QTabWidget, QToolBar
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QIcon, QAction
-from tabs.data import DataTab
-from tabs.plot import PlotTab
-from tabs.control import ControlTab
-from dialogs.help import HelpPrompt
+from PySide6.QtGui import QAction
+from gui.tabs.data import DataTab
+from gui.tabs.plot import PlotTab
+from gui.tabs.control import ControlTab
+from gui.dialogs.help import HelpPrompt
 import gui.icons as icon
 
 
@@ -28,7 +28,11 @@ class MainWindow(QMainWindow):
         and controlling devices.
         """
         QMainWindow.__init__(self)
-        self.data_base_path = os.path.join(get.google_drive(), 'data', 'fake')   # base path to data files
+
+        with open(os.path.join("gui", "stylesheet.css"), "r") as f:
+            self.setStyleSheet(f.read())
+
+        self.data_base_path = os.path.join(get.google_drive(), "Dielectric_data", "Teddy-2",)  # base path to data files
 
         self.force_quit = True              # when quit properly, this will be changed to false
         self.file_open = False
@@ -51,6 +55,8 @@ class MainWindow(QMainWindow):
         self.data_tab = DataTab(self)
         self.plot_tab = PlotTab(self)
         self.control_tab = ControlTab(self)
+        self.control_tab.setStyleSheet("background-color: rgb(43, 43, 32);"
+                                       "color: rgb(255, 255, 255)")
         tabs = [(self.data_tab, "&Data"),
                 (self.plot_tab, "&Plots"),
                 (self.control_tab, "&Control")]
@@ -81,13 +87,13 @@ class MainWindow(QMainWindow):
         self.exit_action.setShortcut('CTRL+Q')
         self.exit_action.triggered.connect(self.quit)
         # Data menu actions
-        self.play_action = QAction(icon.built_in(self, 'MediaPlay'), 'Take &Data', self)
+        self.play_action = QAction(icon.custom("play.png"), 'Take &Data', self)
         self.play_action.setShortcut('CTRL+SPACE')
         self.play_action.triggered.connect(self.data_tab.continue_data)
-        self.pause_action = QAction(icon.built_in(self, 'MediaPause'), 'Pause &Data', self)
+        self.pause_action = QAction(icon.custom("pause.png"), 'Pause &Data', self)
         self.pause_action.setShortcut('CTRL+SPACE')
         self.pause_action.triggered.connect(self.data_tab.pause_data)
-        self.stop_action = QAction(icon.built_in(self, 'MediaStop'), '&Stop Data', self)
+        self.stop_action = QAction(icon.custom("stop.png"), '&Stop Data', self)
         self.stop_action.setShortcut('CTRL+W')
         self.stop_action.triggered.connect(self.data_tab.stop)
         # Help menu actions

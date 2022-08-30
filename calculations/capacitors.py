@@ -2,8 +2,6 @@ import numpy as np
 from scipy import special
 from scipy import optimize
 from decimal import Decimal
-import os
-import csv
 
 eps0 = 8.85e-6  # electric constant in nF/um
 epsS = 3.9      # relative dielectric constant of silica
@@ -85,54 +83,3 @@ def k_film(g: float, h: float) -> float:
 
 def sinhpi4(x, h):
     return np.sinh(np.pi * x / (4 * h))
-
-
-def load_calibration(name: str, capacitance_order: int = 2, loss_order: int = 1) -> tuple[np.ndarray]:
-    """
-    Calculates fit parameters from loading a calibration file
-    :param name: path+filename
-    :param capacitance_order: polynomial order of fit for capacitance
-    :param loss_order: polynomial order of fit for loss tangent
-    :return: tuple of fit parameters for capacitance and loss. Each is a numpy array
-    """
-    cal_data = np.loadtxt(os.path.join(name), comments='#', delimiter=',', skiprows=3)
-    with open(name) as f:
-        reader = csv.reader(f, delimiter=',')
-        for row in reader:
-            if len(row) > 1:        # this will grab the first line with the labels
-                labels = row
-                break
-    temperature_indices = []        # indexes for temperatures
-    capacitance_indices = []        # indexes for capacitance
-    loss_indices = []               # indexes for loss tangent
-
-    for ii, label in enumerate(labels):
-        if 'temperature' in label.lower() and 'B' not in label:
-            temperature_indices.append(ii)
-        elif 'capacitance' in label.lower():
-            capacitance_indices.append(ii)
-        elif 'loss tangent' in label.lower():
-            loss_indices.append(ii)
-
-    capacitance_fit_parameters = [0] * len(temperature_indices)
-    loss_fit_parameters = [0] * len(temperature_indices)
-    for ii in range(capacitance_fit_parameters):
-        capacitance_fit_parameters[ii] = np.polyfit(cal_data[:, temperature_indices[ii]],
-                                                    cal_data[:, capacitance_indices[ii]],
-                                                    2)
-        loss_fit_parameters[ii] = np.polyfit(cal_data[:, temperature_indices[ii]],
-                                             cal_data[:, loss_indices[ii]],
-                                             1)
-
-    return capacitance_fit_parameters[::-1], loss_fit_parameters[::-1]
-
-
-if __name__ == "__main__":
-    print(find_gap(.8))
-    # import decimal
-    # print(k_film(10, 57))
-    # for ii in range(1, 21):
-    #     try:
-    #         print(k_film(ii, 80))
-    #     except decimal.InvalidOperation:
-    #         print("failed")

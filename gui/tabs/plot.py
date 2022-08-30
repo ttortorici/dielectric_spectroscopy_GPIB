@@ -6,9 +6,9 @@ A tab widget for plotting data in app.py
 
 from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QToolButton, QMainWindow
 from PySide6.QtCore import Slot
-import gui.icons as built_in
+import gui.icons as icon
 from gui.plotting import Plot, RightAxisPlot
-from data_files import CSVFile
+from files.csv import CSVFile
 import sys
 import numpy as np
 import pyqtgraph as pg
@@ -28,8 +28,8 @@ class PlotTab(QWidget):
         :param link_y: Do you want it to lock y axes of the same type together?
         """
         QWidget.__init__(self)
-        pg.setConfigOption('background', 'w')
-        pg.setConfigOption('foreground', 'k')
+        pg.setConfigOption('background', (42, 42, 38))       # off white
+        pg.setConfigOption('foreground', (255, 255, 255))             # black
 
         self.data_line_skip = 0
         self.live_plotting = True
@@ -72,7 +72,7 @@ class PlotTab(QWidget):
 
         """Place buttons in vertical layout"""
         self.button_update = QToolButton()
-        self.button_update.setIcon(built_in.icon(self, 'BrowserReload'))
+        self.button_update.setIcon(icon.built_in(self, 'BrowserReload'))
         self.button_update.setToolTip('Update Plots')
         self.button_update.clicked.connect(self.update_plots)
 
@@ -100,10 +100,10 @@ class PlotTab(QWidget):
         self.live_plotting = on
         self.button_update.setEnabled(not on)
         if on:
-            self.button_play_pause.setIcon(built_in.icon(self, 'DialogYesButton'))
+            self.button_play_pause.setIcon(icon.built_in(self, 'DialogYesButton'))
             self.button_play_pause.setToolTip('Live Plotting')
         else:
-            self.button_play_pause.setIcon(built_in.icon(self, 'DialogNoButton'))
+            self.button_play_pause.setIcon(icon.built_in(self, 'DialogNoButton'))
             self.button_play_pause.setToolTip('Click to turn on Live Plotting')
 
     @Slot()

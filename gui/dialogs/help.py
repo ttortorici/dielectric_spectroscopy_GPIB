@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox, QLabel
-import gui.icons as built_in
+import gui.icons as icon
 
 
 class HelpPrompt(QDialog):
     def __init__(self):
         QDialog.__init__(self)
         self.setWindowTitle("About")
-        self.setWindowIcon(built_in.icon(self, 'MessageBoxQuestion'))
+        self.setWindowIcon(icon.built_in(self, 'MessageBoxQuestion'))
 
         """Main text"""
         text = 'You can create a new data file (CTRL+N) or open a preexisting one to append or plot (CTRL+O).\n' \

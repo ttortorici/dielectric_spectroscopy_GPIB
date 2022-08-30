@@ -279,7 +279,7 @@ def plot_peaks(temperature, loss, omega):
 
 if 1:
 #try:
-    filepath = os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy', yearstr, monthstr, daystr)
+    filepath = os.path.join(get.google_drive(), 'Dielectric_data', 'Teddy', yearstr, monthstr, daystr)
     filenames1 = data_files.file_name(monthstr, daystr, yearstr)
     filenames = []
     for file in filenames1[0]:
@@ -435,7 +435,7 @@ for title, axes_labels, time_trim, legend_loc, plot_range in \
     else:
         m = str(month) + '_'
 
-    path_to_save = os.path.join(get.googledrive(), 'Dielectric_data', 'Graphs', str(year), m+calendar.month_name[month],
+    path_to_save = os.path.join(get.google_drive(), 'Dielectric_data', 'Graphs', str(year), m + calendar.month_name[month],
                                 str(day))
 
     if not os.path.exists(path_to_save):

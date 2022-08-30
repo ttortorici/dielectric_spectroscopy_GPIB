@@ -1,8 +1,12 @@
-from PySide6.QtWidgets import (QDialog, QSizePolicy, QGroupBox, QComboBox, QLineEdit, QDialogButtonBox, QFileDialog,
-                               QLabel, QSpinBox, QPushButton, QFormLayout, QVBoxLayout, QDoubleSpinBox)
+"""
+Dialog for creating new file for taking data
+
+@author: Teddy Tortorici
+"""
+
+from PySide6.QtWidgets import (QDialog, QWidget, QGroupBox, QComboBox, QLineEdit, QDialogButtonBox, QFileDialog,
+                               QLabel, QSpinBox, QPushButton, QFormLayout, QVBoxLayout, QDoubleSpinBox, QStackedWidget)
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QIcon
-from gui.icons import custom as custom_icon
 import sys
 import yaml
 import os
@@ -290,7 +294,7 @@ class NewFileDialog(QDialog):
                               whats_this="On the AH this corresponds to an averaging time. On the HP, it will be the"
                                          "number of measurements to average.",
                               default_value=self.averaging)
-        self.dc_bias_setting_box = DropDown(choices=["Off", "On: Low Curront", "On: High Current"],
+        self.dc_bias_setting_box = DropDown(choices=["Off", "On: Low Current", "On: High Current"],
                                             shortcuts=["OFF", "LOW", "HIGH"],
                                             label="DC Bias Setting",
                                             whats_this="Enables or disables a user-supplied DC bias voltage of up to"
@@ -340,20 +344,15 @@ class NewFileDialog(QDialog):
                                       maximum=20.,
                                       label="Gap Width")
 
-
-        self.always_display = [self.purp_box, self.bridge_box, self.ls_box, ]
-        self.display = {"CAL": [],
-                        "POW": [],
-                        "FILM": [],
-                        "OTHER": [],
-                        "TEST": []}
-        boxes = [self.bridge_box, self.ls_box, self.purp_box, self.chip_id_box, self.sample_box, self.frequency_box,
-                 self.cal_file_box, self.film_thickness_box, self.voltage_box, self.ave_box, self.dc_bias_setting_box,
+        boxes = [self.purp_box, self.bridge_box, self.ls_box, self.frequency_box, self.chip_id_box, self.sample_box,
+                 self.voltage_box, self.ave_box, self.cal_file_box, self.film_thickness_box, self.dc_bias_setting_box,
                  self.dc_bias_value_box, self.amp_box, self.comment_box]
 
         """GENERATE FORM"""
         self.form = QGroupBox("Enter measurement details for the dataset")
+
         form_layout = QFormLayout()
+
         for box in boxes:
             form_layout.addRow(box.label, box)
         self.form.setLayout(form_layout)
@@ -372,8 +371,10 @@ class NewFileDialog(QDialog):
         """
         Load presets
         """
-        yaml_fname = max(glob.glob(os.path.join(self.base_path, 'presets', '*yml')), key=datetime_from_yaml_name)
-        yaml_f = os.path.join(self.base_path, 'presets', yaml_fname)
+        print(self.base_path)
+        yaml_fname = max(glob.glob(os.path.join(self.base_path, "presets", "*yml")),
+                         key=datetime_from_yaml_name)
+        yaml_f = os.path.join(self.base_path, "presets", yaml_fname)
         print(yaml_f)
         with open(yaml_f, 'r') as f:
             preset = yaml.safe_load(f)
@@ -397,7 +398,7 @@ class NewFileDialog(QDialog):
         """
         Save Presets
         """
-        self.presets = {'inst': self.bridge_choice,
+        self.presets = {'bridge': self.bridge_choice,
                         'ls': self.ls_choice,
                         'purp': self.purp_choice,
                         'id': self.chip_id,
@@ -414,7 +415,7 @@ class NewFileDialog(QDialog):
                         'comment': self.comment}
 
         save_name = f'presets{self.date.year:04}-{self.date.month:02}-{self.date.day:02}_{self.date.hour:02}.yml'
-        save_presets = os.path.join(self.base_path, 'presets', save_name)
+        save_presets = os.path.join(self.base_path, "presets", save_name)
         with open(save_presets, 'w') as f:
             yaml.dump(self.presets, f, default_flow_style=False)
 
@@ -445,5 +446,5 @@ if __name__ == '__main__':
     from PySide6.QtWidgets import QApplication
     import get
     app = QApplication(sys.argv)
-    dialog = NewFileDialog(os.path.join(get.googledrive(), 'Dielectric_data', 'Teddy-2'))
+    dialog = NewFileDialog(os.path.join(get.google_drive(), 'Dielectric_data', 'Teddy-2'))
     sys.exit(dialog.exec())
