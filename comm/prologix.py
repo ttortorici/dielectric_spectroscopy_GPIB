@@ -13,8 +13,8 @@ class Device:
     comment = "#"
 
     def __init__(self, address: int, serial_port, baudrate: int = 921600, timeout=0.25, do_print=False):
-        if os.name == "nt":
-            serial_port = int(serial_port[3:]) - 1
+        # if os.name == "nt":
+        #     serial_port = int(serial_port[3:]) - 1
         self.do_print = do_print
         self.address = address
 
@@ -22,12 +22,16 @@ class Device:
             timeout = 2
 
         self.dev = serial.Serial(serial_port, baudrate=baudrate, timeout=timeout)
+        # self.dev.write(b"++eoi 1")
+        # self.dev.write(b"++eos 2")
         self.write_raw("++mode 1")
-        self.write_raw("++ifc")
-        self.write_raw("++read_tmo_ms 200")
+        self.write_raw("++auto 1")
+        self.write_raw(f"++addr {self.address}")
+        self.write_raw("++addr {}".format(self.address))
+        print(self.write_raw("++ver"))
 
-        version = self.query("++ver")
-        print(f"Established connection with Prologix with version: {version}")
+        # version = self.query("++ver")
+        # print(f"Established connection with Prologix with version: {version}")
 
     def write_raw(self, message: str, line_end: str = "\n"):
         self.dev.write(f"{message}{line_end}".encode())
@@ -67,6 +71,6 @@ class Device:
 
 
 if __name__ == "__main__":
-    ls = Device(13, "/dev/ttyUSB0", do_print=True)
-    print(ls.query("KRDG? A"))
+    ls = Device(13, "COM4", do_print=True)
+    # print(ls.query("KRDG? A"))
 

@@ -17,7 +17,7 @@ def serialport():
             serial_port = '/dev/tty.usbserial-PX9HMPBU'
     elif os.name == 'nt':
         # platform = 'win'
-        serial_port = ''
+        serial_port = 'COM4'
     else:
         serial_port = ''
     return serial_port
