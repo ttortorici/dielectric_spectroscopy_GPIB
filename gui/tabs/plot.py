@@ -16,9 +16,26 @@ import pyqtgraph as pg
 
 class PlotTab(QWidget):
 
-    data_columns = ['time', 'voltage', 'temperature', 'counts']
-    colors = [(0, 0, 255), (255, 0, 0), (0, 0, 0)]
-    pens = dict(zip(data_columns[1:], [pg.mkPen(color, width=2) for color in colors]))
+    data_columns = ['time', 'temperature a', 'temperature b', 'capacitance', 'loss', 'voltage', 'frequency']
+    colors = {"temperature": ((85, 179, 255),       # light blue
+                              (75, 245, 215)),      # teal
+              "capacitance": ((255, 125, 150),      # light red
+                              (180, 165, 255),      # lighter blue
+                              (220, 220, 220),      # light grey
+                              (180, 255, 180),      # light green
+                              (253, 254, 150),      # yellow
+                              (255, 163, 102)),     # orange
+              "loss": ((255, 105, 183),             # magenta
+                       (205, 145, 255),             # light purple
+                       (255, 255, 255),             # white
+                       (204, 255, 137),             # lime
+                       (249, 218, 122),             # yellow-orange
+                       (255, 131, 102))}            # red-orange
+    pen_width = 2
+    # colors = [(0, 0, 255), (255, 0, 0), (0, 0, 0)]
+    # pens = dict(zip(data_columns[1:], [pg.mkPen(color, width=2) for color in colors]))
+    plot_colors = {"background": (42, 42, 38),      # dark mode
+                   "foreground": (255, 255, 255)}   # white
 
     def __init__(self, parent: QMainWindow, link_x: bool = True, link_y: bool = False):
         """
@@ -28,8 +45,8 @@ class PlotTab(QWidget):
         :param link_y: Do you want it to lock y axes of the same type together?
         """
         QWidget.__init__(self)
-        pg.setConfigOption('background', (42, 42, 38))       # off white
-        pg.setConfigOption('foreground', (255, 255, 255))             # black
+        for key in PlotTab.plot_colors.keys():
+            pg.setConfigOption(key, PlotTab.plot_colors[key])
 
         self.data_line_skip = 0
         self.live_plotting = True
@@ -42,15 +59,15 @@ class PlotTab(QWidget):
         plot_layout = QGridLayout()
         button_layout = QVBoxLayout()
 
-        self.plot_TvV = Plot('Voltage (V)', 'Temperature (K)', pen=PlotTab.pens['temperature'])
-        self.plot_CvT = Plot('Temperature (K)', 'Voltage (V)', pen=PlotTab.pens['voltage'])
-        self.plot_Tvt = Plot('Time', 'Temperature (K)', pen=PlotTab.pens['temperature'], date_axis_item=True)
-        self.plot_Vvt = RightAxisPlot('Voltage (V)', pen=PlotTab.pens['voltage'])
-        self.plot_Cvt = Plot('Time', 'Counts', pen=PlotTab.pens['counts'], right_axis=self.plot_Vvt, date_axis_item=True)
+        self.plot_CvT = Plot('Temperature (K)', 'Capacitance (pF)', pen=)
+        self.plot_LvT = Plot('Temperature (K)', 'Loss Tangent', pen=)
+        self.plot_Tvt = Plot('Time', 'Temperature (K)', pen=, date_axis_item=True)
+        self.plot_Lvt = RightAxisPlot('Loss Tangent', pen=)
+        self.plot_Cvt = Plot('Time', 'Capacitance (pF)', pen=, right_axis=self.plot_Lvt, date_axis_item=True)
 
         # Will place in the gid to mimic the list of lists
-        plots = [[self.plot_TvV, self.plot_Tvt],
-                 [self.plot_CvT, self.plot_Cvt]]
+        plots = [[self.plot_CvT, self.plot_Tvt],
+                 [self.plot_LvT, self.plot_Cvt]]
 
         """Link X and Y axes (if specified)"""
         if link_x or link_y:
