@@ -16,7 +16,7 @@ import pyqtgraph as pg
 
 class PlotTab(QWidget):
 
-    data_columns = ['time', 'temperature a', 'temperature b', 'capacitance', 'loss', 'voltage', 'frequency']
+    labels = ['time', 'temperature a', 'temperature b', 'capacitance', 'loss', 'voltage', 'frequency']
     colors = {"temperature": ((85, 179, 255),       # light blue
                               (75, 245, 215)),      # teal
               "capacitance": ((255, 125, 150),      # light red
@@ -59,11 +59,11 @@ class PlotTab(QWidget):
         plot_layout = QGridLayout()
         button_layout = QVBoxLayout()
 
-        self.plot_CvT = Plot('Temperature (K)', 'Capacitance (pF)', pen=)
-        self.plot_LvT = Plot('Temperature (K)', 'Loss Tangent', pen=)
-        self.plot_Tvt = Plot('Time', 'Temperature (K)', pen=, date_axis_item=True)
-        self.plot_Lvt = RightAxisPlot('Loss Tangent', pen=)
-        self.plot_Cvt = Plot('Time', 'Capacitance (pF)', pen=, right_axis=self.plot_Lvt, date_axis_item=True)
+        self.plot_CvT = Plot('Temperature (K)', 'Capacitance (pF)')
+        self.plot_LvT = Plot('Temperature (K)', 'Loss Tangent')
+        self.plot_Tvt = Plot('Time', 'Temperature (K)', date_axis_item=True)
+        self.plot_Lvt = RightAxisPlot('Loss Tangent')
+        self.plot_Cvt = Plot('Time', 'Capacitance (pF)', right_axis=self.plot_Lvt, date_axis_item=True)
 
         # Will place in the gid to mimic the list of lists
         plots = [[self.plot_CvT, self.plot_Tvt],
@@ -111,6 +111,41 @@ class PlotTab(QWidget):
     def initialize_plots(self, filename):
         """Second initialize for after the MainWindow() is completely done initializing"""
         self.filename = filename
+        self.freq_labels = [str(freq) for freq in self.parent.data_tab.dialog.freq_entry]
+        freq_num = len(self.freq_labels)
+        labels = CSVFile.get_labels(self.filename)
+
+        """CREATE CURVES"""
+        width = self.__class__.pen_width
+
+        colors = self.__class__.colors["capacitance"][:freq_num]
+        pens = [pg.mkPen(color, width=width) for color in colors]
+        self.plot_CvT.set_curves(self.freq_labels, pens)
+        self.plot_Cvt.set_curves([f"C: {f}" for f in self.freq_labels], pens)
+
+        colors = self.__class__.colors["capacitance"][:freq_num]
+        pens = [pg.mkPen(color, width=width) for color in colors]
+        self.plot_LvT.set_curves(self.freq_labels, pens)
+        self.plot_Lvt.set_curves([f"L: {f}" for f in self.freq_labels], pens)
+
+        colors = self.__class__.colors["temperature"][:freq_num]
+        self.plot_Tvt.set_curves(["A", "B"], [pg.mkPen(color, width=width) for color in colors])
+
+        """FIND INDEXES IN DATA"""
+        time_indices = [ii for ii, ll in enumerate(labels) if 'time' in ll.lower()]
+        temp_a_indices = [ii for ii, ll in enumerate(labels) if 'temperature a' in ll.lower()]
+        temp_b_indices = [ii for ii, ll in enumerate(labels) if 'temperature b' in ll.lower()]
+        cap_indices = [ii for ii, ll in enumerate(labels) if 'capacitance' in ll.lower()]
+        loss_indices = [ii for ii, ll in enumerate(labels) if 'loss' in ll.lower()]
+
+        self.plot_CvT.set_indices(temp_a_indices, cap_indices)
+        self.plot_LvT.set_indices(temp_a_indices, loss_indices)
+        self.plot_Tvt.set_indices(time_indices, zip(temp_a_indices, temp_b_indices))
+        self.plot_Cvt.set_indices(time_indices, cap_indices)
+        self.plot_Lvt.set_indices(time_indices, loss_indices)
+
+        self.plot_Cvt.update_views()
+
 
     def set_live_plotting(self, on):
         """Turn live plotting on or off"""

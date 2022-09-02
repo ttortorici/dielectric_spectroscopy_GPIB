@@ -8,23 +8,9 @@ from PySide6.QtGui import QPen
 import pyqtgraph as pg
 
 
-color = {'dark red': (155, 0, 0),
-         'dark green': (76, 145, 0),
-         'dark blue': (0, 0, 200),
-         'purple': (122, 23, 220),
-         'dark orange': (204, 102, 0),
-         'rose': (255, 101, 102),
-         'light green': (51, 255, 153),
-         'cyan': (0, 204, 204),
-         'magenta': (228, 104, 232),
-         'orange': (255, 152, 51),
-         'red': (255, 0, 0),
-         'blue': (0, 0, 255)}
-
-
 class Plot(pg.PlotWidget):
 
-    def __init__(self, x_label: str, y_label: str, pen: QPen,
+    def __init__(self, x_label: str, y_label: str, legend: bool = True,
                  right_axis: pg.ViewBox = None, date_axis_item: bool = False):
         """
         Create a plot widget with some shortcuts
@@ -42,8 +28,8 @@ class Plot(pg.PlotWidget):
         if date_axis_item:
             self.setAxisItems({'bottom': pg.DateAxisItem('bottom')})
 
-        self.pen = pen
-        self.curve = self.plot(pen=pen, name=y_label)
+        if legend:
+            self.addLegend()
 
         if self.right_axis:
             self.showAxis('right')
@@ -51,20 +37,48 @@ class Plot(pg.PlotWidget):
             self.getAxis('right').linkToView(right_axis)
             self.setXLink(right_axis)
             self.setLabel('right', right_axis.label)
-            self.addLegend()
             self.update_views()
             self.getViewBox().sigResized.connect(self.update_views)
+
+        self.curves = None
+        self.x_indices = None
+        self.y_indices = None
 
     def update_views(self):
         self.right_axis.setGeometry(self.getViewBox().sceneBoundingRect())
         self.right_axis.linkedViewChanged(self.getViewBox(), self.right_axis.XAxis)
 
+    def set_curves(self, labels: list[str] | tuple[str], pens: list[QPen] | tuple[QPen]):
+        self.curves = [self.plot(name=label, pen=pen) for label, pen in zip(labels, pens)]
+
+    def set_indices(self, x_indices: list[int], y_indices: list[int] | zip):
+        self.x_indices = x_indices
+        self.y_indices = list(y_indices)
+
+    def update(self, data):
+        if isinstance(self.y_indices[0], list | tuple):
+            
+        else:
+            for curve, x_index, y_index in zip(self.curves, self.x_indices, self.y_indices):
+                curve.setData(x=data[:, x_index], y=data[:, y_index])
+
 
 class RightAxisPlot(pg.ViewBox):
-    def __init__(self, label: str, pen: QPen):
+    def __init__(self, label: str):
         super(self.__class__, self).__init__()
         self.label = label
 
-        self.pen = pen
-        self.curve = pg.PlotCurveItem(pen=self.pen, name=label)
-        self.addItem(self.curve)
+        self.curves = None
+        self.x_indices = None
+        self.y_indices = None
+
+    def set_curves(self, labels: list[str] | tuple[str], pens: list[QPen] | tuple[QPen]):
+        num = len(labels)
+        self.curves = [None] * num
+        for ii, label, pen in zip(range(num), labels, pens):
+            self.curves[ii] = pg.PlotCurveItem(name=label, pen=pen)
+            self.addItem(self.curves[ii])
+
+    def set_indices(self, x_indices: list[int], y_indices: list[int] | zip):
+        self.x_indices = x_indices
+        self.y_indices = y_indices
