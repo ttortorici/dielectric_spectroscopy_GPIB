@@ -9,7 +9,7 @@ import numpy as np
 
 
 class Device:
-    def __init__(self, address: int, gpib_num: int = 0):
+    def __init__(self, address: int, gpib_num: int = 0, termination: str = "\r\n"):
         """
         Establish connection with a device over GPIB at address 'address' for interface 'gpib_num'
         :param address: the devices address
@@ -18,7 +18,8 @@ class Device:
         self.address = address
         self.gpib_num = gpib_num
         self.rm = pyvisa.ResourceManager()
-        self.dev = self.rm.open_resource(f"GPIB{gpib_num}::{address}::INSTR")
+        self.dev = self.rm.open_resource(f"GPIB{gpib_num}::{address}::INSTR", read_termination=termination)
+        self.id = self.get_id()
 
     def read(self) -> str:
         """Reads from the device connected to"""
@@ -51,6 +52,9 @@ class Device:
 
     def get_id(self):
         return self.query("*IDN?")
+
+    def __str__(self):
+        return f"{self.id:s} at GPIB{self.gpib_num}::{self.address:d}"
 
 
 class Fake:
@@ -86,7 +90,7 @@ class Fake:
 
 
 if __name__ == "__main__":
-    import get
-
-    test_device = Device(get.gpib_address["LS"])
-    print(test_device.id())
+    ls = Device(13)
+    print(ls)
+    ah = Device(28, termination="\n")
+    print(ah)

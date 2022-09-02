@@ -12,11 +12,12 @@ class Device:
 
     comment = "#"
 
-    def __init__(self, address: int, serial_port, baudrate: int = 921600, timeout=0.25, do_print=False):
-        # if os.name == "nt":
-        #     serial_port = int(serial_port[3:]) - 1
-        self.do_print = do_print
+    def __init__(self, address: int, serial_port, termination: str = "\r\n",
+                 baudrate: int = 921600, timeout=0.25, silent: bool = True):
+
+        self.silent = silent
         self.address = address
+        self.eos = termination
 
         if not timeout:
             timeout = 2
@@ -33,8 +34,8 @@ class Device:
         # version = self.query("++ver")
         # print(f"Established connection with Prologix with version: {version}")
 
-    def write_raw(self, message: str, line_end: str = "\n"):
-        self.dev.write(f"{message}{line_end}".encode())
+    def write_raw(self, message: str):
+        self.dev.write(f"{message}{self.eos}".encode())
 
     def query(self, message: str) -> str:
         self.write_raw(f"++addr {self.address}")
