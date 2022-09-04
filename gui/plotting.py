@@ -3,7 +3,7 @@ Pyqtgraph plot widgets with some presets
 
 @author: Teddy Tortorici
 """
-
+import numpy as np
 from PySide6.QtGui import QPen
 import pyqtgraph as pg
 
@@ -57,7 +57,22 @@ class Plot(pg.PlotWidget):
 
     def update(self, data):
         if isinstance(self.y_indices[0], list | tuple):
-            
+            data_rows = len(data)
+            total_rows = len(self.x_indices) * data_rows
+            x = np.zeros(total_rows)
+            ys = np.zeros((total_rows, len(self.y_indices[0])))
+            for ii, x_index, y_indices in zip(range(len(self.x_indices)), self.x_indices, self.y_indices):
+                start = ii * data_rows
+                end = start + data_rows
+                x[start:end] = data[:, x_index]
+                for jj, y_index in enumerate(y_indices):
+                    ys[start:end, jj] = data[:, y_index]
+            sorter = np.argsort(x)
+            x = x[sorter]
+            ys = ys[sorter]
+            for ii, curve in enumerate(self.curves):
+                curve.setData(x=x, y=ys[ii])
+
         else:
             for curve, x_index, y_index in zip(self.curves, self.x_indices, self.y_indices):
                 curve.setData(x=data[:, x_index], y=data[:, y_index])
