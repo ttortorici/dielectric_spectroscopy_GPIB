@@ -1,5 +1,5 @@
 """
-Classes for creating and managing data files
+Classes for creating and managing data files for dielectric experiments
 
 @author: Teddy Tortorici
 """
@@ -15,7 +15,7 @@ from calculations.calibration import Calibration
 from calculations.capacitors import geometric_capacitance
 
 
-class DataFile(CSVFile):
+class DielectricSpec(CSVFile):
 
     labels = ('Time [s]', 'Temperature A [K]', 'Temperature B [K]',
               'Capacitance [pF]', 'Loss Tangent', 'Voltage [V]', 'Frequency [Hz]')
@@ -192,7 +192,7 @@ class DataFile(CSVFile):
         return full_data
 
 
-class DielectricConstant(DataFile):
+class DielectricConstant(DielectricSpec):
 
     labels = ('Time [s]', 'Temperature A [K]', 'Temperature B [K]',
               'Capacitance [pF]', 'Loss Tangent', 'Voltage [V]',

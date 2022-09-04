@@ -150,12 +150,12 @@ class DataTab(QWidget):
                                                               bridge=self.dialog.bridge_choice,
                                                               ls_model=self.dialog.ls_choice)
                 else:
-                    self.data = data_files.DataFile(path=path,
-                                                    filename=filename,
-                                                    frequencies=self.dialog.frequencies,
-                                                    gui_signaler=self.writer_signaler,
-                                                    bridge=self.dialog.bridge_choice,
-                                                    ls_model=self.dialog.ls_choice)
+                    self.data = data_files.DielectricSpec(path=path,
+                                                          filename=filename,
+                                                          frequencies=self.dialog.frequencies,
+                                                          gui_signaler=self.writer_signaler,
+                                                          bridge=self.dialog.bridge_choice,
+                                                          ls_model=self.dialog.ls_choice)
                 self.data.initiate_devices(voltage_rms=self.dialog.voltage,
                                            averaging_setting=self.dialog.averaging,
                                            dc_setting=self.dialog.dc_bias_setting)
@@ -231,13 +231,13 @@ class DataTab(QWidget):
                                                               ls_model=ls_num,
                                                               comment=full_comment)
                 else:
-                    self.data = data_files.DataFile(path=path,
-                                                    filename=filename,
-                                                    frequencies=self.dialog.frequencies,
-                                                    gui_signaler=self.writer_signaler,
-                                                    bridge=bridge,
-                                                    ls_model=ls_num,
-                                                    comment=full_comment)
+                    self.data = data_files.DielectricSpec(path=path,
+                                                          filename=filename,
+                                                          frequencies=self.dialog.frequencies,
+                                                          gui_signaler=self.writer_signaler,
+                                                          bridge=bridge,
+                                                          ls_model=ls_num,
+                                                          comment=full_comment)
                 self.data.initiate_devices(voltage_rms=self.dialog.voltage,
                                            averaging_setting=self.dialog.averaging,
                                            dc_setting=self.dialog.dc_bias_setting)

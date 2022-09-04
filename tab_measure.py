@@ -234,14 +234,14 @@ class MeasureTab(qtw.QWidget):
                                                       comment=comment_line,
                                                       lj_chs=lj_chs)
         else:
-            self.data = data_files.DataFile(path=self.data_path,
-                                            filename=self.data_filename,
-                                            port=MeasureTab.port,
-                                            frequencies=self.dialog.freq_entry,
-                                            bridge=self.dialog.bridge_choice,
-                                            cryo=self.dialog.cryo_choice,
-                                            comment=comment_line,
-                                            lj_chs=lj_chs)
+            self.data = data_files.DielectricSpec(path=self.data_path,
+                                                  filename=self.data_filename,
+                                                  port=MeasureTab.port,
+                                                  frequencies=self.dialog.freq_entry,
+                                                  bridge=self.dialog.bridge_choice,
+                                                  cryo=self.dialog.cryo_choice,
+                                                  comment=comment_line,
+                                                  lj_chs=lj_chs)
 
         print('created datafile')
         self.data.bridge.dcbias(self.dialog.dcBias_choice)
