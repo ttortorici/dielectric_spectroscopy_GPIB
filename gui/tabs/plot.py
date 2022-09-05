@@ -5,11 +5,12 @@ A tab widget for plotting data in app.py
 """
 
 from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QToolButton, QMainWindow
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Slot, Qt
 import gui.icons as icon
 from gui.plotting import Plot, RightAxisPlot
 from files.csv import CSVFile
 import sys
+import time
 import numpy as np
 import pyqtgraph as pg
 
@@ -47,6 +48,7 @@ class PlotTab(QWidget):
         QWidget.__init__(self)
         for key in PlotTab.plot_colors.keys():
             pg.setConfigOption(key, PlotTab.plot_colors[key])
+        pg.setConfigOptions(antialias=True)
 
         self.data_line_skip = 0
         self.live_plotting = True
@@ -54,6 +56,7 @@ class PlotTab(QWidget):
         self.parent = parent
 
         self.filename = None
+        self.freq_labels = None
 
         main_layout = QHBoxLayout(self)
         plot_layout = QGridLayout()
@@ -63,7 +66,7 @@ class PlotTab(QWidget):
         self.plot_LvT = Plot('Temperature (K)', 'Loss Tangent')
         self.plot_Tvt = Plot('Time', 'Temperature (K)', date_axis_item=True)
         self.plot_Lvt = RightAxisPlot('Loss Tangent')
-        self.plot_Cvt = Plot('Time', 'Capacitance (pF)', right_axis=self.plot_Lvt, date_axis_item=True)
+        self.plot_Cvt = Plot('Time', 'Capacitance (pF)', right_axis=self.plot_Lvt, date_axis_item=True, legend=False)
 
         # Will place in the gid to mimic the list of lists
         plots = [[self.plot_CvT, self.plot_Tvt],
@@ -111,7 +114,7 @@ class PlotTab(QWidget):
     def initialize_plots(self, filename):
         """Second initialize for after the MainWindow() is completely done initializing"""
         self.filename = filename
-        self.freq_labels = [str(freq) for freq in self.parent.data_tab.dialog.freq_entry]
+        self.freq_labels = [str(freq) for freq in self.parent.data_tab.dialog.frequencies]
         freq_num = len(self.freq_labels)
         labels = CSVFile.get_labels(self.filename)
 
@@ -123,8 +126,8 @@ class PlotTab(QWidget):
         self.plot_CvT.set_curves(self.freq_labels, pens)
         self.plot_Cvt.set_curves([f"C: {f}" for f in self.freq_labels], pens)
 
-        colors = self.__class__.colors["capacitance"][:freq_num]
-        pens = [pg.mkPen(color, width=width) for color in colors]
+        colors = self.__class__.colors["loss"][:freq_num]
+        pens = [pg.mkPen(color, width=width, style=Qt.DashLine) for color in colors]
         self.plot_LvT.set_curves(self.freq_labels, pens)
         self.plot_Lvt.set_curves([f"L: {f}" for f in self.freq_labels], pens)
 
@@ -137,6 +140,7 @@ class PlotTab(QWidget):
         temp_b_indices = [ii for ii, ll in enumerate(labels) if 'temperature b' in ll.lower()]
         cap_indices = [ii for ii, ll in enumerate(labels) if 'capacitance' in ll.lower()]
         loss_indices = [ii for ii, ll in enumerate(labels) if 'loss' in ll.lower()]
+        print(loss_indices)
 
         self.plot_CvT.set_indices(temp_a_indices, cap_indices)
         self.plot_LvT.set_indices(temp_a_indices, loss_indices)
@@ -145,7 +149,7 @@ class PlotTab(QWidget):
         self.plot_Lvt.set_indices(time_indices, loss_indices)
 
         self.plot_Cvt.update_views()
-
+        self.plot_Tvt.setXRange(time.time(), time.time() + 360, padding=0)
 
     def set_live_plotting(self, on):
         """Turn live plotting on or off"""
@@ -168,16 +172,12 @@ class PlotTab(QWidget):
         """Draw curves to update the plots to any changes in the data file"""
         if self.parent.data_tab.active_file:
             data = self.load_data()
-            time_data = data[:, 0]
-            voltage_data = data[:, 1]
-            temperature_data = data[:, 2]
-            counts_data = data[:, 3]
 
-            self.plot_TvV.curve.setData(x=voltage_data, y=temperature_data)
-            self.plot_CvT.curve.setData(x=temperature_data, y=counts_data)
-            self.plot_Tvt.curve.setData(x=time_data, y=temperature_data)
-            self.plot_Vvt.curve.setData(x=time_data, y=voltage_data)
-            self.plot_Cvt.curve.setData(x=time_data, y=counts_data)
+            self.plot_CvT.update_plot(data)
+            self.plot_LvT.update_plot(data)
+            self.plot_Tvt.update_plot(data)
+            self.plot_Cvt.update_plot(data)
+            self.plot_Lvt.update_plot(data)
 
     def load_data(self) -> np.ndarray:
         """Loads data from filename. Will make attempts to load data and if it fails, it will add to the amount of lines

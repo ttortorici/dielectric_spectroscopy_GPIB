@@ -41,9 +41,12 @@ class DataTab(QWidget):
 
         self.server_thread = None   # will create thread on data file start up
         self.data_thread = None     # will create thread on data file start up
+        self.path = None
+        self.filename = None
 
         self.running = False
         self.active_file = False
+        self.started = False
 
         """So we can update plots when new data is taken"""
         self.plot_updater = Signaler()
@@ -109,10 +112,10 @@ class DataTab(QWidget):
     @Slot()
     def open_file(self):
         """Open a dialog to find a file to append to"""
-        stop = True
+        stopped = True
         if self.active_file:
-            stop = self.stop()
-        if stop:
+            stopped = self.stop()
+        if stopped:
             options = QFileDialog.Options() | QFileDialog.DontUseNativeDialog
             filepath, _ = QFileDialog.getOpenFileName(self,  # parent
                                                       "Open data file",  # caption
@@ -138,7 +141,7 @@ class DataTab(QWidget):
                 self.write(f'Opening file "{filepath}"')
                 self.write("Settings: " + comment_line.lstrip("# ").rstrip("\n"))
 
-                self.activate_data_file(path, filename)
+                self.activate_data_file(path, filename, start=False)
                 if self.dialog.purp_choice == "FILM":
                     cal = Calibration(self.dialog.calibration_path)
                     self.data = data_files.DielectricConstant(path=path,
@@ -159,7 +162,8 @@ class DataTab(QWidget):
                 self.data.initiate_devices(voltage_rms=self.dialog.voltage,
                                            averaging_setting=self.dialog.averaging,
                                            dc_setting=self.dialog.dc_bias_setting)
-                self.data_thread.start()
+                self.plot_initializer.signal.emit(os.path.join(path, filename))
+                self.plot_updater.signal.emit()
 
     @Slot()
     def make_new_file(self):
@@ -207,7 +211,9 @@ class DataTab(QWidget):
 
                 """CREATE FILENAME"""
                 day = f"{creation_datetime.day:02}"
-                start_time = f"{self.dialog.date.hour:02}-{self.dialog.date.min:02}"
+                start_time = f"{self.dialog.date.hour:02}-{self.dialog.date.minute:02}"
+                print(self.dialog.date)
+                print(start_time)
                 if not sample:
                     sample = "Bare"
                 if not cid:
@@ -241,33 +247,42 @@ class DataTab(QWidget):
                 self.data.initiate_devices(voltage_rms=self.dialog.voltage,
                                            averaging_setting=self.dialog.averaging,
                                            dc_setting=self.dialog.dc_bias_setting)
-                self.data_thread.start()
+                self.plot_initializer.signal.emit(os.path.join(path, filename))
+                self.start()
 
-    def activate_data_file(self, path: str, filename: str):
+    def activate_data_file(self, path: str, filename: str, start: bool = True):
         """Whether we open a file or make a new one, we need to do all these things"""
         self.server_thread = threading.Thread(target=self.gpib_server.run, args=())
+        self.server_thread.daemon = True
         self.data_thread = threading.Thread(target=self.take_data, args=())
+        self.data_thread.daemon = True
 
         self.plot_updater.signal.connect(self.parent.plot_tab.update_plots)
         self.plot_initializer.signal.connect(self.parent.plot_tab.initialize_plots)
-        self.plot_initializer.signal.emit(os.path.join(path, filename))
 
         self.active_file = True
-        self.button_play.setEnabled(False)
-        self.button_pause.setEnabled(True)
+        self.button_play.setEnabled(not start)
+        self.button_pause.setEnabled(start)
         self.button_stop.setEnabled(True)
-        self.button_play_pause.setCurrentWidget(self.button_pause)
-        self.parent.play_action.setEnabled(False)
-        self.parent.pause_action.setEnabled(True)
+        if start:
+            self.button_play_pause.setCurrentWidget(self.button_pause)
+        else:
+            self.button_play_pause.setCurrentWidget(self.button_play)
+        self.parent.play_action.setEnabled(not start)
+        self.parent.pause_action.setEnabled(start)
         self.parent.stop_action.setEnabled(True)
-        self.parent.exit_action.setEnabled(False)
+        # self.parent.exit_action.setEnabled(False)
 
         """Start GPIB communication server"""
         self.server_thread.start()
         time.sleep(0.01)
 
+    def start(self):
+        self.started = True
+        self.data_thread.start()
+
     def take_data(self):
-        """This should be ran in a thread"""
+        """This should be run in a thread"""
         self.running = True
         while self.active_file:
             while self.running:
@@ -285,7 +300,10 @@ class DataTab(QWidget):
         self.button_pause.setEnabled(True)
         self.parent.pause_action.setEnabled(True)
         self.parent.play_action.setEnabled(False)
-        self.running = True
+        if self.started:
+            self.running = True
+        else:
+            self.start()
 
     @Slot()
     def pause_data(self):
@@ -306,6 +324,7 @@ class DataTab(QWidget):
             self.write("Closing File")
             self.running = False
             self.active_file = False
+            self.started = False
             self.data_thread.join()
             self.button_stop.setEnabled(False)
             self.button_play_pause.setCurrentWidget(self.button_play)
@@ -319,6 +338,8 @@ class DataTab(QWidget):
             self.server_thread.join()
             self.data = None
             self.dialog = None
+            self.filename = None
+            self.path = None
             return True
         else:
             return False

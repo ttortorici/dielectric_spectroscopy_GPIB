@@ -111,7 +111,7 @@ class DielectricSpec(CSVFile):
             else:
                 f_label = f"{int(frequency / 1e15):d} PHz"
             for ll, label in enumerate(self.__class__.labels):
-                self.labels[ff + ll] = f"{label:s} ({f_label:s})"
+                self.labels[ll + ff * len(self.__class__.labels)] = f"{label:s} ({f_label:s})"
             # if type(self.lj_chs) == list:
             #     for ii, ch in enumerate(self.lj_chs):
             #         self.labels.extend(['LJ {} [V] ({})'.format(ch, f), 'LJ StdDev {} [V] ({})'.format(ch, f)])

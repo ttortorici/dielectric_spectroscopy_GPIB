@@ -16,7 +16,13 @@ label_font = QFont("Arial", 16)
 
 class ButtonHandler(QWidget):
     """Allows you to turn buttons on or off from a signal"""
-    activate = Signal(bool)
+    active = Signal(bool)
+
+    def activate(self):
+        self.active.emit(True)
+
+    def deactivate(self):
+        self.active.emit(False)
 
 
 class ControlTab(QWidget):
@@ -27,15 +33,18 @@ class ControlTab(QWidget):
         QWidget.__init__(self)
         self.parent = parent
 
+        """PULL DEVICES FROM self.parent.data_tab.data"""
+        self.bridge = None
+        self.ls = None
+
         self.button_activator = ButtonHandler()
-        self.button_activator.activate.connect(self.buttons_enabled)
+        self.button_activator.active.connect(self.buttons_enabled)
 
         main_layout = QVBoxLayout()
 
-        """DEVICE CONTROLLER: LakeShore"""
-        # Title
-        self.ls = None  # will get from self.parent.data_tab once a server is running
-        ls_intro = self.Title("Lakeshore Remote Control")
+        """TITLES"""
+        bridge_title = self.Title("Bridge Remote Control")
+        ls_title = self.Title("Lakeshore Remote Control")
 
         main_layout.addWidget(ls_intro)
 
