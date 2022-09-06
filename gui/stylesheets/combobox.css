@@ -17,5 +17,5 @@ QComboBox:disabled {
 }
 
 QComboBox::down-arrow {
-    image: url(downarrow.png);
+    image: url(/images/downarrow.png);
 }
