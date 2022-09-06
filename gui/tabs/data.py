@@ -115,7 +115,7 @@ class DataTab(QWidget):
         if self.active_file:
             stopped = self.stop()
         if stopped:
-            filepath, _ = QFileDialog.getOpenFileName(self,  # parent
+            filepath, _ = QFileDialog.getOpenFileName(self.parent,  # parent
                                                       "Open data file",  # caption
                                                       self.parent.data_base_path,  # directory
                                                       "CSV (*.csv)")

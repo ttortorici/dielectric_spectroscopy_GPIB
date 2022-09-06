@@ -7,6 +7,7 @@ Dialog for creating new file for taking data
 from PySide6.QtWidgets import (QDialog, QWidget, QGroupBox, QComboBox, QLineEdit, QDialogButtonBox, QFileDialog,
                                QLabel, QSpinBox, QPushButton, QFormLayout, QVBoxLayout, QDoubleSpinBox, QStackedWidget)
 from PySide6.QtCore import Slot
+import gui.icons as icon
 import sys
 import yaml
 import os
@@ -243,6 +244,9 @@ class NewFileDialog(QDialog):
         self.base_path = base_path
         self.date = None        # will fill once Okay is hit
         self.setWindowTitle("Measurement Details")
+        self.setWindowIcon(icon.built_in(self, 'MessageBoxQuestion'))
+        with open(os.path.join("gui", "stylesheets", "main.css"), "r") as f:
+            self.setStyleSheet(f.read())
 
         """DEFAULT VALUES"""
         self.presets = {}

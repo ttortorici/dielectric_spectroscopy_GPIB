@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox, QLabel
 import gui.icons as icon
+import os
 
 
 class HelpPrompt(QDialog):
@@ -7,6 +8,8 @@ class HelpPrompt(QDialog):
         QDialog.__init__(self)
         self.setWindowTitle("About")
         self.setWindowIcon(icon.built_in(self, 'MessageBoxQuestion'))
+        with open(os.path.join("gui", "stylesheets", "main.css"), "r") as f:
+            self.setStyleSheet(f.read())
 
         """Main text"""
         text = 'You can create a new data file (CTRL+N) or open a preexisting one to append or plot (CTRL+O).\n' \

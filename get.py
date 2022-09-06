@@ -2,6 +2,8 @@
 
 import sys
 import os
+import getpass
+import socket
 
 port = 62538
 
@@ -27,7 +29,6 @@ def google_drive():
     """locates where your google drive is depending on who you are currently generalized for mac users."""
     """For compatiblity, you must rename "Google Drive" folder to "Google_Drive" which will raise an error for
     google drive, which is easily fixed by relocating the folder for it"""
-    import getpass
     user = getpass.getuser()
     if sys.platform == 'darwin':  # for mac users
         path = '/Users/%s/Google_Drive/' % (user)
@@ -38,7 +39,7 @@ def google_drive():
             path = ''
     else:
         if os.name == 'nt':
-            if user == 'etcto':
+            if user == 'etcto' and socket.gethostname() != "DESKTOP-N5IGGUN":
                 path = f"D:\\Google Drive\\My Drive"
             # elif user == 'Chuck':
             else:

@@ -136,3 +136,31 @@ QFileDialog {
 QLabel {
     color: #FFFFFF;
 }
+
+QComboBox {
+    color: #FFFFFF;
+    background-color: #000000;
+    border-width: 1px; border-style: solid;
+    border-color: #777777 #333333 #333333 #777777;
+}
+
+QLineEdit {
+    color: #FFFFFF;
+    background-color: #000000;
+    border-width: 1px; border-style: solid;
+    border-color: #777777 #333333 #333333 #777777;
+}
+
+QSpinBox {
+    color: #FFFFFF;
+    background-color: #000000;
+    border-width: 1px; border-style: solid;
+    border-color: #777777 #333333 #333333 #777777;
+}
+
+QDoubleSpinBox {
+    color: #FFFFFF;
+    background-color: #000000;
+    border-width: 1px; border-style: solid;
+    border-color: #777777 #333333 #333333 #777777;
+}

@@ -29,7 +29,9 @@ class Plot(pg.PlotWidget):
             self.setAxisItems({'bottom': pg.DateAxisItem('bottom')})
 
         if legend:
-            self.addLegend()
+            self.legend = self.addLegend()
+        else:
+            self.legend = None
 
         if self.right_axis:
             self.showAxis('right')

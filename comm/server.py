@@ -33,7 +33,7 @@ class GpibServer:
             self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
 
         """STARTUP COMMANDS"""
-        self.bridge.
+        # self.bridge.
 
     def handle(self, message_to_parse: str) -> str:
         """Parse a message of the format
