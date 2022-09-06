@@ -104,10 +104,7 @@ class DisplayValue(QLineEdit):
     def __init__(self):
         super(DisplayValue, self).__init__()
         self.setReadOnly(True)
-        self.setStyleSheet('QLineEdit {background: rgb(0, 0, 0);'
-                           'selection-background-color: rgb(42, 42, 38);'
-                           'border-width: 3px; border-style: solid;'
-                           'border-color: rgb(226, 213, 0) rgb(185, 161, 0) rgb(185, 161, 0) rgb(226, 213, 0);}')
+        self.setStyleSheet(read_stylesheet("display.css"))
         self.setAlignment(Qt.AlignCenter)
 
 
@@ -149,7 +146,6 @@ class SendBox(QLineEdit):
         self.label_response.setFixedWidth(200)
         self.response = DisplayValue()
         self.row_layout_2 = RowLayout([self.label_response, self.response], True)
-        self.setEnabled(False)
 
     def setEnabled(self, arg__1: bool) -> None:
         super(SendBox, self).setEnabled(arg__1)
@@ -220,8 +216,7 @@ class AverageBox(QSpinBox):
 
         self.apply_button = ApplyButton(self.apply)
         self.row_layout = RowLayout([Label("Averaging Setting"), self.display, Padding(50),
-                                     Label("Change Setting"), self, Padding(20), self.apply_button])
-        self.setEnabled(False)
+                                     Label("Change Setting"), self, self.apply_button])
 
     def setEnabled(self, arg__1: bool) -> None:
         super(AverageBox, self).setEnabled(arg__1)
@@ -246,9 +241,9 @@ class AverageBox(QSpinBox):
 class HeaterRangeBox(QComboBox):
     def __init__(self, parent: ControlTab):
         super(HeaterRangeBox, self).__init__()
-        self.setEnabled(False)
         self.setEditable(True)
         self.lineEdit().setAlignment(Qt.AlignCenter)
+        self.setStyleSheet(read_stylesheet("combobox.css"))
         self.setFixedWidth(150)
         self.parent = parent
 
@@ -257,7 +252,7 @@ class HeaterRangeBox(QComboBox):
         self.addItems(self.choices)
         self.activated.connect(self.apply)
 
-        self.row_layout = RowLayout([Label("Heater Power Range"), self, Padding(250)])
+        self.row_layout = RowLayout([Label("Heater Power Range"), self, Padding(450)])
 
     @Slot()
     def apply(self):
@@ -304,6 +299,7 @@ class HeaterRangeBox(QComboBox):
 class SpinBoxTemplate(QDoubleSpinBox):
     def __init__(self, label: str, precision: int = 1, maximum: float = None):
         super(SpinBoxTemplate, self).__init__()
+        self.setFixedWidth(100)
         self.setDecimals(precision)
         if maximum:
             self.setMaximum(maximum)
@@ -314,7 +310,7 @@ class SpinBoxTemplate(QDoubleSpinBox):
         self.apply_button = ApplyButton(self.apply)
 
         self.row_layout = RowLayout([Label(label), self.display, Padding(50),
-                                     Label("Change Setting"), self, Padding(20), self.apply_button])
+                                     Label("Change Setting"), self, self.apply_button])
 
     def setEnabled(self, arg__1: bool) -> None:
         super(SpinBoxTemplate, self).setEnabled(arg__1)
