@@ -11,14 +11,54 @@ L = 1000        # [um] capacitor finger length
 u = 20          # [um] gap-finger unit cell size
 
 
-def bare_capacitance(g):
+def sinhpi4(x: float, h: float) -> float:
+    """
+    Calculate sinh for pi*x/(4h)
+    :param x: value in numerator
+    :param h: value in denominator
+    :return: sinh
+    """
+    return np.sinh(np.pi * x / (4 * h))
+
+
+def k_air(g: float) -> float:
+    """
+    Calculates k for K(k) calculation for h -> inf
+    :param g: gap size in micron
+    :return: k for K(k)
+    """
+    return (u - g) / (u + g) * np.sqrt(2 * (u - g) / (2 * u - g))
+
+
+def k_mat(g: float, h: float) -> float:
+    """
+    Calculates k for K(k) calculation down to 0.1 um material thickness
+    :param g: gap size [um]
+    :param h: thickness of film [um]
+    :return: argument for elliptic integral
+    """
+    return sinhpi4(u - g, h) / sinhpi4(u + g, h) * np.sqrt((sinhpi4(3 * u - g, h) ** 2 - sinhpi4(u + g, h) ** 2)
+                                                           / (sinhpi4(3 * u - g, h) ** 2 - sinhpi4(u - g, h) ** 2))
+
+
+def elliptic_over_comp(k: float) -> float:
+    """
+    Calculate the elliptic integral of the first kind divided by the elliptic integral of the second kind
+    :param k: the argument of the elliptic integral
+    :return: K(k)/K'(k)
+    """
+    return special.ellipk(k) / special.ellipk(np.sqrt(1 - k**2))
+
+
+def bare_capacitance(g: float) -> float:
+    """
+    Calculate the capacitance of a capacitor with a certain gap size
+    :param g: gap size in micron
+    :return: capacitance in picofarads
+    """
     ka = k_air(g)
     ks = k_mat(g, hS)
     return 2 * (N - 1) * L * eps0 * (elliptic_over_comp(ka) + (epsS - 1) * elliptic_over_comp(ks) / 2)
-
-
-def elliptic_over_comp(k):
-    return special.ellipk(k) / special.ellipk(np.sqrt(1 - k**2))
 
 
 def elliptic_over_comp_small_k(k: float) -> float:
@@ -32,36 +72,26 @@ def elliptic_over_comp_small_k(k: float) -> float:
     return ellip_integral / ellip_integral_comp
 
 
-def find_gap(bare_c_val):
+def find_gap(bare_c_val: float) -> float:
+    """
+    Use a zero-finder to invert the bare capacitance calculation to calculate the gap size
+    :param bare_c_val: capacitance in picofarads
+    :return: gap size in micron
+    """
     def func(g):
         return bare_capacitance(g) - bare_c_val
-    return optimize.fsolve(func, np.array([10.]))[0]
+    return float(optimize.fsolve(func, np.array([10.]))[0])
 
 
-def geometric_capacitance(g, h):
-    """Calculates the geometric capacitance for an interdigital capacitor using the small k
-    h - the thickness of the film
-    g - gap size of the capacitor"""
+def geometric_capacitance(g: float, h: float) -> float:
+    """
+    Calculates the geometric capacitance for an interdigital capacitor using the small k
+    :param g: gap size in micron
+    :param h: thickness of film in micron
+    :return: C_geo value in picofarads
+    """
     k = k_mat(h, g)
     return eps0 * (N - 1) * L * np.pi * (1 + k / 4) / (5 * np.log(2) - 2 * np.log(k))
-
-
-def k_air(g):
-    """Calculates k for K(k) calculation for h -> inf
-    g - gap size"""
-    return (u - g) / (u + g) * np.sqrt(2 * (u - g) / (2 * u - g))
-
-
-def k_mat(g: float, h: float) -> float:
-    """
-    Calculates k for K(k) calculation down to 0.1 um material thickness
-    :param g: gap size [um]
-    :param h: thickness of film [um]
-    :return: argument for elliptic integral
-    """
-
-    return sinhpi4(u - g, h) / sinhpi4(u + g, h) * np.sqrt((sinhpi4(3 * u - g, h) ** 2 - sinhpi4(u + g, h) ** 2)
-                                                           / (sinhpi4(3 * u - g, h) ** 2 - sinhpi4(u - g, h) ** 2))
 
 
 def k_film(g: float, h: float) -> float:
@@ -81,5 +111,5 @@ def k_film(g: float, h: float) -> float:
     return outside_sqrt * np.sqrt(inside_sqrt)
 
 
-def sinhpi4(x, h):
-    return np.sinh(np.pi * x / (4 * h))
+if __name__ == "__main__":
+    pass

@@ -13,6 +13,7 @@ from gui.signalers import MessageSignaler
 from files.csv import CSVFile
 from calculations.calibration import Calibration
 from calculations.capacitors import geometric_capacitance
+from numba import njit
 
 
 class DielectricSpec(CSVFile):
@@ -229,7 +230,7 @@ class DielectricConstant(DielectricSpec):
         if not silent:
             print('Starting measurement')
 
-        data = [0] * len(self.__class__.labels)
+        # data = [0] * len(self.__class__.labels)
 
         """Set the frequency"""
         self.bridge.set_frequency(frequency)
@@ -248,27 +249,25 @@ class DielectricConstant(DielectricSpec):
             bridge_data = self.bridge.read_front_panel()
             if bridge_data[-1] != -1:
                 break
+        data_frequency = bridge_data[0]
+        data_capacitance = bridge_data[1]
+        data_loss = bridge_data[2]
+        data_volt = bridge_data[3]
 
         if not silent:
             print('read front panel')
 
         """Read temperatures from lakeshore"""
-        temperatures = self.ls.read_front_panel()
+        temperature_a, temperature_b = self.ls.read_front_panel()
 
         if not silent:
             print('read temperatures')
 
-        bare_capacitance = self.calibration.bare_capacitance(temperature=temperatures[0], frequency=frequency)
-        bare_loss = self.calibration.bare_loss(temperature=temperatures[0], frequency=frequency)
+        bare_capacitance = self.calibration.bare_capacitance(temperature=temperature_a, frequency=frequency)
+        bare_loss = self.calibration.bare_loss(temperature=temperature_a, frequency=frequency)
 
-        re_eps = 1 + (bridge_data[1] - bare_capacitance) / self.geometric_cap
-        im_eps = (bridge_data[2] * bridge_data[1] - bare_loss * bare_capacitance) / self.geometric_cap
+        re_eps = 1 + (data_capacitance - bare_capacitance) / self.geometric_cap
+        im_eps = (data_loss * data_capacitance - bare_loss * bare_capacitance) / self.geometric_cap
 
-        data[0] = time.time()
-        data[1:3] = temperatures
-        data[3:6] = bridge_data[1:]     # capacitance, loss, voltage
-        data[6] = re_eps
-        data[7] = im_eps
-        data[-1] = bridge_data[0]        # frequency
-
-        return data
+        return [time.time(), temperature_a, temperature_b, data_capacitance,
+                data_loss, data_volt, re_eps, im_eps, data_frequency]

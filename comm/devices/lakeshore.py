@@ -17,6 +17,8 @@ class Client(Device):
         super(self.__class__, self).__init__("LS")
         self.inst_num = model_num
 
+        self.ramp_speed = None
+
         # create list of heater range values in Watts
         # The index is the setting value on the instrument
         # The element corresponding to that index is the power in Watts
@@ -78,7 +80,8 @@ class Client(Device):
         """
         if loop != 1 and loop != 2:
             raise ValueError(f"invalid loop: {loop}")
-        return float(self.query(f"RAMP? {loop:d}").split(',')[1])
+        self.ramp_speed = float(self.query(f"RAMP? {loop:d}").split(',')[1])
+        return self.ramp_speed
 
     def read_ramp_status(self, loop: int = 1) -> bool:
         """
@@ -169,7 +172,7 @@ class Client(Device):
         if proportional is None:
             proportional = self.PID[loop][0]
         else:
-            self.PID[loop][1] = float(proportional)
+            self.PID[loop][0] = float(proportional)
         if integral is None:
             integral = self.PID[loop][1]
         else:
@@ -185,11 +188,12 @@ class Client(Device):
         Set the speed at which the setpoint changes
         :param kelvin_per_min: the ramp speed in K/min
         :param loop: either PID loop 1 or 2 on the device
-        :param ramping: turn ramping on or off (if off it will just instaneously jump to new setpoints)
+        :param ramping: turn ramping on or off (if off it will just instantaneously jump to new setpoints)
         """
         if loop != 1 and loop != 2:
             raise ValueError(f"invalid loop: {loop:d}")
         self.write(f"RAMP {loop:d}, {ramping:b}, {kelvin_per_min}")
+        self.read_ramp_speed(loop)
 
     def ramping_off(self, loop: int = 1):
         """

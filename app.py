@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
         """
         QMainWindow.__init__(self)
 
-        with open(os.path.join("gui", "stylesheet.css"), "r") as f:
+        with open(os.path.join("gui", "stylesheets", "main.css"), "r") as f:
             self.setStyleSheet(f.read())
 
         self.data_base_path = os.path.join(get.google_drive(), "Dielectric_data", "Teddy-2",)  # base path to data files

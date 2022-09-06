@@ -1,6 +1,7 @@
 import numpy as np
 from files.csv import CSVFile
 from calculations.capacitors import find_gap
+from numba import njit
 
 # unicodes = ["\u2070", "\u00B9", "\u00B2", "\u00B3", "\u2074", "\u2075", "\u2076", "\u2077", "\u2078", "\u2079"]
 superscripts = ["", " T", " T\u00B2", " T\u00B3", " T\u2074", " T\u2075",
@@ -43,7 +44,7 @@ class Calibration:
                                                              cal_data[:, loss_indices[ii]],
                                                              loss_fit_order)[::-1]
 
-    def bare_capacitance(self, temperature: float, frequency: int):
+    def bare_capacitance(self, temperature: float, frequency: int) -> float:
         """
         Get the capacitance at a given temperature and frequency
         :param temperature: temperature you wish to know the capacitance
@@ -51,7 +52,7 @@ class Calibration:
         :return: capacitance in pF
         """
         frequency = self.frequencies[np.argmin(abs(self.frequencies - frequency))]
-        return sum([a * temperature ** ii for ii, a in enumerate(self.capacitance_fit_parameters[frequency])])
+        return self.bare_fit(temperature, self.capacitance_fit_parameters[frequency])
 
     def bare_loss(self, temperature: float, frequency: int):
         """
@@ -61,7 +62,21 @@ class Calibration:
         :return: loss tangent as tan(delta)
         """
         frequency = self.frequencies[np.argmin(abs(self.frequencies - frequency))]
-        return sum([a * temperature ** ii for ii, a in enumerate(self.loss_fit_parameters[frequency])])
+        return self.bare_fit(temperature, self.loss_fit_parameters[frequency])
+
+    @staticmethod
+    @njit
+    def bare_fit(temperature: float, fit_params: np.ndarray) -> float:
+        """
+        Get the capacitance at a given temperature and frequency
+        :param temperature: temperature you wish to know the capacitance
+        :param fit_params: [a0, a1, a2, ...]
+        :return: capacitance in pF
+        """
+        output = 0.
+        for ii, a in enumerate(fit_params):
+            output += a * temperature ** ii
+        return output
 
     def capacitance_room_temperature(self) -> float:
         """
@@ -106,9 +121,16 @@ class Calibration:
 
 
 if __name__ == "__main__":
+    import time
+
+    def test(target, args=()):
+        start = time.perf_counter()
+        response = target(*args)
+        print(time.perf_counter() - start)
+        return response
+
     filename = "D:\\Google Drive\\My Drive\\Dielectric_data\\Teddy-2\\1-Calibrations\\2021\\" \
                "calibrate_TT10-05-08_ah_40K_05-21_16-33.csv"
     cal = Calibration(filename)
-    print(cal)
-    print(cal.capacitance_room_temperature())
-    print(cal.gap_estimate())
+    for ii in range(10):
+        print(test(cal.bare_capacitance, args=(200+ii, 400)))

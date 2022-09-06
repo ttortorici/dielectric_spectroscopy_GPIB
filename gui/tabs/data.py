@@ -116,12 +116,10 @@ class DataTab(QWidget):
         if self.active_file:
             stopped = self.stop()
         if stopped:
-            options = QFileDialog.Options() | QFileDialog.DontUseNativeDialog
             filepath, _ = QFileDialog.getOpenFileName(self,  # parent
                                                       "Open data file",  # caption
                                                       self.parent.data_base_path,  # directory
-                                                      "CSV (*.csv)",  # filters
-                                                      options=options)  # dialog options
+                                                      "CSV (*.csv)")
             if filepath:
                 # open file and read comment to find what the averaging setting is
                 print(filepath)
