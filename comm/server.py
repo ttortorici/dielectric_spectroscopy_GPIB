@@ -24,13 +24,16 @@ class GpibServer:
         self.running = False
         self.silent = silent
 
-        """create objects for devices"""
+        """DEVICES"""
         if bridge_type == "FAKE":
             self.bridge = fake.Bridge()
             self.ls = fake.Lakeshore()
         else:
             self.bridge = gpib.Device(GpibServer.addr_bridge[bridge_type], termination="\n")
             self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
+
+        """STARTUP COMMANDS"""
+        self.bridge.
 
     def handle(self, message_to_parse: str) -> str:
         """Parse a message of the format

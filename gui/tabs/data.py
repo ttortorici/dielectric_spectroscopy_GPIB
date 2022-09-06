@@ -326,7 +326,12 @@ class DataTab(QWidget):
             self.running = False
             self.active_file = False
             self.started = False
-            self.data_thread.join()
+            # self.data_thread.start()
+            # print('sldkfj')
+            try:
+                self.data_thread.join()
+            except RuntimeError:
+                pass
             self.button_stop.setEnabled(False)
             self.button_play_pause.setCurrentWidget(self.button_play)
             self.button_play.setEnabled(False)
@@ -345,6 +350,12 @@ class DataTab(QWidget):
             self.dialog = None
             self.filename = None
             self.path = None
+
+            self.parent.plot_tab.plot_CvT.clear_plots()
+            self.parent.plot_tab.plot_LvT.clear_plots()
+            self.parent.plot_tab.plot_Tvt.clear_plots()
+            self.parent.plot_tab.plot_Lvt.clear_plots()
+            self.parent.plot_tab.plot_Cvt.clear_plots()
             return True
         else:
             return False

@@ -79,6 +79,10 @@ class Plot(pg.PlotWidget):
             for curve, x_index, y_index in zip(self.curves, self.x_indices, self.y_indices):
                 curve.setData(x=data[:, x_index], y=data[:, y_index])
 
+    def clear_plots(self):
+        for curve in self.curves:
+            self.removeItem(curve)
+
 
 class RightAxisPlot(pg.ViewBox):
     def __init__(self, label: str):
@@ -121,3 +125,7 @@ class RightAxisPlot(pg.ViewBox):
         else:
             for curve, x_index, y_index in zip(self.curves, self.x_indices, self.y_indices):
                 curve.setData(x=data[:, x_index], y=data[:, y_index])
+
+    def clear_plots(self):
+        for curve in self.curves:
+            self.removeItem(curve)

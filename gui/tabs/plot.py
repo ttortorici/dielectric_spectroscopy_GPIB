@@ -140,7 +140,7 @@ class PlotTab(QWidget):
         temp_b_indices = [ii for ii, ll in enumerate(labels) if 'temperature b' in ll.lower()]
         cap_indices = [ii for ii, ll in enumerate(labels) if 'capacitance' in ll.lower()]
         loss_indices = [ii for ii, ll in enumerate(labels) if 'loss' in ll.lower()]
-        print(loss_indices)
+        # print(loss_indices)
 
         self.plot_CvT.set_indices(temp_a_indices, cap_indices)
         self.plot_LvT.set_indices(temp_a_indices, loss_indices)
