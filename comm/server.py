@@ -29,7 +29,7 @@ class GpibServer:
             self.bridge = fake.Bridge()
             self.ls = fake.Lakeshore()
         else:
-            self.bridge = gpib.Device(GpibServer.addr_bridge[bridge_type])
+            self.bridge = gpib.Device(GpibServer.addr_bridge[bridge_type], termination="\n")
             self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
 
     def handle(self, message_to_parse: str) -> str:

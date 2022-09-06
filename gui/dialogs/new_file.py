@@ -262,7 +262,10 @@ class NewFileDialog(QDialog):
         self.comment = ""
 
         """OVERRIDE PRESETS FROM MOST RECENT YAML FILE"""
-        self.load_yaml()
+        try:
+            self.load_yaml()
+        except ValueError:      # no presets
+            pass
 
         """CREATE FORM ENTRY BOXES"""
         # ALWAYS

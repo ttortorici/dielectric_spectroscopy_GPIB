@@ -153,7 +153,7 @@ class Client(Device):
         :return: measurement frequency setting in Hertz
         """
         msg_back = self.query("SH FR")
-        msg_back = msg_back.lstrip("FREQUENCY").rstrip("HZ").replace(" ", "")
+        msg_back = msg_back.lstrip("FREQUENCY").rstrip("HZ\n").replace(" ", "")
         # Should now be a string that can be converted to a float
         return float(msg_back)
 

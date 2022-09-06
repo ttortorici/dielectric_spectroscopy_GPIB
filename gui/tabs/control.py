@@ -131,7 +131,7 @@ class SendBox(QLineEdit):
         self.label_send.setFixedWidth(200)
         self.send_button = QPushButton()
         self.send_button.setText('Send')
-        print(read_stylesheet("button.css", True))
+        # print(read_stylesheet("button.css", True))
         self.send_button.setStyleSheet(read_stylesheet("button.css", True))
         self.send_button.setFixedWidth(100)
         self.send_button.clicked.connect(self.send)

@@ -42,7 +42,7 @@ def google_drive():
                 path = f"D:\\Google Drive\\My Drive"
             # elif user == 'Chuck':
             else:
-                path = 'C:\\Users\\%s\\Google Drive' % user
+                path = 'C:\\Users\\%s\\My Drive' % user
         else:
             path = ''
     # print(f'\n\n\n{path}\n\n\n')

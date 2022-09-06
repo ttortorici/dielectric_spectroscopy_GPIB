@@ -15,7 +15,3 @@ QComboBox:disabled {
     border-color: rgb(226, 213, 0) rgb(185, 161, 0) rgb(185, 161, 0) rgb(226, 213, 0);
     padding: 10px;
 }
-
-QComboBox::down-arrow {
-    image: url(/images/downarrow.png);
-}

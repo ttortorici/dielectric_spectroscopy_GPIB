@@ -23,7 +23,6 @@ import os
 
 
 class DataTab(QWidget):
-
     font = QFont("Arial", 12)
 
     def __init__(self, parent: QMainWindow):
@@ -37,10 +36,10 @@ class DataTab(QWidget):
         self.gpib_server = None
 
         self.dialog = None
-        self.data = None            # will be an object of a data file from data_file2.py
+        self.data = None  # will be an object of a data file from data_file2.py
 
-        self.server_thread = None   # will create thread on data file start up
-        self.data_thread = None     # will create thread on data file start up
+        self.server_thread = None  # will create thread on data file start up
+        self.data_thread = None  # will create thread on data file start up
         self.path = None
         self.filename = None
 
@@ -59,9 +58,9 @@ class DataTab(QWidget):
         """Create the layout of what goes in this tab"""
         self.layout = QVBoxLayout(self)
 
-        self.data_text_stream = TextStream(DataTab.font)     # this will be where data gets printed as it's collected
+        self.data_text_stream = TextStream(DataTab.font)  # this will be where data gets printed as it's collected
 
-        self.bottom_row = QHBoxLayout()         # this will be a row to add widgets to bellow the text stream
+        self.bottom_row = QHBoxLayout()  # this will be a row to add widgets to bellow the text stream
         self.bottom_row.addStretch(1)
 
         self.button_new_data = QPushButton("Create New Data File")
@@ -127,10 +126,10 @@ class DataTab(QWidget):
                 print(f"path{path}")
                 filename = filepath.split("/")[-1]
                 with open(filepath, 'r') as f:
-                    for ii in range(2):                 # number in range will be which line is stored at the end
+                    for ii in range(2):  # number in range will be which line is stored at the end
                         comment_line = f.readline()
 
-                self.dialog = FakeDialog(comment_line)          # with default averaging_entry = 1
+                self.dialog = FakeDialog(comment_line)  # with default averaging_entry = 1
 
                 self.gpib_server = GpibServer(bridge_type=self.dialog.bridge_choice,
                                               ls_model=self.dialog.ls_choice,
@@ -269,6 +268,10 @@ class DataTab(QWidget):
         self.parent.play_action.setEnabled(not start)
         self.parent.pause_action.setEnabled(start)
         self.parent.stop_action.setEnabled(True)
+        self.button_open_data.setEnabled(False)
+        self.button_new_data.setEnabled(False)
+        self.parent.open_file_action.setEnabled(False)
+        self.parent.new_file_action.setEnabled(False)
         # self.parent.exit_action.setEnabled(False)
 
         """Start GPIB communication server"""
@@ -328,10 +331,14 @@ class DataTab(QWidget):
             self.button_play_pause.setCurrentWidget(self.button_play)
             self.button_play.setEnabled(False)
             self.button_pause.setEnabled(False)
-            self.parent.play_action.setEnabled(True)
-            self.parent.pause_action.setEnabled(True)
+            self.parent.play_action.setEnabled(False)
+            self.parent.pause_action.setEnabled(False)
             self.parent.stop_action.setEnabled(False)
-            self.parent.exit_action.setEnabled(False)
+            self.button_open_data.setEnabled(True)
+            self.button_new_data.setEnabled(True)
+            self.parent.open_file_action.setEnabled(True)
+            self.parent.new_file_action.setEnabled(True)
+            # self.parent.exit_action.setEnabled(False)
             send_client('shutdown')
             self.server_thread.join()
             self.data = None
@@ -345,6 +352,7 @@ class DataTab(QWidget):
 
 class FakeDialog:
     """This is for when we open a file so we can mimic pulling the averaging entry from the dialog for a new file"""
+
     def __init__(self, comment_line: str):
         preset = ast.literal_eval(comment_line.lstrip("# ").rstrip("\n"))
         self.preset = preset
@@ -367,6 +375,7 @@ class FakeDialog:
 if __name__ == "__main__":
     import sys
     from PySide6.QtWidgets import QApplication
+
     app = QApplication(sys.argv)
 
     main_window = DataTab(0)
