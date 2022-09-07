@@ -26,7 +26,7 @@ if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)
-    app.setApplicationName("Megasolid Idiom")
+    app.setApplicationName("Test")
 
     w = TextStream(QFont("Arial", 12))
 

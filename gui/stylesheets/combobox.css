@@ -5,6 +5,7 @@ QComboBox {
     border-width: 3px; border-style: solid;
     border-color: rgb(226, 213, 0) rgb(185, 161, 0) rgb(185, 161, 0) rgb(226, 213, 0);
     padding: 10px;
+    border-radius: 3px;
 }
 
 QComboBox:disabled {
@@ -14,4 +15,5 @@ QComboBox:disabled {
     border-width: 3px; border-style: solid;
     border-color: rgb(226, 213, 0) rgb(185, 161, 0) rgb(185, 161, 0) rgb(226, 213, 0);
     padding: 10px;
+    border-radius: 3px;
 }

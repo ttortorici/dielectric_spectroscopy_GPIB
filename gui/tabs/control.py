@@ -32,14 +32,15 @@ class ControlTab(QWidget):
         bridge_title = self.Title("Bridge Remote Control")
         main_layout.addWidget(bridge_title)
 
-        average_box = AverageBox(self)
-        main_layout.addLayout(average_box.row_layout)
+        self.average_box = AverageBox(self)
+        main_layout.addLayout(self.average_box.row_layout)
 
         send_bridge_box = SendBox(self, "bridge")
         main_layout.addLayout(send_bridge_box.row_layout_1)
         main_layout.addLayout(send_bridge_box.row_layout_2)
 
         """LAKESHORE CONTROLS"""
+        main_layout.addWidget(Padding(10))
         ls_title = self.Title("Lakeshore Remote Control")
         main_layout.addWidget(ls_title)
 
@@ -61,7 +62,14 @@ class ControlTab(QWidget):
         main_layout.addLayout(send_ls_box.row_layout_1)
         main_layout.addLayout(send_ls_box.row_layout_2)
 
+        self.widgets = [self.average_box, self.heater_range_box, self.ramp_speed_box, self.setpoint_box, self.pid_box]
+
         self.setLayout(main_layout)
+
+    @Slot()
+    def update_all(self):
+        for widget in self.widgets:
+            widget.update_value()
 
     class Title(QLabel):
         def __init__(self, text: str):
@@ -125,6 +133,7 @@ class SendBox(QLineEdit):
         :param device: The device to send the message to
         """
         super(SendBox, self).__init__()
+        self.setStyleSheet(read_stylesheet("input_line.css"))
         self.parent = parent
         self.device = device[0].upper()
         self.label_send = Label("Send Raw Message")
@@ -210,6 +219,7 @@ class AverageBox(QSpinBox):
         self.parent = parent
         self.setMaximum(15)
         self.setFixedWidth(50)
+        self.setStyleSheet(read_stylesheet("spinbox.css"))
 
         self.display = DisplayValue()
         self.display.setFixedWidth(50)
@@ -275,7 +285,7 @@ class HeaterRangeBox(QComboBox):
         self.setEnabled(True)
 
     @Slot()
-    def update_box(self):
+    def update_value(self):
         """Run update in a thread"""
         t = threading.Thread(target=self.update_thread, args=())
         t.daemon = True

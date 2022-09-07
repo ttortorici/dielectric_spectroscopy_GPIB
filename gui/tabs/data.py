@@ -50,6 +50,9 @@ class DataTab(QWidget):
         """So we can update plots when new data is taken"""
         self.plot_updater = Signaler()
         self.plot_initializer = MessageSignaler()
+
+        """So we can update controller"""
+        self.update_controller = Signaler()
         # Moved to activate_data_file()
         # self.plot_updater = PlotUpdaterWidget()
         # self.plot_updater.update.connect(self.parent.plot_tab.update_plots)
@@ -256,6 +259,7 @@ class DataTab(QWidget):
 
         self.plot_updater.signal.connect(self.parent.plot_tab.update_plots)
         self.plot_initializer.signal.connect(self.parent.plot_tab.initialize_plots)
+        self.update_controller.signal.connect(self.parent.control_tab.update_all)
 
         self.active_file = True
         self.button_play.setEnabled(not start)
@@ -293,6 +297,7 @@ class DataTab(QWidget):
                 # self.write(str(data_point))
                 if self.parent.plot_tab.live_plotting:
                     self.plot_updater.signal.emit()
+                    self.update_controller.signal.emit()
 
     @Slot()
     def continue_data(self):
