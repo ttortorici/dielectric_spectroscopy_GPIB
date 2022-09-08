@@ -33,7 +33,7 @@ class GpibServer:
             self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
 
         """STARTUP COMMANDS"""
-        self.bridge.write("FORMAT FLOAT, OFF, ON, VAR")
+        self.bridge.write("FORMAT FLOAT, OFF, ON, FIX")
         print("Wrote")
         self.bridge.write("UNITS DS")
         self.ls.write("CSET 1,A,1,1,2")

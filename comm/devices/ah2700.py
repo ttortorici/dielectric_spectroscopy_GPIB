@@ -132,7 +132,7 @@ class Client(Device):
         'F=  1200.0 Hz C= 843.31094 PF L= 0.00314 DS'
         :return: [frequency, capacitance, loss, voltage]
         """
-        # data = [-1, -1, -1, -1]
+        data = [-1, -1, -1, -1]
         raw_msg = self.query('Q')
         # number_of_results = raw_msg.count("=")
         # msg = raw_msg.replace(" ", "")              # remove the spaces
@@ -142,8 +142,9 @@ class Client(Device):
         #     data = [0] * number_of_results
         #     for ii, msg_part in enumerate(msg.split("=")[1:]):
         #         data[ii] = float("".join([digit for digit in msg_part if (not digit.isalpha() or digit == "E")]))
-        msg_rm_quote = raw_msg.replace('",', '').replace('"', '')
-        data = [float(num) for num in msg_rm_quote.split(',')]
+        msg_list = raw_msg.replace('",', '').replace('"', '').split(',')
+        for ii in range(4):
+            data[ii] = float(msg_list[ii])
         return data
 
     def read_frequency(self) -> float:
