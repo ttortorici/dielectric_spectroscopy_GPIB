@@ -67,8 +67,8 @@ class ControlTab(QWidget):
         self.setLayout(main_layout)
 
     def initialize_controller(self):
-        self.bridge = self.parent.data.bridge
-        self.ls = self.parent.data.ls
+        self.bridge = self.parent.data_tab.data.bridge
+        self.ls = self.parent.data_tab.data.ls
 
     @Slot()
     def update_all(self):
