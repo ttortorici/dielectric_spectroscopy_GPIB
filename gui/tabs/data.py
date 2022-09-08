@@ -164,6 +164,7 @@ class DataTab(QWidget):
                                            dc_setting=self.dialog.dc_bias_setting)
                 self.plot_initializer.signal.emit(os.path.join(path, filename))
                 self.plot_updater.signal.emit()
+                self.parent.control_tab.initialize_controller()
 
     @Slot()
     def make_new_file(self):
@@ -248,6 +249,7 @@ class DataTab(QWidget):
                                            averaging_setting=self.dialog.averaging,
                                            dc_setting=self.dialog.dc_bias_setting)
                 self.plot_initializer.signal.emit(os.path.join(path, filename))
+                self.parent.control_tab.initialize_controller()
                 self.start()
 
     def activate_data_file(self, path: str, filename: str, start: bool = True):
