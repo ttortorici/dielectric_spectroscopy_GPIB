@@ -125,15 +125,16 @@ class Client(Device):
         # msgout = self.query('SH AV').split('=')
         return int(self.query('SH AV'))
 
-    def read_front_panel(self) -> list[float]:
+    def read_front_panel(self) -> list[str]:
         """
         Causes the bridge to execute a single measurement. If continuous readings were being taken then the Q command
         aborts them after taking another measurement. The result from the instrument looks like
         'F=  1200.0 Hz C= 843.31094 PF L= 0.00314 DS'
         :return: [frequency, capacitance, loss, voltage]
         """
-        data = [-1, -1, -1, -1]
+        # data = [-1, -1, -1, -1]
         raw_msg = self.query('Q')
+        data = [raw_msg[:8].strip(), raw_msg[13:24].strip(), raw_msg[29:41].strip(), raw_msg[42:52].strip()
         # number_of_results = raw_msg.count("=")
         # msg = raw_msg.replace(" ", "")              # remove the spaces
         # if number_of_results < 2:
@@ -142,9 +143,9 @@ class Client(Device):
         #     data = [0] * number_of_results
         #     for ii, msg_part in enumerate(msg.split("=")[1:]):
         #         data[ii] = float("".join([digit for digit in msg_part if (not digit.isalpha() or digit == "E")]))
-        msg_list = raw_msg.replace('",', '').replace('"', '').split(',')
-        for ii in range(4):
-            data[ii] = float(msg_list[ii])
+        # msg_list = raw_msg.replace('",', '').replace('"', '').split(',')
+        # for ii in range(4):
+        #     data[ii] = float(msg_list[ii])
         return data
 
     def read_frequency(self) -> float:
