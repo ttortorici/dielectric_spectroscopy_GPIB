@@ -122,8 +122,8 @@ class Client(Device):
         Fetch averaging setting
         :return: the value of the averaging setting.
         """
-        msgout = self.query('SH AV').split('=')
-        return int(msgout[1])
+        # msgout = self.query('SH AV').split('=')
+        return int(self.query('SH AV'))
 
     def read_front_panel(self) -> list[float]:
         """
@@ -132,15 +132,18 @@ class Client(Device):
         'F=  1200.0 Hz C= 843.31094 PF L= 0.00314 DS'
         :return: [frequency, capacitance, loss, voltage]
         """
+        # data = [-1, -1, -1, -1]
         raw_msg = self.query('Q')
-        number_of_results = raw_msg.count("=")
-        msg = raw_msg.replace(" ", "")              # remove the spaces
-        if number_of_results < 2:
-            data = [-1, -1, -1, -1]
-        else:
-            data = [0] * number_of_results
-            for ii, msg_part in enumerate(msg.split("=")[1:]):
-                data[ii] = float("".join([digit for digit in msg_part if (not digit.isalpha() or digit == "E")]))
+        # number_of_results = raw_msg.count("=")
+        # msg = raw_msg.replace(" ", "")              # remove the spaces
+        # if number_of_results < 2:
+        #     data = [-1, -1, -1, -1]
+        # else:
+        #     data = [0] * number_of_results
+        #     for ii, msg_part in enumerate(msg.split("=")[1:]):
+        #         data[ii] = float("".join([digit for digit in msg_part if (not digit.isalpha() or digit == "E")]))
+        msg_rm_quote = raw_msg.replace('",', '').replace('"', '')
+        data = [float(num) for num in msg_rm_quote.split(',')]
         return data
 
     def read_frequency(self) -> float:
@@ -152,18 +155,19 @@ class Client(Device):
         "FREQUENCY        100.00 E+00 HZ'
         :return: measurement frequency setting in Hertz
         """
-        msg_back = self.query("SH FR")
-        msg_back = msg_back.lstrip("FREQUENCY").rstrip("HZ\n").replace(" ", "")
+        # msg_back = self.query("SH FR")
+        # msg_back = msg_back.lstrip("FREQUENCY").rstrip("HZ\n").replace(" ", "")
         # Should now be a string that can be converted to a float
-        return float(msg_back)
+        return float(self.query("SH FR"))
 
     def read_loss_units(self) -> str:
         """
         Fetch units for loss
         :return: Two character string representing loss unit setting
         """
-        msgout = self.query('SH UN').strip('\n')
-        return msgout[-2:]
+        msgout = self.query('SH UN')
+        # return msgout[-2:]
+        return msgout
 
     def remote(self):
         """

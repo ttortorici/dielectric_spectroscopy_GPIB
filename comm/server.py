@@ -33,7 +33,10 @@ class GpibServer:
             self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
 
         """STARTUP COMMANDS"""
-        # self.bridge.
+        self.bridge.write("FORMAT FLOAT, OFF, ON, VAR")
+        print("Wrote")
+        self.bridge.write("UNITS DS")
+        self.ls.write("CSET 1,A,1,1,2")
 
     def handle(self, message_to_parse: str) -> str:
         """Parse a message of the format

@@ -78,8 +78,8 @@ class DielectricSpec(CSVFile):
                            [OFF, LOW, HIGH]
         """
         if self.bridge_type == "AH":
-            self.bridge.format(notation="ENG")
-            self.bridge.set_units("DS")
+            # self.bridge.format(notation="ENG")
+            # self.bridge.set_units("DS")
             if voltage_rms is not None:
                 self.bridge.set_voltage(voltage_rms)
             if averaging_setting is not None:
