@@ -195,6 +195,7 @@ class DielectricSpec(CSVFile):
                                   f"{partial_data[5]:s} V<sub>RMS</sub>".rjust(25),
                                   f"{partial_data[6]:s} Hz".rjust(25)]
                 self.gui_signaler.signal.emit(", ".join(converted_list) + "\n")
+            partial_data[0] = str(partial_data[0])
             full_data[start_index:end_index] = partial_data
         self.write_row(full_data)
         # if self.gui_signaler:

@@ -191,11 +191,14 @@ class Client(Device):
                 averaging = 15
             self.write(f'AV {averaging}')
             to_print = f"Set averaging setting to {averaging}"
+            self.ave_setting = averaging
         elif up and self.ave < 15:
             self.write('AV UP')
+            self.ave_setting += 1
             to_print = "Pushed averaging setting setting up one notch"
         elif down and self.ave > 0:
             self.write('AV DO')
+            self.ave_setting -= 1
             to_print = "Pushed averaging setting setting down one notch"
         else:
             to_print = "Did not change setting"

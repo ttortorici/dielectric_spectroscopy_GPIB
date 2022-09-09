@@ -20,6 +20,7 @@ class GpibServer:
     addr_ls = {331: 13, 340: 12}
 
     def __init__(self, bridge_type: str = "AH", ls_model: int = 331, silent: bool = True):
+        print("creating server")
         self.host_port = ("localhost", get.port)
         self.running = False
         self.silent = silent
@@ -31,6 +32,7 @@ class GpibServer:
         else:
             self.bridge = gpib.Device(GpibServer.addr_bridge[bridge_type], termination="\n")
             self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
+        print("connected to devices")
 
         """STARTUP COMMANDS"""
         self.bridge.write("FORMAT FLOAT, OFF, ON, FIX")

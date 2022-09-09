@@ -177,14 +177,16 @@ class DataTab(QWidget):
             self.dialog.exec()
 
             if self.dialog.result() == QDialog.Accepted:
+                print("accepted dialog")
                 bridge = self.dialog.bridge_choice
                 ls_num = self.dialog.ls_choice
                 cid = self.dialog.chip_id.replace(" ", "_")
                 sample = self.dialog.sample.replace(" ", "_")
                 cal_file = self.dialog.calibration_path
+                print("get some dialog settings")
 
                 self.gpib_server = GpibServer(bridge_type=bridge, ls_model=ls_num, silent=True)
-
+                print("made server")
                 creation_datetime = self.dialog.date
                 self.write('Starting new data file on {m:02}/{d:02}/{y:04} at {h:02}:{min:02}:{s}'.format(
                     m=creation_datetime.month,
@@ -220,6 +222,7 @@ class DataTab(QWidget):
                 if not cid:
                     cid = "test"
                 filename = f"{sample}__D-{day}__{cid}__{bridge}__LS{ls_num}__T-{start_time}.csv"
+                print(f"making file {filename}")
 
                 """CREATE COMMENT LINE"""
                 full_comment = str(self.dialog.presets)
@@ -291,6 +294,15 @@ class DataTab(QWidget):
     def take_data(self):
         """This should be run in a thread"""
         self.running = True
+
+        """INITIATE DEVICES WITH DIALOG SETTINGS"""
+        print("setting devices")
+        self.data.bridge.set_voltage(self.dialog.voltage)
+        print("set voltage")
+        self.data.bridge.set_ave(self.dialog.averaging)
+        print("set ave")
+        self.data.ls.set_ramp_speed(6.)
+        print("set ramp speed")
         while self.active_file:
             while self.running:
                 data_point = self.data.sweep_frequencies()

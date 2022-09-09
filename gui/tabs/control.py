@@ -298,15 +298,14 @@ class HeaterRangeBox(QComboBox):
     def update_thread(self):
         """Thread to run for update"""
         self.setEnabled(False)
-        hrange = self.ls.read_heater_range()
+        hrange = self.parent.ls.read_heater_range()
         if hrange > 1:
             hstring = f'{int(hrange)} W'
         elif not hrange:
             hstring = 'Off'
         else:
             hstring = f'{int(hrange * 1000)} mW'
-        self.heaterRangeChoice.setCurrentIndex(self.heater_range_choices.index(hstring))
-        self.parent.button_activator.activate.emit(True)
+        self.setCurrentIndex(self.choices.index(hstring))
         self.setEnabled(True)
 
 

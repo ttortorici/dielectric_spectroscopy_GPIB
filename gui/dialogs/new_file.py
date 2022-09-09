@@ -378,11 +378,10 @@ class NewFileDialog(QDialog):
         """
         Load presets
         """
-        print(self.base_path)
         yaml_fname = max(glob.glob(os.path.join(self.base_path, "presets", "*yml")),
                          key=datetime_from_yaml_name)
         yaml_f = os.path.join(self.base_path, "presets", yaml_fname)
-        print(yaml_f)
+        print(f"found yaml: {yaml_f}")
         with open(yaml_f, 'r') as f:
             preset = yaml.safe_load(f)
 
