@@ -32,7 +32,7 @@ class Client(Device):
         # Make sure control loop settings are in Kelvin and based on channel A
         self.set_control_loop()
 
-    def read_front_panel(self, units: str = 'K') -> list[float]:
+    def read_front_panel(self, units: str = 'K') -> tuple[str, str]:
         """
         Read temperature from both stages
         :param units: K or C or S (for sensor)
@@ -42,9 +42,9 @@ class Client(Device):
         if units not in ['K', 'C', 'S']:
             raise ValueError('Must give units "K" or "C" or "S"')
 
-        temperature_a = float(self.query(f'{units}RDG? A'))
-        temperature_b = float(self.query(f'{units}RDG? B'))
-        return [temperature_a, temperature_b]
+        temperature_a = self.query(f'{units}RDG? A').strip("+")
+        temperature_b = self.query(f'{units}RDG? B').strip("+")
+        return temperature_a, temperature_b
 
     def read_heater_output(self) -> float:
         """

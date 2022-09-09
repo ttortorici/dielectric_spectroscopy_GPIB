@@ -128,7 +128,7 @@ class DielectricSpec(CSVFile):
         if not silent:
             print('Starting measurement')
 
-        data = [0] * len(self.__class__.labels)
+        # data = [0] * len(self.__class__.labels)
 
         """Set the frequency"""
         self.bridge.set_frequency(frequency)
@@ -140,51 +140,60 @@ class DielectricSpec(CSVFile):
             time.sleep(1)
 
         """Make attempts to read from the bridge"""
-        for _ in range(attempts):
-            bridge_data = self.bridge.read_front_panel()
-            if bridge_data[-1] != -1:
-                break
+        f, c, l, v = self.bridge.read_front_panel()
+        # for _ in range(attempts):
+        #     bridge_data = self.bridge.read_front_panel()
+        #     if bridge_data[-1] != -1:
+        #         break
 
         if not silent:
             print('read front panel')
 
         """Read temperatures from lakeshore"""
-        temperatures = self.ls.read_front_panel()
+        t_a, t_b = self.ls.read_front_panel()
 
         if not silent:
             print('read temperatures')
 
-        data[0] = time.time()
-        data[1:3] = temperatures
-        data[3:6] = bridge_data[1:]     # capacitance, loss, voltage
-        data[6] = bridge_data[0]        # frequency
+        # data[0] = time.time()
+        # data[1:3] = temperatures
+        # data[3:6] = bridge_data[1:]     # capacitance, loss, voltage
+        # data[6] = bridge_data[0]        # frequency
 
-        return data
+        return [time.time(), t_a, t_b, c, l, v, f]
 
     def sweep_frequencies(self, silent: bool = True):  # , amp=1, offset=0):
         """
         Repeat measurements at each frequency in self.unique_frequencies
         """
-        full_data = [0] * len(self.__class__.labels) * len(self.unique_frequencies)
+        len_labels = len(self.__class__.labels)
+        full_data = [0] * len_labels * len(self.unique_frequencies)
         for ff, frequency in enumerate(self.unique_frequencies):
-            start_index = ff * len(self.__class__.labels)
-            end_index = (ff + 1) * len(self.__class__.labels)
+            start_index = ff * len_labels
+            end_index = (ff + 1) * len_labels
             partial_data = self.measure_at_frequency(frequency, silent=silent)
             if self.gui_signaler:
-                converted_list = [""] * len(self.__class__.labels)
-                for ii, label in enumerate(self.__class__.labels):
-                    if "time" in label.lower():
-                        converted_list[ii] = str(datetime.datetime.fromtimestamp(partial_data[ii]))
-                    elif "temperature" in label.lower():
-                        converted_list[ii] = f"{partial_data[ii]:.2f} K".rjust(20)
-                    elif "frequency" in label.lower():
-                        converted_list[ii] = f"{int(partial_data[ii])} Hz".rjust(20)
-                    elif "voltage" in label.lower():
-                        converted_list[ii] = f"{partial_data[ii]:.1f} V<sub>RMS</sub>".rjust(25)
-                    elif "capacitance" in label.lower():
-                        converted_list[ii] = f"{partial_data[ii]:.6f} pF".rjust(20)
-                    else:
-                        converted_list[ii] = f"{partial_data[ii]:.6f}".rjust(17)
+                # converted_list = [""] * len_labels
+                # for ii, label in enumerate(self.__class__.labels):
+                #     if "time" in label.lower():
+                #         converted_list[ii] = str(datetime.datetime.fromtimestamp(partial_data[ii]))
+                #     elif "temperature" in label.lower():
+                #         converted_list[ii] = f"{partial_data[ii]:.2f} K".rjust(20)
+                #     elif "frequency" in label.lower():
+                #         converted_list[ii] = f"{int(partial_data[ii])} Hz".rjust(20)
+                #     elif "voltage" in label.lower():
+                #         converted_list[ii] = f"{partial_data[ii]:.1f} V<sub>RMS</sub>".rjust(25)
+                #     elif "capacitance" in label.lower():
+                #         converted_list[ii] = f"{partial_data[ii]:.6f} pF".rjust(20)
+                #     else:
+                #         converted_list[ii] = f"{partial_data[ii]:.6f}".rjust(17)
+                converted_list = [str(datetime.datetime.fromtimestamp(partial_data[0])),
+                                  f"{partial_data[1]:s} K".rjust(20),
+                                  f"{partial_data[2]:s} K".rjust(20),
+                                  f"{partial_data[3]:s} pF".rjust(20),
+                                  f"{partial_data[4]:s}".rjust(17),
+                                  f"{partial_data[5]:s} V<sub>RMS</sub>".rjust(25),
+                                  f"{partial_data[6]:s} Hz".rjust(25)]
                 self.gui_signaler.signal.emit(", ".join(converted_list) + "\n")
             full_data[start_index:end_index] = partial_data
         self.write_row(full_data)

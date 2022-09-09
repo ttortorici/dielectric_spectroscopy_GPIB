@@ -55,7 +55,7 @@ class CSVFile:
     def write_row(self, row_to_write: list):
         """Turns a list into a comma delimited row to write to the csv file"""
         with open(self.name, 'a') as f:
-            f.write(str(row_to_write).lstrip("[").rstrip("]") + '\n')
+            f.write(", ".join(row_to_write) + '\n')
 
     def write_comment(self, comment: str):
         """Writes a comment line in the csv file"""

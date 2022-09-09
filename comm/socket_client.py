@@ -33,24 +33,24 @@ class Device:
         self.host = "localhost"
         self.port = get.port
 
-    def query(self, msg):
+    def query(self, msg: str) -> str:
         return self.send(f"{self.dev_id}::Q::{msg}")
 
-    def write(self, msg):
+    def write(self, msg: str) -> str:
         self.send(f"{self.dev_id}::W::{msg}")
         return "empty"
 
-    def read(self):
+    def read(self) -> str:
         return self.send(f"{self.dev_id}::R")
 
-    def get_id(self):
+    def get_id(self) -> str:
         return self.query('*IDN?')
 
-    def reset(self):
+    def reset(self) -> str:
         self.write('*RST')
         return "reset"
 
-    def send(self, msg):
+    def send(self, msg: str) -> str:
         return send(msg, self.host, self.port)
 
 

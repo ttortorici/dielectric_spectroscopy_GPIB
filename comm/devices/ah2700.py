@@ -125,7 +125,7 @@ class Client(Device):
         # msgout = self.query('SH AV').split('=')
         return int(self.query('SH AV'))
 
-    def read_front_panel(self) -> list[str]:
+    def read_front_panel(self) -> tuple[str, str, str, str]:
         """
         Causes the bridge to execute a single measurement. If continuous readings were being taken then the Q command
         aborts them after taking another measurement. The result from the instrument looks like
@@ -134,7 +134,7 @@ class Client(Device):
         """
         # data = [-1, -1, -1, -1]
         raw_msg = self.query('Q')
-        data = [raw_msg[:8].strip(), raw_msg[13:24].strip(), raw_msg[29:41].strip(), raw_msg[42:52].strip()
+        # data = [raw_msg[:8].strip(), raw_msg[13:24].strip(), raw_msg[29:41].strip(), raw_msg[42:52].strip()
         # number_of_results = raw_msg.count("=")
         # msg = raw_msg.replace(" ", "")              # remove the spaces
         # if number_of_results < 2:
@@ -146,7 +146,7 @@ class Client(Device):
         # msg_list = raw_msg.replace('",', '').replace('"', '').split(',')
         # for ii in range(4):
         #     data[ii] = float(msg_list[ii])
-        return data
+        return raw_msg[0:8].strip(), raw_msg[13:25].strip(), raw_msg[30:42].strip(), raw_msg[43:52].strip()
 
     def read_frequency(self) -> float:
         """
