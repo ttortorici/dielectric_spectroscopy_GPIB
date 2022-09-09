@@ -1,70 +1,30 @@
-from PySide6.QtWidgets import QWidget, QApplication
-from PySide6.QtCore import Signal, Slot
-from PySide6.QtGui import QAction
-import sys
+from time import perf_counter
 
 
-class Signaler1(QWidget):
-    signal = Signal(list)
-
-
-class Doer(QWidget):
-    def __init__(self):
-        super(self.__class__, self).__init__()
-        self.signaler = Signaler1()
-        self.signaler.signal.connect(self.write)
-
-    @Slot(list)
-    def write(self, list_to_write: list):
-        for item in list_to_write:
-            print(item)
-
-class Holder:
-    def __init__(self, signaler: Signaler1):
-        signaler.signal.emit([1,2,3,4,5,6])
-
-
-class A:
-
-    class_attr = "inside A"
-
-    def __init__(self, a):
-        self.a = a
-        print(f"Class attr = {self.__class__.class_attr}")
-        print(f"init A with {a}")
-
-    def method_a(self):
-        return self.__class__.class_attr
-
-    def __str__(self):
-        return "class A"
-
-
-class B(A):
-
-    class_attr = "inside B"
-
-    def __init__(self):
-        super(self.__class__, self).__init__("B")
-
-
-class A1:
-    def __init__(self, name):
-        self.name = name
-        self.self = "A1"
-
-class A2:
-    def __init__(self, name):
-        self.name = name
-        self.self = "A2"
+def test(target, args=(), attempts=1000000):
+    start = perf_counter()
+    for _ in range(attempts):
+        target(*args)
+    elapsed = perf_counter() - start
+    print(elapsed)
 
 
 if __name__ == "__main__":
-    x = 0
-    if x:
-        C=A1
-    else:
-        C=A2
-    c=C("test")
-    print(c.name)
-    print(c.self)
+    def q1(string):
+        return [num.strip() for num in string.replace('",', '').replace('"', '').split(',')]
+    def q2(string):
+        return [string[0:8].strip(), string[13:25].strip(), string[30:42].strip(), string[43:52].strip()]
+    def q3(string):
+        l = string.split(",")
+        return [l[0].strip(), l[2].strip(), l[4].strip(), l[5].strip()]
+    def f1(string):
+        return [float(num) for num in string.replace('",', '').replace('"', '').split(',')]
+    def f2(string):
+        return [float(string[0:8]), float(string[13:25]), float(string[30:42]), float(string[43:52])]
+
+    q = ' 14000.0," ", 0.9977124  ," ",-0.0000264  , 1.00    '
+    test(q1, (q,))
+    test(q2, (q,))
+    test(q3, (q,))
+    test(f1, (q,))
+    test(f2, (q,))
