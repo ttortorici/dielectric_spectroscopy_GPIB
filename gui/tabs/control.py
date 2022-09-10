@@ -116,8 +116,17 @@ class DisplayValue(QLineEdit):
     def __init__(self):
         super(DisplayValue, self).__init__()
         self.setReadOnly(True)
-        self.setStyleSheet(read_stylesheet("display.css"))
+        self.stylesheet = read_stylesheet("display.css")
+        self.setStyleSheet(self.stylesheet)
         self.setAlignment(Qt.AlignCenter)
+
+    def change_color(self, hex_color: str):
+        """
+        Change the background color of the display
+        :param hex_color: must be #xaxaxa format
+        """
+        self.stylesheet[28:35] = hex_color
+        self.setStyleSheet(self.stylesheet)
 
 
 class RowLayout(QHBoxLayout):
@@ -310,7 +319,7 @@ class HeaterRangeBox(QComboBox):
 
 
 class SpinBoxTemplate(QDoubleSpinBox):
-    def __init__(self, label: str, precision: int = 1, maximum: float = None):
+    def __init__(self, label: str | None, precision: int = 1, maximum: float = None):
         super(SpinBoxTemplate, self).__init__()
         self.setFixedWidth(100)
         self.setDecimals(precision)
@@ -322,8 +331,9 @@ class SpinBoxTemplate(QDoubleSpinBox):
 
         self.apply_button = ApplyButton(self.apply)
 
-        self.row_layout = RowLayout([Label(label), self.display, Padding(50),
-                                     Label("Change Setting"), self, self.apply_button])
+        if label is not None:
+            self.row_layout = RowLayout([Label(label), self.display, Padding(50),
+                                         Label("Change Setting"), self, self.apply_button])
 
     def setEnabled(self, arg__1: bool) -> None:
         super(SpinBoxTemplate, self).setEnabled(arg__1)
@@ -346,8 +356,15 @@ class SpinBoxTemplate(QDoubleSpinBox):
 
 class RampSpeedBox(SpinBoxTemplate):
     def __init__(self, parent: ControlTab):
-        super(RampSpeedBox, self).__init__("Ramping Speed (K/min)", precision=1, maximum=100.0)
+        super(RampSpeedBox, self).__init__(None, precision=1, maximum=100.0)
         self.parent = parent
+        self.display.setFixedWidth(75)
+        self.on_display = DisplayValue()
+        self.on_display.setFixedWidth(50)
+        self.percent_display = DisplayValue()
+        self.percent_display.setFixedWidth(75)
+        self.row_layout = RowLayout([Label("Ramp Speed (K/min)"), self.display, self.on_display, self.percent_display,
+                                     Padding(50), Label("Change Setting"), self, self.apply_button])
 
     def apply_thread(self):
         self.apply_button.setEnabled(False)
@@ -360,6 +377,10 @@ class RampSpeedBox(SpinBoxTemplate):
     @Slot()
     def update_value(self):
         self.display.setText(f"{self.parent.ls.ramp_speed:.1f}")
+        ramp_status = self.parent.ls.read_ramp_status()
+        self.on_display.change_color(["#6b1313", "#106324"][ramp_status])
+        self.on_display.setText(["Off", "On"][ramp_status])
+        self.percent_display.setText(self.parent.ls.read_heater_output + "%")
 
 
 class SetpointBox(SpinBoxTemplate):

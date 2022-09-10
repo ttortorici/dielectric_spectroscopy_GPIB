@@ -46,12 +46,12 @@ class Client(Device):
         temperature_b = self.query(f'{units}RDG? B').strip("+")
         return temperature_a, temperature_b
 
-    def read_heater_output(self) -> float:
+    def read_heater_output(self) -> str:
         """
         Query the percent power being output to the heater
-        :return: decimal form (i.e. 1. == 100%)
+        :return: in percent
         """
-        return float(self.query('HTR?')) / 100.
+        return self.query('HTR?')
 
     def read_heater_range(self) -> float:
         """
@@ -83,15 +83,15 @@ class Client(Device):
         self.ramp_speed = float(self.query(f"RAMP? {loop:d}").split(',')[1])
         return self.ramp_speed
 
-    def read_ramp_status(self, loop: int = 1) -> bool:
+    def read_ramp_status(self, loop: int = 1) -> int:
         """
         Check whether the setpoint is ramping or not
         :param loop: either PID loop 1 or 2 on the device
-        :return: boolean value of whether or not the device is ramping (is the setpoint moving?)
+        :return: 0 or 1 boolean value of whether or not the device is ramping (is the setpoint moving?)
         """
         if loop != 1 and loop != 2:
             raise ValueError(f"invalid loop: {loop}")
-        return bool(int(self.query(f"RAMPST? {loop:d}")))
+        return int(self.query(f"RAMPST? {loop:d}"))
 
     def read_setpoint(self, loop: int = 1) -> float:
         """
