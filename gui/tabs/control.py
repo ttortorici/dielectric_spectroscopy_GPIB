@@ -70,6 +70,18 @@ class ControlTab(QWidget):
         self.bridge = self.parent.data_tab.data.bridge
         self.ls = self.parent.data_tab.data.ls
 
+    @Slot(str)
+    def update_values(self, message_from_file):
+        list_vals = message_from_file.split("::")
+        heater_range_index = list_vals[0]
+        ramp_speed = list_vals[1]
+        heater_output = list_vals[2]
+        setpoint = list_vals[3]
+        pid_query = list_vals[4]
+        p = list_vals[5]
+        i = list_vals[6]
+        d = list_vals[7]
+
     @Slot()
     def update_all(self):
         for widget in self.widgets:
@@ -319,13 +331,13 @@ class HeaterRangeBox(QComboBox):
 
 
 class SpinBoxTemplate(QDoubleSpinBox):
-    def __init__(self, label: str | None, precision: int = 1, maximum: float = None):
+    def __init__(self, label: str | None, precision: int = 1, maximum: float = None, minimum: float = 0.):
         super(SpinBoxTemplate, self).__init__()
         self.setFixedWidth(100)
         self.setDecimals(precision)
         if maximum:
             self.setMaximum(maximum)
-        self.setMinimum(0.)
+        self.setMinimum(minimum)
 
         self.display = DisplayValue()
 
@@ -403,7 +415,7 @@ class SetpointBox(SpinBoxTemplate):
 
 class PBox(SpinBoxTemplate):
     def __init__(self, parent: ControlTab):
-        super(PBox, self).__init__("P", 2, 1000.)
+        super(PBox, self).__init__("P", 1, 1000., .1)
         self.parent = parent
 
     def apply_thread(self):
@@ -420,7 +432,7 @@ class PBox(SpinBoxTemplate):
 
 class IBox(SpinBoxTemplate):
     def __init__(self, parent: ControlTab):
-        super(IBox, self).__init__("I", 2, 1000.)
+        super(IBox, self).__init__("I", 1, 1000., 0.1)
         self.parent = parent
 
     def apply_thread(self):
@@ -437,7 +449,7 @@ class IBox(SpinBoxTemplate):
 
 class DBox(SpinBoxTemplate):
     def __init__(self, parent: ControlTab):
-        super(DBox, self).__init__("D", 2, 1000.)
+        super(DBox, self).__init__("D", 1, 200.)
         self.parent = parent
 
     def apply_thread(self):

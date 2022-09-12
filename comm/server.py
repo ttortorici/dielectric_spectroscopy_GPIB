@@ -24,6 +24,7 @@ class GpibServer:
         self.host_port = ("localhost", get.port)
         self.running = False
         self.silent = silent
+        self.writing_q_to_bridge = False
 
         """DEVICES"""
         if bridge_type == "FAKE":
@@ -43,7 +44,7 @@ class GpibServer:
     def handle(self, message_to_parse: str) -> str:
         """Parse a message of the format
         [Instrument ID]::[command]::[optional message]"""
-        msg_list = message_to_parse.upper().split('::')
+        msg_list = message_to_parse.split('::')
         dev_id = msg_list[0]
         command = msg_list[1]
         try:
@@ -51,33 +52,74 @@ class GpibServer:
         except IndexError:
             message = ""
 
-        """SELECT DEVICE (instrument)"""
         if dev_id == "LS":
-            instrument = self.ls
-            dev_name = "Lakeshore Temperature Controller"
-        elif dev_id == "AH" or dev_id == "HP":
-            instrument = self.bridge
-            dev_name = f"{dev_id} Capacitance Bridge"
-        else:
-            instrument = None
-            dev_name = "Failed to find an instument"
-        if not self.silent:
-            print(f"Connecting to: {dev_name}")
-
-        if instrument:
             if command[0] == "W":
                 if not self.silent:
+                    print(f'Writing "{message}" to LS')
+                self.ls.write(message)
+                msgout = 'empty'
+            elif command[0] == "Q":
+                if not self.silent:
+                    print(f'Querying LS with "{message}"')
+                msgout = self.ls.query(message)
+            elif command[0] == "R":
+                if dev_id in ["AH", "HP"]:
+                    self.writing_q_to_bridge = False
+                if not self.silent:
+                    print('Reading from LS')
+                msgout = self.ls.read()
+        elif dev_id in ["AH", "HP"]:
+            if command[0] == "W":
+                if message == "Q":
+                    self.writing_q_to_bridge = True
+                if not self.silent:
                     print(f'Writing "{message}" to {dev_id}')
-                instrument.write(message)
+                self.bridge.write(message)
+                if self.writing_q_to_bridge:
+                    self.bridge.write("Q")
                 msgout = 'empty'
             elif command[0] == "Q":
                 if not self.silent:
                     print(f'Querying {dev_id} with "{message}"')
-                msgout = instrument.query(message)
+                msgout = self.bridge.query(message)
             elif command[0] == "R":
+                if dev_id in ["AH", "HP"]:
+                    self.writing_q_to_bridge = False
                 if not self.silent:
                     print(f'Reading from {dev_id}')
-                msgout = instrument.read()
+                msgout = self.bridge.read()
+
+        # """SELECT DEVICE (instrument)"""
+        # if dev_id == "LS":
+        #     instrument = self.ls
+        #     dev_name = "Lakeshore Temperature Controller"
+        # elif dev_id == "AH" or dev_id == "HP":
+        #     instrument = self.bridge
+        #     dev_name = f"{dev_id} Capacitance Bridge"
+        # else:
+        #     instrument = None
+        #     dev_name = "Failed to find an instument"
+        # if not self.silent:
+        #     print(f"Connecting to: {dev_name}")
+        #
+        # if instrument:
+        #     if command[0] == "W":
+        #         if dev_id in ["AH", "HP"] and message == "Q":
+        #             self.writing_q_to_bridge = True
+        #         if not self.silent:
+        #             print(f'Writing "{message}" to {dev_id}')
+        #         instrument.write(message)
+        #         msgout = 'empty'
+        #     elif command[0] == "Q":
+        #         if not self.silent:
+        #             print(f'Querying {dev_id} with "{message}"')
+        #         msgout = instrument.query(message)
+        #     elif command[0] == "R":
+        #         if dev_id in ["AH", "HP"]:
+        #             self.writing_q_to_bridge = False
+        #         if not self.silent:
+        #             print(f'Reading from {dev_id}')
+        #         msgout = instrument.read()
         else:
             msgout = f'Did not give a valid device id: {dev_id}'
         return msgout

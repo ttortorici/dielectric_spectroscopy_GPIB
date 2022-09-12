@@ -16,6 +16,18 @@ from calculations.capacitors import geometric_capacitance
 from numba import njit
 
 
+def zero_strip(num_string: str):
+    """
+    takes a string of numbers and removes the zeros left of the decimal, but will leave one zero before the decimal
+    :param num_string: something like "000.0" or "023.2
+    :return: will return "0.0" and "23.2" for the given examples above
+    """
+    for ind in range(len(num_string)):
+        if num_string[ind] != "0" or num_string[ind+1] == ".":
+            break
+    return num_string[ind:]
+
+
 class DielectricSpec(CSVFile):
 
     labels = ('Time [s]', 'Temperature A [K]', 'Temperature B [K]',
@@ -39,6 +51,8 @@ class DielectricSpec(CSVFile):
         unique_frequencies.sort()                           # sort the list
         self.unique_frequencies = unique_frequencies[::-1]  # reverse order (big to small)
         self.gui_signaler = gui_signaler
+        self.controller_signaler = MessageSignaler()
+        self.controller_signaler.signal.connect(self.parent.control_tab.update_values)
 
         self.bridge_type = bridge.upper()
         if self.bridge_type[0:2] == 'AH' or self.bridge_type == 'FAKE':
@@ -118,7 +132,7 @@ class DielectricSpec(CSVFile):
             #         self.labels.extend(['LJ {} [V] ({})'.format(ch, f), 'LJ StdDev {} [V] ({})'.format(ch, f)])
         self.write_row(self.labels)
 
-    def measure_at_frequency(self, frequency: int, attempts: int = 3, silent: bool = True):  # , amp=1, offset=0):
+    def measure_at_frequency_old(self, frequency: int, attempts: int = 3, silent: bool = True):  # , amp=1, offset=0):
         """
         Just measure at one frequency
         :param frequency: The frequency to measure at in Hz
@@ -162,6 +176,48 @@ class DielectricSpec(CSVFile):
 
         return [time.time(), t_a, t_b, c, l, v, f]
 
+    def measure_at_frequency(self, frequency: int, attempts: int = 3):
+        """
+        Just measure at one frequency
+        :param frequency: The frequency to measure at in Hz
+        :param attempts: how many times to attempt to get data after failed attempts
+        :param silent: if silent, then it doesn't print anything
+        """
+        """Set the frequency"""
+        self.bridge.set_frequency(frequency)
+
+        """Read temperatures from lakeshore"""
+        t_a = self.ls.query("KRDG? A")[1:]
+        t_b = self.ls.query("KRDG? B")[1:]
+
+        """Initiate bridge measurement"""
+        self.bridge.write("Q")
+
+        """Get info for controller"""
+        heater_range_index = self.ls.query("RANGE?")
+        ramp_speed = zero_strip(self.ls.query("RAMP? 1")[3:])
+        heater_output = zero_strip(self.ls.query("HTR?")[1:])
+        setpoint = zero_strip(self.ls.query("SETP?")[1:])
+        pid_query = self.ls.query("PID?")
+        p = zero_strip(pid_query[1:7])
+        i = zero_strip(pid_query[9:15])
+        d = zero_strip(pid_query[17:22])
+
+        self.controller_signaler.signal.emit("::".join([heater_range_index,
+                                                        ramp_speed,
+                                                        heater_output,
+                                                        setpoint,
+                                                        p, i, d]))
+
+        """Make attempts to read from the bridge"""
+        raw_msg = self.bridge.read()
+        f = raw_msg[0:8].strip()
+        c = raw_msg[13:25].strip()
+        l = raw_msg[30:42].strip()
+        v = raw_msg[43:52].strip()
+
+        return [time.time(), t_a, t_b, c, l, v, f]
+
     def sweep_frequencies(self, silent: bool = True):  # , amp=1, offset=0):
         """
         Repeat measurements at each frequency in self.unique_frequencies
@@ -171,7 +227,7 @@ class DielectricSpec(CSVFile):
         for ff, frequency in enumerate(self.unique_frequencies):
             start_index = ff * len_labels
             end_index = (ff + 1) * len_labels
-            partial_data = self.measure_at_frequency(frequency, silent=silent)
+            partial_data = self.measure_at_frequency(frequency)
             if self.gui_signaler:
                 # converted_list = [""] * len_labels
                 # for ii, label in enumerate(self.__class__.labels):

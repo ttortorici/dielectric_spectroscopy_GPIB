@@ -148,6 +148,16 @@ class Client(Device):
         #     data[ii] = float(msg_list[ii])
         return raw_msg[0:8].strip(), raw_msg[13:25].strip(), raw_msg[30:42].strip(), raw_msg[43:52].strip()
 
+    def read_front_panel_after_write(self) -> tuple[str, str, str, str]:
+        """
+        Causes the bridge to execute a single measurement. If continuous readings were being taken then the Q command
+        aborts them after taking another measurement. The result from the instrument looks like
+        'F=  1200.0 Hz C= 843.31094 PF L= 0.00314 DS'
+        :return: [frequency, capacitance, loss, voltage]
+        """
+        raw_msg = self.read()
+        return raw_msg[0:8].strip(), raw_msg[13:25].strip(), raw_msg[30:42].strip(), raw_msg[43:52].strip()
+
     def read_frequency(self) -> float:
         """
         Fetch the value the measurement frequency is set to in Hertz.

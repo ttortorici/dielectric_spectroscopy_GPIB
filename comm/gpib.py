@@ -19,7 +19,7 @@ class Device:
         self.gpib_num = gpib_num
         self.rm = pyvisa.ResourceManager()
         self.dev = self.rm.open_resource(f"GPIB{gpib_num}::{address}::INSTR", read_termination=termination)
-        self.id = self.get_id()
+        # self.id = self.get_id()
 
     def read(self) -> str:
         """Reads from the device connected to"""
