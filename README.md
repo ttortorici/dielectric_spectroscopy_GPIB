@@ -1,4 +1,7 @@
-dielectric_spectroscopy_GPIB
+# dielectric_spectroscopy_GPIB
+
+## Set up
+run "python setup.py pip"
 
 Run measurement_server.py to open communication with GPIB.
 
