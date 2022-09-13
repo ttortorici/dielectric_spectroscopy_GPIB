@@ -13,7 +13,6 @@ from gui.signalers import MessageSignaler
 from files.csv import CSVFile
 from calculations.calibration import Calibration
 from calculations.capacitors import geometric_capacitance
-from numba import njit
 
 
 def zero_strip(num_string: str):
