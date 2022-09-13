@@ -1,8 +1,7 @@
 import sys
 import subprocess
 
-packages_to_install = ['decimal',
-                       'matplotlib',
+packages_to_install = ['matplotlib',
                        'numba',
                        'numpy',
                        'pyqtgraph',
