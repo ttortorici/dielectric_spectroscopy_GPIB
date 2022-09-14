@@ -19,7 +19,7 @@ class GpibServer:
     addr_bridge = {"AH": 28, "HP": 5}
     addr_ls = {331: 13, 340: 12}
 
-    def __init__(self, bridge_type: str = "AH", ls_model: int = 331, silent: bool = True):
+    def __init__(self, bridge_type: str = "AH", ls_model: int = 331, timeout: int = None, silent: bool = True):
         print("creating server")
         self.host_port = ("localhost", get.port)
         self.running = False
@@ -32,6 +32,8 @@ class GpibServer:
             self.ls = fake.Lakeshore()
         else:
             self.bridge = gpib.Device(GpibServer.addr_bridge[bridge_type], termination="\n")
+            if timeout:
+                self.bridge.dev.timeout = timeout
             self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
         print("connected to devices")
 
