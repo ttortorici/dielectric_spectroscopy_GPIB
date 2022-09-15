@@ -85,7 +85,7 @@ class MainWidget(QWidget):
     def __init__(self):
         super(MainWidget, self).__init__()
 
-        self.server = GpibServer()
+        self.server = GpibServer(timeout=3600)
         self.server_thread = threading.Thread(target=self.server.run)
         self.server_thread.start()
         self.run_thread = threading.Thread(target=self.run)
@@ -98,7 +98,7 @@ class MainWidget(QWidget):
 
         display_layout = QVBoxLayout()
 
-        display_keys = ("Frequency", "Capacitance", "Loss Tangent", "RMS Voltage")
+        display_keys = ("Frequency", "Capacitance", "Loss Tangent", "RMS Voltage", "Error")
         self.displays = dict(zip(display_keys, [DisplayWidget(self, key) for key in display_keys]))
 
         for key in display_keys:
@@ -115,15 +115,16 @@ class MainWidget(QWidget):
         self.bridge.set_ave(7)
         self.run_thread.start()
 
-    def update_displays(self, frequency: str, capacitance: str, loss: str, voltage: str):
+    def update_displays(self, frequency: str, capacitance: str, loss: str, voltage: str, error: str = ""):
         self.displays["Frequency"].setText(frequency)
         self.displays["Capacitance"].setText(capacitance)
         self.displays["Loss Tangent"].setText(loss)
         self.displays["RMS Voltage"].setText(voltage)
+        self.displays["Error"].setText(error)
 
     def run(self):
         while True:
-            front_panel = self.bridge.read_front_panel()
+            front_panel = self.bridge.read_front_panel_full()
             self.update_displays(*front_panel)
 
 

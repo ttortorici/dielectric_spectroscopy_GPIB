@@ -148,6 +148,24 @@ class Client(Device):
         #     data[ii] = float(msg_list[ii])
         return raw_msg[0:8].strip(), raw_msg[13:25].strip(), raw_msg[30:42].strip(), raw_msg[43:52].strip()
 
+    def read_front_panel_full(self) -> tuple[str, str, str, str, str]:
+        """
+        Will also return error
+        :return: frequency, capacitance, loss tangent, voltage rms, error
+        """
+        raw_msg = self.query("Q")
+        frequency = raw_msg[0:8].strip()
+        capacitance = raw_msg[13:25].strip()
+        loss_tangent = raw_msg[30:42].strip()
+        voltage_rms = raw_msg[43:52].strip()
+        try:
+            error = raw_msg[53:].strip()
+        except IndexError:
+            error = ""
+        return frequency, capacitance, loss_tangent, voltage_rms, error
+
+
+
     def read_front_panel_after_write(self) -> tuple[str, str, str, str]:
         """
         Causes the bridge to execute a single measurement. If continuous readings were being taken then the Q command
