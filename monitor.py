@@ -9,8 +9,8 @@ import sys
 import threading
 
 from PySide6.QtWidgets import (QMainWindow, QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
-                               QLabel, QRadioButton, QButtonGroup)
-from PySide6.QtCore import Slot, Qt
+                               QLabel, QRadioButton, QButtonGroup, QSpinBox, QDoubleSpinBox, QPushButton)
+from PySide6.QtCore import Slot, Signal, Qt
 from PySide6.QtGui import QFont
 import gui.icons as icon
 from comm.socket_client import send as send_client
@@ -32,6 +32,7 @@ class DisplayWidget(QLineEdit):
         self.label.setAlignment(Qt.AlignCenter)
 
         self.setReadOnly(True)
+        self.setAlignment(Qt.AlignRight)
         self.row_layout = QHBoxLayout()
         self.row_layout.addWidget(self.label)
         self.row_layout.addWidget(self)
@@ -70,7 +71,9 @@ class FrequencyWidget(QButtonGroup):
 
     @Slot()
     def button_press(self):
-        self.parent.bridge.write(f"FR {self.value():d}")
+        new_frequency = self.value()
+        self.parent.bridge.write(f"FR {new_frequency:d}")
+        print(f"Set frequency to {new_frequency}")
 
     def value(self):
         text = self.button(self.checkedId()).text().rstrip("Hz")
@@ -79,6 +82,71 @@ class FrequencyWidget(QButtonGroup):
         else:
             frequency = int(text)
         return frequency
+
+
+class AveragingWidget(QSpinBox):
+
+    stepChanged = Signal()
+
+    def __init__(self, parent: QWidget):
+        super(AveragingWidget, self).__init__()
+        self.label = QLabel("Averaging")
+        self.label.setFont(QFont("Arial", 26))
+        self.label.setAlignment(Qt.AlignCenter)
+
+        self.setFont(QFont("Arial", 26))
+        self.parent = parent
+        self.setMinimum(0)
+        self.setMaximum(15)
+        self.setFixedWidth(100)
+
+        # self.valueChanged.connect(self.set)
+        self.editingFinished.connect(self.set)
+        # self.stepChanged.connect(self.set)
+        # self.lineEdit().setReadOnly(True)
+        self.memory = 0
+
+    @Slot()
+    def set(self):
+        new_ave_setting = self.value()
+        if new_ave_setting != self.memory:
+            self.parent.bridge.set_ave(new_ave_setting)
+            print(f"Setting Averaging to: {new_ave_setting}")
+            self.memory = new_ave_setting
+
+    # def stepBy(self, step):
+    #     value = self.value()
+    #     super(AveragingWidget, self).stepBy(step)
+    #     if self.value() != value:
+    #         self.stepChanged.emit()
+
+
+class VoltageWidget(QDoubleSpinBox):
+    def __init__(self, parent: QWidget, default_value: int = 1):
+        super(VoltageWidget, self).__init__()
+        self.parent = parent
+        self.label = QLabel("Voltage RMS")
+        self.label.setFont(QFont("Arial", 26))
+        self.label.setAlignment(Qt.AlignCenter)
+
+        self.setFont(QFont("Arial", 26))
+        self.parent = parent
+        self.setValue(default_value)
+        self.memory = default_value
+        self.setDecimals(3)
+        self.setMinimum(0.001)
+        self.setMaximum(15)
+        self.setFixedWidth(200)
+
+        self.editingFinished.connect(self.set)
+
+    @Slot()
+    def set(self):
+        new_voltage = self.value()
+        if new_voltage != self.memory:
+            self.parent.bridge.set_voltage(new_voltage)
+            print(f"Set voltage {new_voltage}")
+            self.memory = new_voltage
 
 
 class MainWidget(QWidget):
@@ -104,6 +172,19 @@ class MainWidget(QWidget):
         for key in display_keys:
             display_layout.addLayout(self.displays[key].row_layout)
 
+        bottom_row = QHBoxLayout()
+        averaging_box = AveragingWidget(self)
+        voltage_box = VoltageWidget(self)
+        label = QLabel("press ENTER to set")
+
+        bottom_row.addWidget(label)
+        bottom_row.addWidget(averaging_box.label)
+        bottom_row.addWidget(averaging_box)
+        bottom_row.addWidget(voltage_box.label)
+        bottom_row.addWidget(voltage_box)
+
+        display_layout.addLayout(bottom_row)
+
         self.frequency_options = FrequencyWidget(self)
 
         main_layout.addLayout(display_layout)
@@ -112,14 +193,15 @@ class MainWidget(QWidget):
         self.setLayout(main_layout)
 
         self.bridge.set_frequency(self.frequency_options.value())
-        self.bridge.set_ave(7)
+        self.bridge.set_ave(0)
+        self.bridge.set_voltage(1)
         self.run_thread.start()
 
     def update_displays(self, frequency: str, capacitance: str, loss: str, voltage: str, error: str = ""):
-        self.displays["Frequency"].setText(frequency)
-        self.displays["Capacitance"].setText(capacitance)
+        self.displays["Frequency"].setText(frequency + " Hz")
+        self.displays["Capacitance"].setText(capacitance + " pF")
         self.displays["Loss Tangent"].setText(loss)
-        self.displays["RMS Voltage"].setText(voltage)
+        self.displays["RMS Voltage"].setText(voltage + " V")
         self.displays["Error"].setText(error)
 
     def run(self):

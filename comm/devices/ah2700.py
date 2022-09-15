@@ -161,7 +161,7 @@ class Client(Device):
         try:
             error = raw_msg[53:].strip()
         except IndexError:
-            error = ""
+            error = "None"
         return frequency, capacitance, loss_tangent, voltage_rms, error
 
 
@@ -290,8 +290,8 @@ class Client(Device):
         """
         Description: Limits the amplitude of the test voltage applied by the bridge to the device under test.
         :param v_rms: This is the maximum AC voltage in volts RMS that the bridge will apply to the DUT. Any voltage may
-                      be entered, but the bridge will limit the maximum measurement voltage to a value equal to or below
-                      the amount specified.
+                      be entered up to 15 Vrms, but the bridge will limit the maximum measurement voltage to a value
+                      equal to or below the amount specified.
         :param up: Can set to True to change the v_rms setting up to the next available voltage
         :param down: Can set to True to change the v_rms setting down to the next available voltage
         """
