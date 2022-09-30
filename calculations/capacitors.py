@@ -47,7 +47,7 @@ def elliptic_over_comp(k: float) -> float:
     :param k: the argument of the elliptic integral
     :return: K(k)/K'(k)
     """
-    return special.ellipk(k) / special.ellipk(np.sqrt(1 - k**2))
+    return special.ellipk(k ** 2) / special.ellipk(1 - k**2)
 
 
 def bare_capacitance(g: float) -> float:
@@ -112,4 +112,29 @@ def k_film(g: float, h: float) -> float:
 
 
 if __name__ == "__main__":
-    pass
+    # print(special.ellipk(0.1))
+    # print(special.ellipk(0.2))
+    # print(special.ellipk(0.3))
+
+    import dielepy as dp
+    print(bare_capacitance(10))
+    print(dp.bare_interdigital(u, 10, hS, N, L, epsS), end="\n\n")
+    print(k_mat(10, .08))
+    print(dp.k_thin(u, 10, .08), end="\n\n")
+    print(elliptic_over_comp(0.1))
+    # print(dp.)
+
+
+    # def comp_approx(k):
+    #     ln2 = np.log(2)
+    #     ln1_k = np.log(1-k)
+    #     term1 = 2*ln2 - 0.5*ln1_k
+    #     term2 = (0.5 * ln2 - 0.25 - 0.125 * ln1_k) * (1-k)
+    #     term3 = 0.0234375 * (3*ln1_k-12*ln2+7)*(1-k)**2
+    #     term4 = (15*5*ln1_k-60*5*ln2+37)*(1-k)**3 / 1536
+    #     print(term1)
+    #     print(term2+term1)
+    #     print(term1+term2-term3)
+    #     return term1 + term2 - term3 - term4
+    # print(comp_approx(.999))
+    # print(special.ellipk(.999))
