@@ -105,6 +105,8 @@ class DataTab(QWidget):
         """So we can write to the GUI from threads"""
         self.writer_signaler = MessageSignaler()
         self.writer_signaler.signal.connect(self.data_text_stream.write)
+        self.controller_signaler = MessageSignaler()
+
 
     def write(self, text: str, end: str = "\n"):
         """Writes to the GUI by using the write_thread widget"""
@@ -150,6 +152,7 @@ class DataTab(QWidget):
                                                               film_thickness=self.dialog.film_thickness,
                                                               capacitor_calibration=cal,
                                                               gui_signaler=self.writer_signaler,
+                                                              con_signaler=self.controller_signaler,
                                                               bridge=self.dialog.bridge_choice,
                                                               ls_model=self.dialog.ls_choice)
                 else:
@@ -157,6 +160,7 @@ class DataTab(QWidget):
                                                           filename=filename,
                                                           frequencies=self.dialog.frequencies,
                                                           gui_signaler=self.writer_signaler,
+                                                          con_signaler=self.controller_signaler,
                                                           bridge=self.dialog.bridge_choice,
                                                           ls_model=self.dialog.ls_choice)
                 self.data.initiate_devices(voltage_rms=self.dialog.voltage,
@@ -237,6 +241,7 @@ class DataTab(QWidget):
                                                               film_thickness=self.dialog.film_thickness,
                                                               capacitor_calibration=Calibration(cal_file),
                                                               gui_signaler=self.writer_signaler,
+                                                              con_signaler=self.controller_signaler,
                                                               bridge=bridge,
                                                               ls_model=ls_num,
                                                               comment=full_comment)
@@ -245,6 +250,7 @@ class DataTab(QWidget):
                                                           filename=filename,
                                                           frequencies=self.dialog.frequencies,
                                                           gui_signaler=self.writer_signaler,
+                                                          con_signaler=self.controller_signaler,
                                                           bridge=bridge,
                                                           ls_model=ls_num,
                                                           comment=full_comment)
@@ -264,7 +270,7 @@ class DataTab(QWidget):
 
         self.plot_updater.signal.connect(self.parent.plot_tab.update_plots)
         self.plot_initializer.signal.connect(self.parent.plot_tab.initialize_plots)
-        self.update_controller.signal.connect(self.parent.control_tab.update_all)
+        self.update_controller.signal.connect(self.parent.control_tab.update_values)
 
         self.active_file = True
         self.button_play.setEnabled(not start)

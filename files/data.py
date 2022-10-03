@@ -32,7 +32,8 @@ class DielectricSpec(CSVFile):
     labels = ('Time [s]', 'Temperature A [K]', 'Temperature B [K]',
               'Capacitance [pF]', 'Loss Tangent', 'Voltage [V]', 'Frequency [Hz]')
 
-    def __init__(self, path: str, filename: str, frequencies: list, gui_signaler: MessageSignaler = None,
+    def __init__(self, path: str, filename: str, frequencies: list,
+                 gui_signaler: MessageSignaler = None, con_signaler: MessageSignaler = None,
                  bridge: str = 'AH', ls_model: int = 331, comment: str = "", lj_chs: list = None):
         """
         Create data file, and instances of the Bridge and Lakeshore for communication.
@@ -40,6 +41,8 @@ class DielectricSpec(CSVFile):
         :param filename: name of the file.
         :param frequencies: list of ints. frequencies to measure at. Will remove duplicates and reverse sort them
                             so measurements are made from the highest frequency to the lowest frequency.
+        :param gui_signaler:
+        :param con_signaler:
         :param bridge: "AH" or "HP" to select which bridge to use.
         :param ls_model: integer value of the lakeshore model number.
         :param comment: Will write the comment after opening the file with the # header so that is ignored.
@@ -50,8 +53,7 @@ class DielectricSpec(CSVFile):
         unique_frequencies.sort()                           # sort the list
         self.unique_frequencies = unique_frequencies[::-1]  # reverse order (big to small)
         self.gui_signaler = gui_signaler
-        self.controller_signaler = MessageSignaler()
-        self.controller_signaler.signal.connect(self.parent.control_tab.update_values)
+        self.controller_signaler = con_signaler
 
         self.bridge_type = bridge.upper()
         if self.bridge_type[0:2] == 'AH' or self.bridge_type == 'FAKE':
@@ -265,7 +267,8 @@ class DielectricConstant(DielectricSpec):
               'Re[dielectric constant]', 'Im[dielectric constant]', 'Frequency [Hz]')
 
     def __init__(self, path: str, filename: str, frequencies: list, film_thickness: float,
-                 capacitor_calibration: Calibration, gui_signaler: MessageSignaler = None,
+                 capacitor_calibration: Calibration,
+                 gui_signaler: MessageSignaler = None, con_signaler: MessageSignaler = None,
                  bridge: str = 'AH', ls_model: int = 331, comment: str = "", lj_chs: list = None):
         """
         Data file for measuring a well characterized sample after calibrating the bare capacitor.
@@ -279,7 +282,7 @@ class DielectricConstant(DielectricSpec):
         :param comment: optional comment to append to datafile when started.
         :param lj_chs: not supported currently.
         """
-        super(self.__class__, self).__init__(path, filename, frequencies, gui_signaler,
+        super(self.__class__, self).__init__(path, filename, frequencies, gui_signaler, con_signaler,
                                              bridge, ls_model, comment, lj_chs)
         self.calibration = capacitor_calibration
         gap_width = self.calibration.gap_estimate()

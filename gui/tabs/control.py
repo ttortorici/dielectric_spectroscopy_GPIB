@@ -21,6 +21,7 @@ class ControlTab(QWidget):
     def __init__(self, parent: QMainWindow):
         QWidget.__init__(self)
         self.parent = parent
+        self.parent.data_tab.controller_signaler.signal.connect(self.update_values)
 
         """PULL DEVICES FROM self.parent.data_tab.data"""
         self.bridge = None
@@ -77,10 +78,17 @@ class ControlTab(QWidget):
         ramp_speed = list_vals[1]
         heater_output = list_vals[2]
         setpoint = list_vals[3]
-        pid_query = list_vals[4]
-        p = list_vals[5]
-        i = list_vals[6]
-        d = list_vals[7]
+        p = list_vals[4]
+        i = list_vals[5]
+        d = list_vals[6]
+        self.heater_range_box.setCurrentIndex(int(heater_range_index))
+        self.ramp_speed_box.display.setText(ramp_speed)
+        self.ramp_speed_box.on_display.setText(heater_output)
+        self.setpoint_box.display.setText(setpoint)
+        self.pid_box.p_box.display.setText(p)
+        self.pid_box.i_box.display.setText(i)
+        self.pid_box.d_box.display.setText(d)
+
 
     @Slot()
     def update_all(self):
@@ -137,7 +145,7 @@ class DisplayValue(QLineEdit):
         Change the background color of the display
         :param hex_color: must be #xaxaxa format
         """
-        self.stylesheet[28:35] = hex_color
+        self.stylesheet[28:35] = self.stylesheet[:28] + hex_color + self.stylesheet[35:]
         self.setStyleSheet(self.stylesheet)
 
 
