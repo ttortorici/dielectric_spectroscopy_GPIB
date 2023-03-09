@@ -273,7 +273,7 @@ class NewFileDialog(QDialog):
 
         """CREATE FORM ENTRY BOXES"""
         # ALWAYS
-        self.purp_box = DropDown(choices=["Calibration (bare capacitor)", "Powder Sample",
+        self.purp_box = DropDown(choices=["Calibration", "Powder Sample",
                                           "Thin Film", "Other", "Test"],
                                  shortcuts=["CAL", "POW", "FILM", "OTHER", "TEST"],
                                  label="Purpose of Measurement",

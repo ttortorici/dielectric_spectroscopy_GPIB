@@ -204,6 +204,7 @@ class DielectricSpec(CSVFile):
         i = zero_strip(pid_query[9:15])
         d = zero_strip(pid_query[17:22])
 
+        print("About to emit at frequency {}".format(frequency))
         self.controller_signaler.signal.emit("::".join([heater_range_index,
                                                         ramp_speed,
                                                         heater_output,

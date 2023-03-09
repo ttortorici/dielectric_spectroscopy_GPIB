@@ -74,6 +74,7 @@ class ControlTab(QWidget):
     @Slot(str)
     def update_values(self, message_from_file):
         list_vals = message_from_file.split("::")
+        print(list_vals)
         heater_range_index = list_vals[0]
         ramp_speed = list_vals[1]
         heater_output = list_vals[2]
@@ -378,7 +379,7 @@ class RampSpeedBox(SpinBoxTemplate):
     def __init__(self, parent: ControlTab):
         super(RampSpeedBox, self).__init__(None, precision=1, maximum=100.0)
         self.parent = parent
-        self.display.setFixedWidth(75)
+        self.display.setFixedWidth(100)
         self.on_display = DisplayValue()
         self.on_display.setFixedWidth(50)
         self.percent_display = DisplayValue()
