@@ -54,8 +54,15 @@ class CSVFile:
 
     def write_row(self, row_to_write: list):
         """Turns a list into a comma delimited row to write to the csv file"""
-        with open(self.name, 'a') as f:
-            f.write(", ".join(row_to_write) + '\n')
+        written = False
+        while not written:
+            try:
+                with open(self.name, 'a') as f:
+                    f.write(", ".join(row_to_write) + '\n')
+                written = True
+            except OSError:
+                print(f"OSError: [Errno 22] Invalid argument: {self.name}")
+
 
     def write_comment(self, comment: str):
         """Writes a comment line in the csv file"""

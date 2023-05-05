@@ -218,6 +218,8 @@ class DataTab(QWidget):
 
                 """CREATE FILENAME"""
                 day = f"{creation_datetime.day:02}"
+                year = f"{creation_datetime.year:04}"
+                month = f"{creation_datetime.month:02}"
                 start_time = f"{self.dialog.date.hour:02}-{self.dialog.date.minute:02}"
                 print(self.dialog.date)
                 print(start_time)
@@ -225,7 +227,7 @@ class DataTab(QWidget):
                     sample = "Bare"
                 if not cid:
                     cid = "test"
-                filename = f"{sample}__D-{day}__{cid}__{bridge}__LS{ls_num}__T-{start_time}.csv"
+                filename = f"{year}-{month}-{day}__{sample}__{cid}__{bridge}__LS{ls_num}__T-{start_time}.csv"
                 print(f"making file {filename}")
 
                 """CREATE COMMENT LINE"""

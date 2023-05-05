@@ -21,12 +21,14 @@ class PlotTab(QWidget):
     colors = {"temperature": ((85, 179, 255),       # light blue
                               (75, 245, 215)),      # teal
               "capacitance": ((255, 125, 150),      # light red
+                              (255, 255, 255),      # white
                               (180, 165, 255),      # lighter blue
                               (220, 220, 220),      # light grey
                               (180, 255, 180),      # light green
                               (253, 254, 150),      # yellow
                               (255, 163, 102)),     # orange
               "loss": ((255, 105, 183),             # magenta
+                       (210, 210, 210),             #light grey
                        (205, 145, 255),             # light purple
                        (255, 255, 255),             # white
                        (204, 255, 137),             # lime
