@@ -1,4 +1,5 @@
 import sys
 
 if __name__ == "__main__":
-    print(sys.argv)
+    for ii in range(100000000):
+        print(sys.argv)

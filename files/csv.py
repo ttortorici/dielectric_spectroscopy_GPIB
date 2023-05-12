@@ -63,7 +63,6 @@ class CSVFile:
             except OSError:
                 print(f"OSError: [Errno 22] Invalid argument: {self.name}")
 
-
     def write_comment(self, comment: str):
         """Writes a comment line in the csv file"""
         with open(self.name, "a") as f:

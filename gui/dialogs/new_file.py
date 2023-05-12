@@ -95,7 +95,7 @@ class IntListBox(QLineEdit):
     def __init__(self, label: str = "", whats_this: str = None, default_value: list = None):
         """
         Create a line edit entry box that converts comma delimited text into a list of ints
-        :param label: label to go next to it
+        :param label: label to go next to it.
         :param whats_this: description
         """
         super(self.__class__, self).__init__()
