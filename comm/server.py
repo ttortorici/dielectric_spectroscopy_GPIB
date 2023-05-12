@@ -201,6 +201,6 @@ def server_echo_rev(host: str = "localhost", port: int = get.port):
 
 
 if __name__ == "__main__":
-    # server_echo_rev()
+
     server = GpibServer()
     server.run()
