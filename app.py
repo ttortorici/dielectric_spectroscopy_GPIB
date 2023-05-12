@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QTabWidget
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QAction
 from gui.tabs.data import DataTab
-from gui.tabs.plot import PlotTab
+from gui.tabs.plot_widget import PlotTab
 from gui.tabs.control import ControlTab
 from gui.dialogs.help import HelpPrompt
 import gui.icons as icon

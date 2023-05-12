@@ -4,19 +4,137 @@ A tab widget for plotting data in app.py
 @author: Teddy Tortorici
 """
 
-from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QToolButton, QMainWindow
+from PySide6.QtWidgets import QWidget, QMainWindow, QGridLayout, QVBoxLayout, QHBoxLayout, QToolButton, QToolBar
+from PySide6.QtGui import QAction
 from PySide6.QtCore import Slot, Qt
+from gui.dialogs.help import HelpPrompt
 import gui.icons as icon
 from gui.plotting import Plot, RightAxisPlot
 from files.csv import CSVFile
 import sys
+import os
 import time
 import numpy as np
 import pyqtgraph as pg
 
 
-class PlotTab(QWidget):
+class PlotWindow(QMainWindow):
 
+    width = 1200
+    height = 650
+
+    def __init__(self):
+        QMainWindow.__init__(self)
+        self.force_quit = True
+
+        try:
+            with open(os.path.join("gui", "stylesheets", "main.css"), "r") as f:
+                self.setStyleSheet(f.read())
+        except FileNotFoundError:
+            with open(os.path.join("stylesheets", "main.css"), "r") as f:
+                self.setStyleSheet(f.read())
+
+        """WINDOW PROPERTIES"""
+        self.setWindowTitle("Data Acquisition App")
+        self.resize(PlotWindow.width, PlotWindow.height)
+        self.setWindowIcon(icon.custom('app.png'))
+
+        self.setCentralWidget(PlotWidget())
+
+        """MENU BAR"""
+        main_menu = self.menuBar()
+
+        # File, Data, and Help drop down menus
+        file_menu = main_menu.addMenu('&File')
+        data_menu = main_menu.addMenu('&Data')
+        help_menu = main_menu.addMenu('&Help')
+
+        self.help = HelpPrompt()
+
+        """MENU ACTIONS"""
+        # File menu actions
+        # self.new_file_action = QAction(icon.built_in(self, 'FileIcon'), '&New Data File', self)
+        # self.new_file_action.setShortcut('CTRL+N')
+        # self.new_file_action.triggered.connect(self.data_tab.make_new_file)
+        # self.open_file_action = QAction(icon.built_in(self, 'DirIcon'), '&Open Data File', self)
+        # self.open_file_action.setShortcut('CTRL+O')
+        # self.open_file_action.triggered.connect(self.data_tab.open_file)
+        self.exit_action = QAction(icon.built_in(self, 'BrowserStop'), 'E&xit', self)
+        self.exit_action.setShortcut('CTRL+Q')
+        self.exit_action.triggered.connect(self.quit)
+        # Data menu actions
+        self.play_action = QAction(icon.custom("play.png"), 'Take &Data', self)
+        self.play_action.setShortcut('CTRL+SPACE')
+        self.play_action.triggered.connect(self.data_tab.continue_data)
+        self.pause_action = QAction(icon.custom("pause.png"), 'Pause &Data', self)
+        self.pause_action.setShortcut('CTRL+SPACE')
+        self.pause_action.triggered.connect(self.data_tab.pause_data)
+        self.stop_action = QAction(icon.custom("stop.png"), '&Stop Data', self)
+        self.stop_action.setShortcut('CTRL+W')
+        self.stop_action.triggered.connect(self.data_tab.stop)
+        # Help menu actions
+        self.about_action = QAction(icon.built_in(self, 'MessageBoxQuestion'), '&About', self)
+        self.about_action.setShortcut('CTRL+/')
+        self.about_action.triggered.connect(self.get_help)
+
+        file_actions = [self.exit_action]
+        data_actions = [self.play_action, self.pause_action, self.stop_action]
+        help_actions = [self.about_action]
+
+        """ADD ACTIONS to MENUS and TOOLBARS"""
+        toolbar = QToolBar()
+        for action in file_actions:
+            if action.text() == "E&xit":
+                file_menu.addSeparator()
+            else:
+                toolbar.addAction(action)
+            file_menu.addAction(action)
+        toolbar.addSeparator()
+        for action in data_actions:
+            data_menu.addAction(action)
+            toolbar.addAction(action)
+        toolbar.addSeparator()
+        for action in help_actions:
+            help_menu.addAction(action)
+            toolbar.addAction(action)
+
+        """ADD ACTIONS TO TOOLBAR"""
+        self.addToolBar(toolbar)
+
+        """Disable the following actions on start up"""
+        for action in data_actions:
+            action.setEnabled(False)
+
+    @Slot()
+    def quit(self):
+        """Exit program"""
+        stop = True
+        if self.data_tab.active_file:
+            stop = self.data_tab.stop()
+        if stop:
+            exit_question = QMessageBox.critical(self, 'Exiting', 'Are you sure you would like to quit?',
+                                                 QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+            if exit_question == QMessageBox.Yes:
+                self.force_quit = False
+                print('Exiting')
+                self.close()
+
+    @Slot()
+    def closeEvent(self, event):
+        """Overrides closeEvent so that there is no force quit"""
+        if self.force_quit:
+            event.ignore()
+            self.quit()
+        else:
+            event.accept()
+
+    @Slot()
+    def get_help(self):
+        """Opens HELP Prompt"""
+        self.help.exec()
+
+
+class PlotWidget(QWidget):
     labels = ['time', 'temperature a', 'temperature b', 'capacitance', 'loss', 'voltage', 'frequency']
     colors = {"temperature": ((85, 179, 255),       # light blue
                               (75, 245, 215)),      # teal
@@ -40,7 +158,7 @@ class PlotTab(QWidget):
     plot_colors = {"background": (42, 42, 38),      # dark mode
                    "foreground": (255, 255, 255)}   # white
 
-    def __init__(self, parent: QMainWindow, link_x: bool = True, link_y: bool = False):
+    def __init__(self, link_x: bool = True, link_y: bool = False):
         """
         Tab for plotting
         :param parent: Is the MainWindow() object
@@ -48,14 +166,13 @@ class PlotTab(QWidget):
         :param link_y: Do you want it to lock y axes of the same type together?
         """
         QWidget.__init__(self)
-        for key in PlotTab.plot_colors.keys():
-            pg.setConfigOption(key, PlotTab.plot_colors[key])
+
+        for key in PlotWidget.plot_colors.keys():
+            pg.setConfigOption(key, PlotWidget.plot_colors[key])
         pg.setConfigOptions(antialias=True)
 
         self.data_line_skip = 0
         self.live_plotting = True
-
-        self.parent = parent
 
         self.filename = None
         self.freq_labels = None
@@ -192,7 +309,8 @@ if __name__ == "__main__":
     from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
 
-    main_window = PlotTab(QWidget())
+    main_window = PlotWindow()
+
     main_window.show()
 
     sys.exit(app.exec())

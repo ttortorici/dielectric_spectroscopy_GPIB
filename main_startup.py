@@ -44,7 +44,7 @@ if __name__ == "__main__":
         launch_process("py main_scripts\\server.py {} {}".format(bridge, ls_num))
         print("Launched server")
 
-        launch_process("py main_scripts\\take_data.py")
+        launch_process("py main_scripts\\data_taker.py")
         print("Launched data taking process {m:02}/{d:02}/{y:04} at {h:02}:{min:02}:{s}".format(
             m=creation_datetime.month,
             d=creation_datetime.day,
@@ -58,8 +58,6 @@ if __name__ == "__main__":
         year = f"{creation_datetime.year:04}"
         month = f"{creation_datetime.month:02}"
         start_time = f"{dialog.date.hour:02}-{dialog.date.minute:02}"
-        # print(dialog.date)
-        # print(start_time)
         if not sample:
             sample = "Bare"
         if not cid:
@@ -68,7 +66,17 @@ if __name__ == "__main__":
         print(f"Creating file: {filename}")
 
         """CREATE COMMENT LINE"""
-        full_comment = '"' + str(dialog.presets) + '"'
+        full_comment = str(dialog.presets)
 
         """CREATE DATA FILE"""
-
+        launch_process('py main_scripts.data_taker {path} {fname} "{f}" {v} {ave} {dc} {b} {ls} "{c}"'.format(
+            path=path,
+            fname=filename,
+            f=str(dialog.frequencies).strip("[").strip("]"),
+            v=dialog.voltage,
+            ave=dialog.averaging,
+            dc=dialog.dc_bias_setting,
+            b=bridge,
+            ls=ls_num,
+            c=full_comment
+        ))
