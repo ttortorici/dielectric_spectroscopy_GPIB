@@ -3,29 +3,86 @@ A tab widget for plotting data in app.py
 
 @author: Teddy Tortorici
 """
-
-from PySide6.QtWidgets import QWidget, QMainWindow, QGridLayout, QVBoxLayout, QHBoxLayout, QToolButton, QToolBar
+import sys
+import os
+import time
+import numpy as np
+import threading
+import pyqtgraph as pg
+from PySide6.QtWidgets import (QWidget, QMainWindow, QGridLayout, QVBoxLayout, QHBoxLayout,
+                               QToolButton, QToolBar, QMessageBox)
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Slot, Qt
 from gui.dialogs.help import HelpPrompt
 import gui.icons as icon
 from gui.plotting import Plot, RightAxisPlot
+from gui.signalers import MessageSignaler, Signaler
 from files.csv import CSVFile
-import sys
-import os
-import time
-import numpy as np
-import pyqtgraph as pg
+from files.data import DielectricSpec
 
+
+class DataHandler(QWidget):
+    def __init__(self, parent_window: QMainWindow, sys_argv: list):
+        QWidget.__init__(self)
+
+        self.parent = parent_window
+
+        self.data_thread = threading.Thread(target=self.take_data, args=())
+        self.data_thread.daemon = True
+        self.running = False
+        self.started = False
+
+        self.plot_updater = MessageSignaler()
+        # self.plot_initializer = MessageSignaler()
+        self.plot_updater.signal.connect(self.parent.update)
+        # self.plot_initializer.signal.connect(self.parent.initialize)
+
+        self.base_path = sys_argv[1]
+        self.filename = sys_argv[2]
+        self.frequencies = [int(f) for f in sys_argv[3].split(",")]
+        self.voltage = float(sys_argv[4])
+        self.averaging = int(sys_argv[5])
+        self.dc_bias_setting = sys_argv[6]
+        self.bridge = sys_argv[7]
+        self.ls_num = int(sys_argv[8])
+        comment = sys_argv[9]
+        self.file = DielectricSpec(path=self.base_path,
+                                   filename=self.filename,
+                                   frequencies=self.frequencies,
+                                   bridge=self.bridge,
+                                   ls_model=self.ls_num,
+                                   comment=comment)
+        self.file.initiate_devices(voltage_rms=self.voltage,
+                                   averaging_setting=self.averaging,
+                                   dc_setting=self.dc_bias_setting)
+
+    def start(self):
+        self.started = True
+        self.data_thread.start()
+
+    def take_data(self):
+        """This should be run in a thread"""
+        self.running = True
+
+        """INITIATE DEVICES WITH DIALOG SETTINGS"""
+        while self.running:
+            data_point = self.file.sweep_frequencies()
+            # print(f'Got this as data: {data_point}')
+            self.file.write_row(data_point)
+            # self.write(str(data_point))
+            if self.parent.plot_tab.live_plotting:
+                self.plot_updater.signal.emit()
 
 class PlotWindow(QMainWindow):
 
     width = 1200
     height = 650
 
-    def __init__(self):
+    def __init__(self, sys_argv):
         QMainWindow.__init__(self)
         self.force_quit = True
+
+        self.data = DataHandler(sys_argv)
 
         try:
             with open(os.path.join("gui", "stylesheets", "main.css"), "r") as f:
@@ -40,6 +97,10 @@ class PlotWindow(QMainWindow):
         self.setWindowIcon(icon.custom('app.png'))
 
         self.setCentralWidget(PlotWidget())
+
+        """SIGNALERS"""
+        self.plot_updater = Signaler()
+        self.plot_initializer = Signaler()
 
         """MENU BAR"""
         main_menu = self.menuBar()
@@ -65,20 +126,23 @@ class PlotWindow(QMainWindow):
         # Data menu actions
         self.play_action = QAction(icon.custom("play.png"), 'Take &Data', self)
         self.play_action.setShortcut('CTRL+SPACE')
-        self.play_action.triggered.connect(self.data_tab.continue_data)
+        self.play_action.triggered.connect(self.data.continue_data)
         self.pause_action = QAction(icon.custom("pause.png"), 'Pause &Data', self)
         self.pause_action.setShortcut('CTRL+SPACE')
-        self.pause_action.triggered.connect(self.data_tab.pause_data)
-        self.stop_action = QAction(icon.custom("stop.png"), '&Stop Data', self)
-        self.stop_action.setShortcut('CTRL+W')
-        self.stop_action.triggered.connect(self.data_tab.stop)
+        self.pause_action.triggered.connect(self.data.pause_data)
+        # self.stop_action = QAction(icon.custom("stop.png"), '&Stop Data', self)
+        # self.stop_action.setShortcut('CTRL+W')
+        # self.stop_action.triggered.connect(self.data_tab.stop)
         # Help menu actions
         self.about_action = QAction(icon.built_in(self, 'MessageBoxQuestion'), '&About', self)
         self.about_action.setShortcut('CTRL+/')
         self.about_action.triggered.connect(self.get_help)
 
+        self.play_action.setEnabled(False)
+        self.pause_action.setEnabled(True)
+
         file_actions = [self.exit_action]
-        data_actions = [self.play_action, self.pause_action, self.stop_action]
+        data_actions = [self.play_action, self.pause_action]
         help_actions = [self.about_action]
 
         """ADD ACTIONS to MENUS and TOOLBARS"""
