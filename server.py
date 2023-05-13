@@ -7,8 +7,8 @@ author: Teddy Tortorici
 import time
 import socket
 import get
-import comm.gpib as gpib
-import comm.fake_gpib as fake
+import gpib.gpib as gpib
+import gpib.fake_gpib as fake
 
 
 class AH:
@@ -42,7 +42,7 @@ class GpibServer:
 
     def __init__(self, bridge_type: str = "AH", ls_model: int = 331, timeout: int = None):
         print("creating server")
-        self.host_port = ("localhost", get.port)
+        self.host_port = ("localhost", get.port())
         self.running = False
         self.writing_q_to_bridge = False
 

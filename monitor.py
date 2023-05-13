@@ -13,9 +13,9 @@ from PySide6.QtWidgets import (QMainWindow, QApplication, QMessageBox, QWidget, 
 from PySide6.QtCore import Slot, Signal, Qt
 from PySide6.QtGui import QFont
 import gui.icons as icon
-from comm.socket_client import send as send_client
-from comm.devices.ah2700 import Client as Bridge
-from comm.server import GpibServer
+from gpib.socket_client import send as send_client
+from gpib.devices.ah2700 import Client as Bridge
+from gpib.server import GpibServer
 
 
 class DisplayWidget(QLineEdit):

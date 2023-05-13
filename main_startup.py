@@ -1,10 +1,9 @@
 import os
 from PySide6.QtWidgets import QApplication, QDialog
-
+import time
 import get
 import sys
 from gui.dialogs.new_file import NewFileDialog
-import files.data as data_files
 
 
 def launch_process(command, leave_open=True):
@@ -41,10 +40,9 @@ if __name__ == "__main__":
         creation_datetime = dialog.date
 
         """LAUNCH SERVER"""
-        launch_process("py main_scripts\\server.py {} {}".format(bridge, ls_num))
+        launch_process("py server.py {} {}".format(bridge, ls_num))
         print("Launched server")
 
-        launch_process("py main_scripts\\data_taker.py")
         print("Launched data taking process {m:02}/{d:02}/{y:04} at {h:02}:{min:02}:{s}".format(
             m=creation_datetime.month,
             d=creation_datetime.day,
@@ -69,7 +67,7 @@ if __name__ == "__main__":
         full_comment = str(dialog.presets)
 
         """CREATE DATA FILE"""
-        launch_process('py main_scripts.data_taker {path} {fname} "{f}" {v} {ave} {dc} {b} {ls} "{c}"'.format(
+        launch_process('py data_taker.py {path} {fname} "{f}" {v} {ave} {dc} {b} {ls} "{c}"'.format(
             path=path,
             fname=filename,
             f=str(dialog.frequencies).strip("[").strip("]"),
@@ -80,3 +78,10 @@ if __name__ == "__main__":
             ls=ls_num,
             c=full_comment
         ))
+    else:
+        print("Canceled")
+    print("Closing window in:")
+    for ii in range(30, 0, -1):
+        print(ii, end=', ')
+        time.sleep(1)
+    print(0)

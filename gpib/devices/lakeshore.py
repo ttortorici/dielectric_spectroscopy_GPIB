@@ -5,7 +5,7 @@ classes for communicating with Lakeshore temperature controllers
 """
 
 import numpy as np
-from comm.socket_client import Device
+from gpib.socket_client import Device
 
 
 class Client(Device):

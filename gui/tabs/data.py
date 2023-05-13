@@ -13,8 +13,8 @@ import gui.icons as icon
 from gui.signalers import Signaler, MessageSignaler
 from gui.text_stream import TextStream
 import files.data as data_files
-from comm.server import GpibServer
-from comm.socket_client import send as send_client
+from gpib.server import GpibServer
+from gpib.socket_client import send as send_client
 from calculations.calibration import Calibration
 import threading
 import time

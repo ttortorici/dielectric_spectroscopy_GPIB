@@ -31,7 +31,7 @@ class Device:
     def __init__(self, dev_id):
         self.dev_id = dev_id
         self.host = "localhost"
-        self.port = get.port
+        self.port = get.port()
 
     def query(self, msg: str) -> str:
         return self.send(f"{self.dev_id}::Q::{msg}")

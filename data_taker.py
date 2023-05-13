@@ -6,9 +6,7 @@ A tab widget for plotting data in app.py
 import sys
 import os
 import time
-import numpy as np
 import threading
-import datetime
 import pyqtgraph as pg
 from PySide6.QtWidgets import (QWidget, QMainWindow, QGridLayout, QVBoxLayout, QHBoxLayout,
                                QToolButton, QMessageBox, QApplication)
@@ -17,7 +15,7 @@ from PySide6.QtCore import Slot, Qt
 from gui.dialogs.help import HelpPrompt
 import gui.icons as icon
 from gui.plotting import Plot, RightAxisPlot
-from gui.signalers import MessageSignaler, Signaler
+from gui.signalers import MessageSignaler
 from files.csv import CSVFile
 from files.data import DielectricSpec
 
@@ -154,7 +152,6 @@ class PlotWidget(QWidget):
     def __init__(self, sys_argv, link_x: bool = True, link_y: bool = False):
         """
         Tab for plotting
-        :param parent: Is the MainWindow() object
         :param link_x: Do you want it to lock x axes of the same type together?
         :param link_y: Do you want it to lock y axes of the same type together?
         """
@@ -168,7 +165,7 @@ class PlotWidget(QWidget):
 
         """SET UP SIGNALERS"""
         self.plot_updater = MessageSignaler()
-        self.plot_updater.signal.connect(self.parent.update)
+        self.plot_updater.signal.connect(self.update)
         # self.plot_initializer = MessageSignaler()
         # self.plot_initializer.signal.connect(self.parent.initialize)
 
@@ -270,11 +267,11 @@ class PlotWidget(QWidget):
         while self.running:
             data_point = self.file.sweep_frequencies()
             self.file.write_row(data_point)
-            if self.parent.plot_tab.live_plotting:
+            if self.live_plotting:
                 self.plot_updater.signal.emit(str(data_point).strip('[').strip(']'))
 
     def initialize_plots(self):
-        self.freq_labels = [str(freq) for freq in self.parent.data_tab.dialog.frequencies]
+        self.freq_labels = [str(freq) for freq in self.frequencies]
         freq_num = len(self.freq_labels)
         labels = CSVFile.get_labels(self.filename)
 
