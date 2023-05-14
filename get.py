@@ -17,7 +17,7 @@ def base_path():
             path = f"D:\\Google Drive\\My Drive"
         # elif user == 'Chuck':
         else:
-            path = 'C:\\Users\\Chuck\\Documents\\'
+            path = f'C:\\Users\\{user}\\Documents\\'
     else:
         path = ''
     return path

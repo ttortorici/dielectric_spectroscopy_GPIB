@@ -12,10 +12,10 @@ from PySide6.QtWidgets import (QMainWindow, QApplication, QMessageBox, QWidget, 
                                QLabel, QRadioButton, QButtonGroup, QSpinBox, QDoubleSpinBox, QPushButton)
 from PySide6.QtCore import Slot, Signal, Qt
 from PySide6.QtGui import QFont
-import gui.icons as icon
-from gpib.socket_client import send as send_client
-from gpib.devices.ah2700 import Client as Bridge
-from gpib.server import GpibServer
+import gui as icon
+from gpib import send as send_client
+from gpib import Client as Bridge
+from gpib import GpibServer
 
 
 class DisplayWidget(QLineEdit):

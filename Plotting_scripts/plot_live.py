@@ -188,14 +188,14 @@ if __name__ == '__main__':
     p2.setXLink(p1)
     
     p3 = win.addPlot(title='',
-                     axisItems={'bottom':DateAxisItem.DateAxisItem('bottom')},
-                                row=0, col=1)
+                     axisItems={'bottom': DateAxisItem.DateAxisItem('bottom')},
+                     row=0, col=1)
     p3.setLabel('left', 'Temperature (K)')
     p3.addLegend()
 
     p4 = win.addPlot(title='',
-                     axisItems={'bottom':DateAxisItem.DateAxisItem('bottom')},
-                                row=1, col=1)
+                     axisItems={'bottom': DateAxisItem.DateAxisItem('bottom')},
+                     row=1, col=1)
     p4.setLabel('left', y_Alabel)
     p4.showAxis('right')
     p4.setLabel('right', y_Blabel)

@@ -14,18 +14,6 @@ from calculations.calibration import Calibration
 from calculations.capacitors import geometric_capacitance
 
 
-def zero_strip(num_string: str):
-    """
-    takes a string of numbers and removes the zeros left of the decimal, but will leave one zero before the decimal
-    :param num_string: something like "000.0" or "023.2
-    :return: will return "0.0" and "23.2" for the given examples above
-    """
-    for ind in range(len(num_string)):
-        if num_string[ind] != "0" or num_string[ind+1] == ".":
-            break
-    return num_string[ind:]
-
-
 class DielectricSpec(CSVFile):
 
     labels = ('Time [s]', 'Temperature A [K]', 'Temperature B [K]',
@@ -188,16 +176,6 @@ class DielectricSpec(CSVFile):
         """Initiate bridge measurement"""
         self.bridge.write("Q")
 
-        """Get info for controller"""
-        heater_range_index = self.ls.query("RANGE?")
-        ramp_speed = zero_strip(self.ls.query("RAMP? 1")[3:])
-        heater_output = zero_strip(self.ls.query("HTR?")[1:])
-        setpoint = zero_strip(self.ls.query("SETP?")[1:])
-        pid_query = self.ls.query("PID?")
-        p = zero_strip(pid_query[1:7])
-        i = zero_strip(pid_query[9:15])
-        d = zero_strip(pid_query[17:22])
-
         """Make attempts to read from the bridge"""
         raw_msg = self.bridge.read()
         f = raw_msg[0:8].strip()
@@ -217,12 +195,13 @@ class DielectricSpec(CSVFile):
             start_index = ff * len_labels
             end_index = (ff + 1) * len_labels
             partial_data = self.measure_at_frequency(frequency)
+            now = str(datetime.datetime.fromtimestamp(partial_data[0]))
+            now = now.split(' ')[1].split('.')[0]
             partial_data[0] = str(partial_data[0])
-
-            print_list = [str(datetime.datetime.fromtimestamp(partial_data[0])),
-                          f"{partial_data[1]:s} K".rjust(20),
-                          f"{partial_data[2]:s} K".rjust(20),
-                          f"{partial_data[3]:s} pF".rjust(20),
+            print_list = [now,
+                          f"{partial_data[1]:s} K".rjust(10),
+                          f"{partial_data[2]:s} K".rjust(10),
+                          f"{partial_data[3]:s} pF".rjust(10),
                           f"{partial_data[4]:s}".rjust(17),
                           f"{partial_data[5]:s} V<sub>RMS</sub>".rjust(25),
                           f"{partial_data[6]:s} Hz".rjust(25)]

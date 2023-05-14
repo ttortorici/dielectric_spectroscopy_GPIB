@@ -5,7 +5,6 @@ import sys
 sys.path.append('..')
 import get
 
-
 root = Tkinter.Tk()
 root.title('File Selector')
 

@@ -338,6 +338,7 @@ class PlotWidget(QWidget):
 
 
 if __name__ == "__main__":
+    print("Launching plot")
     app = QApplication(sys.argv)
 
     main_window = PlotWindow(sys.argv)

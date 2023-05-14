@@ -451,6 +451,7 @@ class NewFileDialog(QDialog):
 if __name__ == '__main__':
     from PySide6.QtWidgets import QApplication
     import get
+
     app = QApplication(sys.argv)
     dialog = NewFileDialog(os.path.join(get.google_drive(), 'Dielectric_data', 'Teddy-2'))
     sys.exit(dialog.exec())

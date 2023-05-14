@@ -2,7 +2,7 @@ from random import random
 from time import perf_counter
 import numpy as np
 import dielepy as dp
-import calculations.capacitors as cc
+import calculations as cc
 from scipy.special import factorial2, factorial
 
 COUNT = 500000  # Change this value depending on the speed of your computer

@@ -12,8 +12,8 @@ from gui.dialogs.new_file import NewFileDialog
 import gui.icons as icon
 from gui.signalers import Signaler, MessageSignaler
 from gui.text_stream import TextStream
-import files.data as data_files
-from gpib.server import GpibServer
+from files.data import DielectricSpec as data_files
+from gpib import GpibServer
 from gpib.socket_client import send as send_client
 from calculations.calibration import Calibration
 import threading

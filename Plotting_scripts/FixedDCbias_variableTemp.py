@@ -12,7 +12,6 @@ import sys;
 sys.path.append('../GPIB')
 import get
 
-
 date = str(datetime.date.today()).split('-')
 yearstr = date[0]
 monthstr = date[1]
