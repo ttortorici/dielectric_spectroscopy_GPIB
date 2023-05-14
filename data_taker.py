@@ -87,6 +87,8 @@ class PlotWindow(QMainWindow):
         for action in help_actions:
             help_menu.addAction(action)
 
+        self.start()
+
     def start(self):
         self.plot_widget.data_taking_thread.start()
 
@@ -189,7 +191,6 @@ class PlotWidget(QWidget):
         self.data_line_skip = 0
         self.live_plotting = True
 
-        self.filename = None
         self.freq_labels = None
 
         """CREATE LAYOUT"""
@@ -273,7 +274,7 @@ class PlotWidget(QWidget):
     def initialize_plots(self):
         self.freq_labels = [str(freq) for freq in self.frequencies]
         freq_num = len(self.freq_labels)
-        labels = CSVFile.get_labels(self.filename)
+        labels = CSVFile.get_labels(os.path.join(self.base_path, self.filename))
 
         """CREATE CURVES"""
         width = self.__class__.pen_width

@@ -41,35 +41,36 @@ class GpibServer:
     addr_ls = {331: 13, 340: 12}
 
     def __init__(self, bridge_type: str = "AH", ls_model: int = 331, timeout: int = None):
-        print("creating server")
         self.host_port = ("localhost", get.port())
         self.running = False
         self.writing_q_to_bridge = False
+        print("Creating server.\n")
 
         """DEVICES"""
         if bridge_type == "FAKE":
             self.bridge = fake.Bridge()
             self.ls = fake.Lakeshore()
+            print('"Connected" to FAKE devices.\n')
         else:
             self.bridge = gpib.Device(GpibServer.addr_bridge[bridge_type], termination="\n")
             if timeout:
                 self.bridge.dev.timeout = timeout
+            print("Connected to bridge.")
 
             """STARTUP COMMANDS"""
             self.bridge.write("FORMAT {}, {}, {}, {}".format(*AH.formatting))
-            print("Connected to AH2700A")
-            print("Formatted: Notation: {}; Labeling: {}; IEEE-488.2: {}; Field Width: {}".format(*AH.formatting))
+            print("Formatted: Notation: {}; Labeling: {}; IEEE-488.2: {}; Field Width: {}.".format(*AH.formatting))
             self.bridge.write("UNITS {}".format(AH.units))
-            print("Set units to {}".format(AH.units))
+            print("Set units to {}.".format(AH.units))
 
             self.ls = gpib.Device(GpibServer.addr_ls[ls_model])
-            print("Connected to LS{}".format(ls_model))
+            print("\nConnected to LS{}".format(ls_model))
 
             """STARTUP COMMANDS"""
             self.ls.write("CSET {},{},{},{},{}".format(*LS.control_loop))
             unit_dict = ["", "K", "C", "sensor"]
             on_dict = ["off", "on", "on"]
-            print("Control loop configured: Loop: {}; Channel: {}; Units: {}; Enabled: {}; Powerup: {}".format(
+            print("Control loop configured: Loop: {}; Channel: {}; Units: {}; Enabled: {}; Powerup: {}.\n".format(
                 LS.control_loop,
                 LS.input,
                 unit_dict[LS.units],
@@ -80,6 +81,7 @@ class GpibServer:
     def handle(self, message_to_parse: str) -> str:
         """Parse a message of the format
         [Instrument ID]::[command]::[optional message]"""
+        # print("\nHandling message:")
         msg_list = message_to_parse.split('::')
         dev_id = msg_list[0]
         command = msg_list[1]
@@ -90,33 +92,33 @@ class GpibServer:
 
         if dev_id == "LS":
             if command[0] == "W":
-                print(f'Writing "{message}" to LS')
+                # print(f'Writing "{message}" to LS')
                 self.ls.write(message)
                 msgout = 'empty'
             elif command[0] == "Q":
-                print(f'Querying LS with "{message}"')
+                # print(f'Querying LS with "{message}"')
                 msgout = self.ls.query(message)
             elif command[0] == "R":
                 if dev_id in ["AH", "HP"]:
                     self.writing_q_to_bridge = False
-                print('Reading from LS')
+                # print('Reading from LS')
                 msgout = self.ls.read()
         elif dev_id in ["AH", "HP"]:
             if command[0] == "W":
                 if message == "Q":
                     self.writing_q_to_bridge = True
-                print(f'Writing "{message}" to {dev_id}')
+                # print(f'Writing "{message}" to {dev_id}')
                 self.bridge.write(message)
                 if self.writing_q_to_bridge:
                     self.bridge.write("Q")
                 msgout = 'empty'
             elif command[0] == "Q":
-                print(f'Querying {dev_id} with "{message}"')
+                # print(f'Querying {dev_id} with "{message}"')
                 msgout = self.bridge.query(message)
             elif command[0] == "R":
                 if dev_id in ["AH", "HP"]:
                     self.writing_q_to_bridge = False
-                print(f'Reading from {dev_id}')
+                # print(f'Reading from {dev_id}')
                 msgout = self.bridge.read()
         else:
             msgout = f'Did not give a valid device id: {dev_id}'
@@ -140,10 +142,10 @@ class GpibServer:
                 # establish a connection with a client
                 conn, addr = s.accept()
                 with conn:
-                    print(f"Connected to: {addr[0]}:{addr[1]}  : {time.ctime(time.time())}")
+                    print(f"\nConnected to: {addr[0]}:{addr[1]}  : {time.ctime(time.time())}")
                     while True:
                         msg_client = conn.recv(1024)
-                        print(repr(msg_client))
+                        # print(repr(msg_client))
                         if not msg_client:
                             break
                         elif msg_client == GpibServer.shutdown_command:
@@ -154,7 +156,7 @@ class GpibServer:
                             msg_client = msg_client.decode()
                             print(f"Received message: {msg_client}")
                             msg_server = self.handle(msg_client)
-                            print(f"Sending back message {msg_server}")
+                            print(f"Sending back message: {msg_server}")
                             conn.sendall(msg_server.encode())
 
 

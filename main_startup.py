@@ -67,7 +67,7 @@ if __name__ == "__main__":
         full_comment = str(dialog.presets)
 
         """CREATE DATA FILE"""
-        launch_process('py data_taker.py {path} {fname} "{f}" {v} {ave} {dc} {b} {ls} "{c}"'.format(
+        launch_process('py data_taker.py "{path}" "{fname}" "{f}" "{v}" "{ave}" "{dc}" "{b}" "{ls}" "{c}"'.format(
             path=path,
             fname=filename,
             f=str(dialog.frequencies).strip("[").strip("]"),
@@ -77,11 +77,8 @@ if __name__ == "__main__":
             b=bridge,
             ls=ls_num,
             c=full_comment
-        ))
+        ), leave_open=False)
     else:
         print("Canceled")
-    print("Closing window in:")
-    for ii in range(30, 0, -1):
-        print(ii, end=', ')
-        time.sleep(1)
-    print(0)
+    input("Press Enter to close")
+

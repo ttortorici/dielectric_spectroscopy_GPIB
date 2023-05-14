@@ -43,7 +43,7 @@ class Bridge(Fake):
     def query(self, msg: str) -> str:
         time.sleep(0.5)
         if msg == "SH AV":
-            return "AVE = 7"
+            return "7"
         elif msg == "Q":
             return "F = {f} HZ C = {c:.5f} PF L = {d:.5f} V = {v} V".format(f=self.frequency,
                                                                             c=1 + 0.2 * np.random.random(),
