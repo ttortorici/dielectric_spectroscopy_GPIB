@@ -8,16 +8,20 @@ import os
 import time
 import threading
 import pyqtgraph as pg
+import numpy as np
 from PySide6.QtWidgets import (QWidget, QMainWindow, QGridLayout, QVBoxLayout, QHBoxLayout,
                                QToolButton, QMessageBox, QApplication)
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Slot, Qt
+
+import get
 from gui.dialogs.help import HelpPrompt
 import gui.icons as icon
 from gui.plotting import Plot, RightAxisPlot
-from gui.signalers import MessageSignaler
+from gui.signalers import Signaler
 from files.csv import CSVFile
 from files.data import DielectricSpec
+from gpib.socket_client import shutdown_command
 
 
 class PlotWindow(QMainWindow):
@@ -110,6 +114,7 @@ class PlotWindow(QMainWindow):
         if exit_question == QMessageBox.Yes:
             self.force_quit = False
             print('Exiting')
+            shutdown_command("localhost", get.port())
             self.close()
 
     @Slot()
@@ -166,8 +171,9 @@ class PlotWidget(QWidget):
         # self.started = False
 
         """SET UP SIGNALERS"""
-        self.plot_updater = MessageSignaler()
-        self.plot_updater.signal.connect(self.update)
+        # self.plot_updater = MessageSignaler()
+        self.plot_updater = Signaler()
+        self.plot_updater.signal.connect(self.update_plots)
         # self.plot_initializer = MessageSignaler()
         # self.plot_initializer.signal.connect(self.parent.initialize)
 
@@ -269,7 +275,8 @@ class PlotWidget(QWidget):
             data_point = self.file.sweep_frequencies()
             self.file.write_row(data_point)
             if self.live_plotting:
-                self.plot_updater.signal.emit(str(data_point).strip('[').strip(']'))
+                # self.plot_updater.signal.emit(str(data_point).strip('[').strip(']'))
+                self.plot_updater.signal.emit()
 
     def initialize_plots(self):
         self.freq_labels = [str(freq) for freq in self.frequencies]
@@ -324,17 +331,26 @@ class PlotWidget(QWidget):
         """Switch the live plotting setting"""
         self.set_live_plotting(not self.live_plotting)
 
-    @Slot(str)
-    def update_plots(self, data_str):
+    @Slot()
+    def update_plots(self):
         """Draw curves to update the plots to any changes in the data file"""
-        # data = self.load_data()
-        data = data_str.split(', ')
+        # data = data_str.split(', ')
+        # data = [float(element.strip("'")) for element in data]
+        data = self.load_data()
 
         self.plot_CvT.update_plot(data)
         self.plot_LvT.update_plot(data)
         self.plot_Tvt.update_plot(data)
         self.plot_Cvt.update_plot(data)
         self.plot_Lvt.update_plot(data)
+
+    def load_data(self) -> np.ndarray:
+        """Loads data from filename. Will make attempts to load data and if it fails, it will add to the amount of lines
+        needed to skip. After the first attempt to load data, it should succeed on the first attempt every time"""
+        data, self.data_line_skip = CSVFile.load_data_np(
+            os.path.join(self.base_path, self.filename), self.data_line_skip
+        )
+        return data
 
 
 if __name__ == "__main__":

@@ -200,11 +200,11 @@ class DielectricSpec(CSVFile):
             partial_data[0] = str(partial_data[0])
             print_list = [now,
                           f"{partial_data[1]:s} K".rjust(10),
-                          f"{partial_data[2]:s} K".rjust(10),
-                          f"{partial_data[3]:s} pF".rjust(10),
-                          f"{partial_data[4]:s}".rjust(17),
-                          f"{partial_data[5]:s} V<sub>RMS</sub>".rjust(25),
-                          f"{partial_data[6]:s} Hz".rjust(25)]
+                          f"{partial_data[2]:s} K".rjust(12),
+                          f"{partial_data[3]:s} pF".rjust(15),
+                          f"{partial_data[4]:s}".rjust(13),
+                          f"{partial_data[5]:s} V".rjust(10),
+                          f"{partial_data[6]:s} Hz".rjust(12)]
             print(", ".join(print_list))
 
             full_data[start_index:end_index] = partial_data

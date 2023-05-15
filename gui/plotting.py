@@ -45,6 +45,8 @@ class Plot(pg.PlotWidget):
         self.curves = None
         self.x_indices = None
         self.y_indices = None
+        self.x = None
+        self.y = None
 
     def update_views(self):
         self.right_axis.setGeometry(self.getViewBox().sceneBoundingRect())
@@ -52,12 +54,15 @@ class Plot(pg.PlotWidget):
 
     def set_curves(self, labels: list[str] | tuple[str], pens: list[QPen] | tuple[QPen]):
         self.curves = [self.plot(name=label, pen=pen) for label, pen in zip(labels, pens)]
+        self.x = [np.array([])] * len(self.curves)
+        self.y = [np.array([])] * len(self.curves)
 
     def set_indices(self, x_indices: list[int], y_indices: list[int] | zip):
         self.x_indices = x_indices
         self.y_indices = list(y_indices)
 
     def update_plot(self, data):
+        # print(repr(self.y_indices))
         # print(type(self.y_indices))
         # print(self.y_indices)
         if isinstance(self.y_indices[0], list | tuple):
@@ -78,8 +83,22 @@ class Plot(pg.PlotWidget):
                 curve.setData(x=x, y=ys[:, ii])
 
         else:
+            # for ii, curve, x_index, y_index in zip(range(len(self.curves)),
+            #                                        self.curves,
+            #                                        self.x_indices,
+            #                                        self.y_indices):
             for curve, x_index, y_index in zip(self.curves, self.x_indices, self.y_indices):
+                # print(repr(x_index))
+                # print(repr(y_index))
                 curve.setData(x=data[:, x_index], y=data[:, y_index])
+                # self.x[ii] = np.append(self.x, data[x_index])
+                # self.y[ii] = np.append(self.y, data[y_index])
+                # print("x = " + repr(self.x[ii]))
+                # print("y = " + repr(self.y[ii]))
+                # if len(self.x[ii]) > 0:
+                #     curve.setData(x=self.x[ii], y=self.y[ii])
+
+                # curve.setData(x=data[x_index], y=data[y_index])
 
     def clear_plots(self):
         for curve in self.curves:
@@ -94,6 +113,8 @@ class RightAxisPlot(pg.ViewBox):
         self.curves = None
         self.x_indices = None
         self.y_indices = None
+        self.x = None
+        self.y = None
 
     def set_curves(self, labels: list[str] | tuple[str], pens: list[QPen] | tuple[QPen]):
         num = len(labels)
@@ -101,6 +122,8 @@ class RightAxisPlot(pg.ViewBox):
         for ii, label, pen in zip(range(num), labels, pens):
             self.curves[ii] = pg.PlotCurveItem(name=label, pen=pen)
             self.addItem(self.curves[ii])
+        self.x = [np.array([])] * num
+        self.y = [np.array([])] * num
 
     def set_indices(self, x_indices: list[int], y_indices: list[int] | zip):
         self.x_indices = x_indices
@@ -127,6 +150,12 @@ class RightAxisPlot(pg.ViewBox):
         else:
             for curve, x_index, y_index in zip(self.curves, self.x_indices, self.y_indices):
                 curve.setData(x=data[:, x_index], y=data[:, y_index])
+                # self.x[ii] = np.append(self.x, data[x_index])
+                # self.y[ii] = np.append(self.y, data[y_index])
+                # # print(self.x[ii])
+                # # print(self.y[ii])
+                # if len(self.x[ii]) > 0:
+                #     curve.setData(x=self.x[ii], y=self.y[ii])
 
     def clear_plots(self):
         for curve in self.curves:

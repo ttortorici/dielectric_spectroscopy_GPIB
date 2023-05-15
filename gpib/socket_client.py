@@ -25,6 +25,10 @@ def send(msg: str, host: str = "localhost", port: int = 62538) -> str:
         return "did not send anything"
 
 
+def shutdown_command(host, port):
+    send("shutdown")
+
+
 class Device:
     """This class is meant to be inherited by classes dedicated to specific devices"""
 

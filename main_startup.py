@@ -40,7 +40,7 @@ if __name__ == "__main__":
         creation_datetime = dialog.date
 
         """LAUNCH SERVER"""
-        launch_process("py server.py {} {}".format(bridge, ls_num))
+        launch_process("py server.py {} {}".format(bridge, ls_num), leave_open=False)
         print("Launched server")
 
         print("Launched data taking process {m:02}/{d:02}/{y:04} at {h:02}:{min:02}:{s}".format(
@@ -80,5 +80,5 @@ if __name__ == "__main__":
         ), leave_open=False)
     else:
         print("Canceled")
-    input("Press Enter to close")
+    # input("Press Enter to close")
 
