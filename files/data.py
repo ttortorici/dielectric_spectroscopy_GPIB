@@ -6,9 +6,9 @@ Classes for creating and managing data files for dielectric experiments
 
 import time
 import datetime
-from gpib.devices.ah2700 import Client as BridgeAH
-from gpib.devices.hp4275 import Client as BridgeHP
-from gpib.devices.lakeshore import Client as Lakeshore
+from communication.devices.ah2700 import Client as BridgeAH
+from communication.devices.hp4275 import Client as BridgeHP
+from communication.devices.lakeshore import Client as Lakeshore
 from files.csv import CSVFile
 from calculations.calibration import Calibration
 from calculations.capacitors import geometric_capacitance

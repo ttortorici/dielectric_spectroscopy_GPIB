@@ -1,7 +1,7 @@
 import sys
 import time
 import numpy as np
-from gpib.socket_client import Device
+from communication.socket_client import Device
 
 
 class Client(Device):

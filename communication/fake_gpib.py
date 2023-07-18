@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from gpib.gpib import Fake
+from communication.gpib import Fake
 
 
 class Lakeshore(Fake):

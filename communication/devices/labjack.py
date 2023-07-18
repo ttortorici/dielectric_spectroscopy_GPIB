@@ -3,7 +3,7 @@ import u6
 import time
 import numpy as np
 import struct
-from gpib.socket_client import Device as DeviceClient
+from communication.socket_client import Device as DeviceClient
 # import sys
 # import threading
 

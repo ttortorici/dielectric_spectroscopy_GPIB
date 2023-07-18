@@ -13,9 +13,9 @@ from PySide6.QtWidgets import (QMainWindow, QApplication, QMessageBox, QWidget, 
 from PySide6.QtCore import Slot, Signal, Qt
 from PySide6.QtGui import QFont
 import gui as icon
-from gpib import send as send_client
-from gpib import Client as Bridge
-from gpib import GpibServer
+from communication import send as send_client
+from communication import Client as Bridge
+from communication import GpibServer
 
 
 class DisplayWidget(QLineEdit):

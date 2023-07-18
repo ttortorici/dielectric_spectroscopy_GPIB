@@ -7,8 +7,8 @@ author: Teddy Tortorici
 import time
 import socket
 import get
-import gpib.gpib as gpib
-import gpib.fake_gpib as fake
+import communication.gpib as gpib
+import communication.fake_gpib as fake
 
 
 class AH:

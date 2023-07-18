@@ -21,7 +21,7 @@ from gui.plotting import Plot, RightAxisPlot
 from gui.signalers import Signaler
 from files.csv import CSVFile
 from files.data import DielectricSpec
-from gpib.socket_client import shutdown_command
+from communication.socket_client import shutdown_command
 
 
 class PlotWindow(QMainWindow):
