@@ -2,10 +2,10 @@ import socket
 
 
 def Main():
-    host = '192.168.0.13'  # client ip
-    port = 4005
+    host = '128.138.145.145'  # client ip
+    port = 62539
 
-    server = ('192.168.0.12', 4000)
+    server = ('10.201.82.132', 62539)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
