@@ -115,6 +115,10 @@ class PlotWindow(QMainWindow):
             self.force_quit = False
             print('Exiting')
             shutdown_command("localhost", get.port())
+
+            file = os.path.join(self.plot_widget.base_path, self.plot_widget.filename)
+            save_loc = os.path.join(get.onedrive(), "Teddy", )
+
             self.close()
 
     @Slot()
@@ -178,6 +182,7 @@ class PlotWidget(QWidget):
         # self.plot_initializer.signal.connect(self.parent.initialize)
 
         """SET UP DATA FILE"""
+        self.data = None
         self.file = None
         self.base_path = sys_argv[1]
         self.filename = sys_argv[2]
@@ -266,18 +271,6 @@ class PlotWidget(QWidget):
                                    averaging_setting=self.averaging,
                                    dc_setting=self.dc_bias_setting)
 
-    def take_data(self):
-        """This should be run in a thread"""
-        self.running = True
-
-        """INITIATE DEVICES WITH DIALOG SETTINGS"""
-        while self.running:
-            data_point = self.file.sweep_frequencies()
-            self.file.write_row(data_point)
-            if self.live_plotting:
-                # self.plot_updater.signal.emit(str(data_point).strip('[').strip(']'))
-                self.plot_updater.signal.emit()
-
     def initialize_plots(self):
         self.freq_labels = [str(freq) for freq in self.frequencies]
         freq_num = len(self.freq_labels)
@@ -315,6 +308,22 @@ class PlotWidget(QWidget):
         self.plot_Cvt.update_views()
         self.plot_Tvt.setXRange(time.time(), time.time() + 360, padding=0)
 
+    def take_data(self):
+        """This should be run in a thread"""
+        self.running = True
+
+        # self.data = self.file.sweep_frequencies()
+        # self.file.write_row(self.data)
+
+        """INITIATE DEVICES WITH DIALOG SETTINGS"""
+        while self.running:
+            data_point = self.file.sweep_frequencies()
+            self.file.write_row(data_point)
+            # self.data = np.vstack((self.data, data_point))
+            if self.live_plotting:
+                # self.plot_updater.signal.emit(str(data_point).strip('[').strip(']'))
+                self.plot_updater.signal.emit()
+
     def set_live_plotting(self, on):
         """Turn live plotting on or off"""
         self.live_plotting = on
@@ -337,6 +346,7 @@ class PlotWidget(QWidget):
         # data = data_str.split(', ')
         # data = [float(element.strip("'")) for element in data]
         data = self.load_data()
+        # print(self.data)
 
         self.plot_CvT.update_plot(data)
         self.plot_LvT.update_plot(data)
