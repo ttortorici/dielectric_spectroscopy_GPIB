@@ -1,6 +1,5 @@
 import os
 from PySide6.QtWidgets import QApplication, QDialog
-import time
 import get
 import sys
 from gui.dialogs.new_file import NewFileDialog
@@ -67,7 +66,7 @@ if __name__ == "__main__":
         full_comment = str(dialog.presets)
 
         """CREATE DATA FILE"""
-        launch_process('py data_taker.py "{path}" "{fname}" "{f}" "{v}" "{ave}" "{dc}" "{b}" "{ls}" "{c}"'.format(
+        launch_process('py data_taker.py "{path}" "{fname}" "{f}" "{v}" "{ave}" "{dc}" "{b}" "{ls}" "{c}" "{p}"'.format(
             path=path,
             fname=filename,
             f=str(dialog.frequencies).strip("[").strip("]"),
@@ -76,9 +75,9 @@ if __name__ == "__main__":
             dc=dialog.dc_bias_setting,
             b=bridge,
             ls=ls_num,
-            c=full_comment
+            c=full_comment,
+            p=purpose
         ), leave_open=False)
     else:
         print("Canceled")
     # input("Press Enter to close")
-

@@ -10,10 +10,10 @@ import threading
 import pyqtgraph as pg
 import numpy as np
 from PySide6.QtWidgets import (QWidget, QMainWindow, QGridLayout, QVBoxLayout, QHBoxLayout,
-                               QToolButton, QMessageBox, QApplication)
+                               QToolButton, QMessageBox, QApplication, QFileDialog)
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Slot, Qt
-
+import shutil
 import get
 from gui.dialogs.help import HelpPrompt
 import gui.icons as icon
@@ -30,6 +30,7 @@ class PlotWindow(QMainWindow):
     height = 650
 
     def __init__(self, sys_argv):
+        self.purpose = sys_argv[-1]     # "CAL", "POW", "FILM", "OTHER", "TEST"
         QMainWindow.__init__(self)
         self.plot_widget = PlotWidget(sys_argv)
 
@@ -117,8 +118,18 @@ class PlotWindow(QMainWindow):
             shutdown_command("localhost", get.port())
 
             file = os.path.join(self.plot_widget.base_path, self.plot_widget.filename)
-            save_loc = os.path.join(get.onedrive(), "Teddy", )
+            save_loc = os.path.join(get.onedrive(), "Teddy")
 
+            if self.purpose == "CAL":
+                save_loc = os.path.join(save_loc, "Capacitors" , "Mounts")
+            elif self.purpose == "POW":
+                save_loc = os.path.join(save_loc, "Powders")
+            elif self.purpose == "FILM":
+                save_loc = os.path.join(save_loc, "Capacitors", "TPP Films")
+
+            file_save, filetype = QFileDialog.getSaveFileName(self, caption="Save Data to OneDrive",
+                                                              dir=save_loc, filter="CSV (*.csv)")
+            shutil.copyfile(file, file_save)
             self.close()
 
     @Slot()

@@ -31,8 +31,11 @@ def uuid():
 
 
 def onedrive():
-    if uuid() == "1F0050C0-00C6-0C00-E9B7-BCAEC5601728":
+    uu_id = uuid()
+    if uu_id == "1F0050C0-00C6-0C00-E9B7-BCAEC5601728":
         path = "F:\\OneDrive - UCB-O365\\Rogerslab3"
+    elif uu_id == "4C4C4544-0053-4D10-8058-B4C04F503432":
+        path = "D:\\OneDrive - school\\OneDrive - UCB-O365\\Rogerslab3"
     else:
         path = ""
     return path
