@@ -37,9 +37,9 @@ class FileButton(QPushButton):
         """
         Open file dialog and replace button text with the filename
         """
-        self.filename, _ = QFileDialog.getSaveFileName(self, self.title, self.base_path,
-                                                       f"{self.filetypes};;All Files (*)")
-        filename_display = self.filename.lstrip(self.base_path)
+        self.filename, _ = QFileDialog.getSaveFileName(self, caption=self.title, dir=get.onedrive(),
+                                                       filter="CSV (*.csv)")
+        # filename_display = self.filename.lstrip(self.base_path)
         self.set(filename_display)
 
     def get(self) -> str:
