@@ -1,66 +1,71 @@
 from communication.devices.lakeshore import Client as Lakeshore
 import numpy as np
 import time
+import os
 
 
-# def drop(ls: Lakeshore, high: float, low: float, ramp_speed: float):
-#     while ls.read_temperature() <= high:
-#         time.sleep(600)
-#     ls.set_ramp_speed(ramp_speed)
-#     ls.set_setpoint(low)
+def run_command_line():
+    ls = Lakeshore(331)
 
+    setpoint = None
 
-class Controller:
-    def __init__(self):
-        self.ls = Lakeshore(331)
+    with open(os.path.join("text", "temperature control startup.txt"), "r") as startup_file:
+        print(startup_file.read())
 
-    def check_setpoint(self):
-        """Returns the current set-point of the controller; this changes over time if ramping."""
-        return self.ls.read_setpoint()
+    run = True
+    while run:
+        command = input("LS>").upper().split(" ")
+        if command[0] == "QUIT" or command == "EXIT":
+            run = False
+            print("Exiting", end="")
+            for _ in range(5):
+                time.sleep(1)
+                print(" .", end="")
+        elif command[0] == "HELP":
+            with open(os.path.join("text", "temperature control help.txt"), "r") as help_file:
+                print(help_file.read())
 
-    def set_setpoint(self, setpoint):
-        """Change the set-point that the controller will ramp to."""
-        self.ls.set_setpoint(setpoint)
+        elif command[0] == "PID?":
+            print("P={}; I={}; D={}".format(*ls.read_pid()))
+        elif command[0] == "PID":
+            if len(command) < 4:
+                print('No PID values given; please type "PID X, Y, Z" to set P=X, I=Y, D=Z.')
+            else:
+                p = float(command[1].strip(","))
+                i = float(command[2].strip(","))
+                d = float(command[3].strip(","))
+                ls.set_pid(p, i, d)
+                print("Set P=X, I=Y, D=Z.")
 
-    # def check_flatness(self, length: int, wait_time: float):
-    #     """
-    #     Checks if the temperature is stabilized.
-    #     :param length: number of temperature points to look at.
-    #     :param wait_time: delta-t between each measured temperature.
-    #     :return: True if flat; false if not.
-    #     """
-    #     times = np.empty(length)
-    #     temperatures = np.empty(length)
-    #     for ii in range(length):
-    #         temperatures[ii] = self.ls.read_temperature()
-    #         times[ii] = time.time()
-    #         print(f"{temperatures[ii]} K")
-    #         print(f"Waiting {wait_time} seconds")
-    #         time.sleep(wait_time)
-    #     times = np.vstack([times, np.ones(length)]).T
-    #     slope = np.linalg.lstsq(times, temperatures, rcond=None)[0][0] * 60      # in K / min
-    #     return abs(slope) < 0.01
+        elif command[0] == "RAMP?":
+            print("{} K/min".format(ls.read_ramp_speed()))
+        elif command[0] == "RAMP":
+            if len(command) == 1:
+                print('No ramp-rate given; please type "RAMP X" to set the ramp-rate to X K/min.')
+            else:
+                ls.set_ramp_speed(float(command[1]))
 
-    # def turnaround(self):
-    #     if self.check_flatness(3, 30):
-    #         sp = self.check_setpoint()
-    #         if sp < 50:
-    #             self.set_setpoint(300)
-    #         else:
-    #             self.set_setpoint(20)
-    #         return True
-    #     else:
-    #         return False
+        elif command[0] == "SP?":
+            if setpoint is not None:
+                print("{} K".format(setpoint))
+            else:
+                print("{} K".format(ls.read_setpoint()))
+        elif command[0] == "SP":
+            if len(command) == 1:
+                print('No temperature given; please type "SP X" to set the set-point to X Kelvin.')
+            else:
+                setpoint = float(command[1])
+                ls.set_setpoint(setpoint)
+                print("Set-point ramping to {} K".format(setpoint))
 
-    # def start(self):
-    #     while True:
-    #         accepted = self.turnaround()
-    #         if accepted:
-    #             time.sleep(3600)
-    #         else:
-    #             time.sleep(300)
+        elif command[0] == "RAW":
+            if len(command) == 1:
+                print('No message given; please type "RAW [message]" to send [message] to the Lakeshore.')
+            else:
+                message_back = ls.write(command[1].upper())
+                print('Sent "{}" to the LakeShore.'.format(command[1].upper()))
+                print('Response: {}'.format(message_back))
 
 
 if __name__ == "__main__":
-    # c = Controller()
-    input("LS>")
+    run_command_line()
