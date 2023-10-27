@@ -2,6 +2,7 @@ import os
 from PySide6.QtWidgets import QApplication, QDialog
 import get
 import sys
+import time
 from gui.dialogs.new_file import NewFileDialog
 
 
@@ -39,7 +40,7 @@ if __name__ == "__main__":
         creation_datetime = dialog.date
 
         """LAUNCH SERVER"""
-        launch_process("py server.py {} {}".format(bridge, ls_num), leave_open=False)
+        launch_process("py server.py {} {}".format(bridge, ls_num), leave_open=True)
         print("Launched server")
 
         print("Launched data taking process {m:02}/{d:02}/{y:04} at {h:02}:{min:02}:{s}".format(
@@ -77,7 +78,13 @@ if __name__ == "__main__":
             ls=ls_num,
             c=full_comment,
             p=purpose
-        ), leave_open=False)
+        ), leave_open=True)
+
+        time.sleep(5)
+        launch_process("py temperature_controller.py", leave_open=True)
+        print("Launched server")
     else:
         print("Canceled")
     # input("Press Enter to close")
+
+
