@@ -120,6 +120,11 @@ class GpibServer:
                     self.writing_q_to_bridge = False
                 # print(f'Reading from {dev_id}')
                 msgout = self.bridge.read()
+            elif command[0] == "F":
+                self.bridge.write("FORMAT {}, {}, {}, {}".format(*AH.formatting))
+                print("Formatted: Notation: {}; Labeling: {}; IEEE-488.2: {}; Field Width: {}.".format(*AH.formatting))
+                self.bridge.write("UNITS {}".format(AH.units))
+                print("Set units to {}.".format(AH.units))
         else:
             msgout = f'Did not give a valid device id: {dev_id}'
         return msgout

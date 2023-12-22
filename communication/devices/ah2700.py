@@ -63,6 +63,10 @@ class Client(Device):
         if not self.silent:
             print(printmsg)
 
+    def reformat(self):
+        self.raw("F")
+        print("\n\nREFORMATTING\n\n")
+
     def format(self, notation: str = 'FLOAT', labeling: str = 'ON', ieee: str = 'OF', fwidth: str = 'FIX'):
         """Controls the format and numeric notation of results which are sent to serial or
         GPIB ports. Front panel results are not affected

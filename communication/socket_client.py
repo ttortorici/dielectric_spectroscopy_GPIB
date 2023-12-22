@@ -47,6 +47,9 @@ class Device:
     def read(self) -> str:
         return self.send(f"{self.dev_id}::R")
 
+    def raw(self, command) -> None:
+        self.send(f"{self.dev_id}::{command}")
+
     def get_id(self) -> str:
         return self.query('*IDN?')
 

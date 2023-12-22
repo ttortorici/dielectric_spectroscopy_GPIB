@@ -329,7 +329,8 @@ class PlotWidget(QWidget):
         """INITIATE DEVICES WITH DIALOG SETTINGS"""
         while self.running:
             data_point = self.file.sweep_frequencies()
-            self.file.write_row(data_point)
+            # self.file.write_row(data_point)
+
             # self.data = np.vstack((self.data, data_point))
             if self.live_plotting:
                 # self.plot_updater.signal.emit(str(data_point).strip('[').strip(']'))

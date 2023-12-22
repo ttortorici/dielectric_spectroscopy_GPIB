@@ -190,24 +190,36 @@ class DielectricSpec(CSVFile):
         Repeat measurements at each frequency in self.unique_frequencies
         """
         len_labels = len(self.__class__.labels)
-        full_data = [0] * len_labels * len(self.unique_frequencies)
-        for ff, frequency in enumerate(self.unique_frequencies):
-            start_index = ff * len_labels
-            end_index = (ff + 1) * len_labels
-            partial_data = self.measure_at_frequency(frequency)
-            now = str(datetime.datetime.fromtimestamp(partial_data[0]))
-            now = now.split(' ')[1].split('.')[0]
-            partial_data[0] = str(partial_data[0])
-            print_list = [now,
-                          f"{partial_data[1]:s} K".rjust(10),
-                          f"{partial_data[2]:s} K".rjust(12),
-                          f"{partial_data[3]:s} pF".rjust(15),
-                          f"{partial_data[4]:s}".rjust(13),
-                          f"{partial_data[5]:s} V".rjust(10),
-                          f"{partial_data[6]:s} Hz".rjust(12)]
-            print(", ".join(print_list))
+        full_data = [0] * len_labels * len(self.unique_frequencies)     # initiate list of data
+        try:
+            for ff, frequency in enumerate(self.unique_frequencies):
+                start_index = ff * len_labels       # figure out where to start indexing data in the list
+                end_index = (ff + 1) * len_labels
+                partial_data = self.measure_at_frequency(frequency)     # get a report back from the bridge
 
-            full_data[start_index:end_index] = partial_data
+                """Print partial data to terminal"""
+                now = str(datetime.datetime.fromtimestamp(partial_data[0]))
+                now = now.split(' ')[1].split('.')[0]
+                partial_data[0] = str(partial_data[0])
+                print_list = [now,
+                              f"{partial_data[1]:s} K".rjust(10),
+                              f"{partial_data[2]:s} K".rjust(12),
+                              f"{partial_data[3]:s} pF".rjust(15),
+                              f"{partial_data[4]:s}".rjust(13),
+                              f"{partial_data[5]:s} V".rjust(10),
+                              f"{partial_data[6]:s} Hz".rjust(12)]
+                print(", ".join(print_list))
+
+                """place partial data in the full data list"""
+                full_data[start_index:end_index] = partial_data
+            [float(number) for number in full_data]
+        except ValueError:
+            print("error")
+            self.bridge.reformat()
+            for ii in range(len(self.unique_frequencies)):
+                full_data[ii+3:ii+7] = ["-1", "-1", "-1", "-1"]
+            # full_data = [-1] * len_labels * len(self.unique_frequencies)
+            # print(full_data)
         self.write_row(full_data)
         return full_data
 

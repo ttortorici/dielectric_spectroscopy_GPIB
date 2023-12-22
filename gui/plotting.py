@@ -88,9 +88,10 @@ class Plot(pg.PlotWidget):
             #                                        self.x_indices,
             #                                        self.y_indices):
             for curve, x_index, y_index in zip(self.curves, self.x_indices, self.y_indices):
-                # print(repr(x_index))
-                # print(repr(y_index))
-                curve.setData(x=data[:, x_index], y=data[:, y_index])
+                # print(data.shape)
+                # print(len(data.shape))
+                if len(data.shape) == 2:
+                    curve.setData(x=data[:, x_index], y=data[:, y_index])
                 # self.x[ii] = np.append(self.x, data[x_index])
                 # self.y[ii] = np.append(self.y, data[y_index])
                 # print("x = " + repr(self.x[ii]))
